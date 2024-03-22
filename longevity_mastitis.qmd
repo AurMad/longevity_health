@@ -1,0 +1,95 @@
+---
+title: "Causal analysis of the relationship between mastitis and longevity in dairy cows"
+author: "Aurélien Madouasse"
+format: html
+bibliography: references.bib
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(ggdag)
+```
+
+# Introduction
+
+In broad terms, longevity is the length of the life of an animal, although a wide variety of indicators can be used to measure it. A recent study by [@dallago2021] provided evidence of a decrease in dairy cows' longevity between the 1960s and 2010s in the top 10 high milk-producing countries.
+
+The departure of a cow from her herd is called culling [@fetrow2006]. In some cases, the farmer has no other choice than to cull a cow, in case of death or when the cow is not pregnant and does not give enough milk anymore to be kept in the herd. This is usually called involuntary culling. In other cases, farmers choose to cull the cows for various reasons, mostly for the presence of a disease. This is called voluntary culling. The main documented causes of culling are reproductive failure, mastitis and lameness.
+
+Improving dairy cows' longevity therefore requires to act on the causes of culling. For example, if a disease is reported as a cause for culling, preventing the disease from occurring should increase longevity. However, this is a notably hard task. The decision of culling a cow may depend on several combined causes that are related to the status of a given animal as well as on the farm context. Furthermore, disease incidence may be increased by the presence of risk factors, and, disease occurrence can also act on factors such as milk production or reproduction that are sufficient reasons for culling. Lastly, for contagious diseases, culling infected cows could reduce the incidence of the disease by removing sources of infection from the herd.
+
+Our objective in this paper is to analyse longevity and disease occurrence in a causal framework, using mastitis in dairy cows as an example.
+
+# Introduction
+
+## Potential outcome framework
+
+Estimating the causal effect of the occurrence of an event on an outcome requires to be able to compare the outcome values with and without the event. For example, estimating the effect of mastitis occurrence on the probability of culling in a given cow would require to be able to observe the same cow with and without mastitis and record whether she is culled or not following the disease or its absence. Such data is of course impossible to obtain. This is in fact called *the fundamental problem of causal inference*. But laying out the problem in these terms can help to clarify the research questions, design experiments, analyse the data and interpret the results. [@hernan2024] describe in simple terms and introduce notation for the potential outcome framework, that was developed by several scientists over the course of the XX$^{th}$ century, notably Donald Rubin [@rubin1974]. Let us introduce this notation using the causal effect of mastitis on the probability of culling in a cow as an example. We consider mastitis occurrence as a binary event $A$ with $A=1$ denoting presence of mastitis and $A=0$ denoting the absence of mastitis. We are interested in whether cow $i$ is culled or not at the end of her lactation. We label $Y_i^{A}$ this outcome, with $Y^{A=a}_i=1$ if cow $i$ is culled and $Y^{A=a}_i=0$ if cow $i$ is not culled, when event $A=a$ occurs. In a given cow, only one event $A=a$ and its associated outcome $Y^{A=a}$ can be observed. These event and outcome are called factual, and the unobserved ones are called counterfactual.
+
+## Estimands: the quantities of interest
+
+An estimand is a quantity whose value is the answer to a precise research question [@kahan2024; @lundberg2021]. Estimands are independent of both the data available and the estimation method used for the analysis. The two minimum components of an estimand are a *unit-specific quantity* and a *target population* [@lundberg2021]. For example, if we wanted to know the causal effect of clinical mastitis in the first month of lactation on the probability of culling before or at the end of lactation in French dairy cows, we could define the following estimand:
+
+$$
+\delta_1 = \frac{1}{n} \sum_{i=1}^n Y^{1}_i - Y^{0}_i
+$$ where $n$ is the total number of cows in the French dairy cow population, $Y^1_i$ and $Y^0_i$ are binary variables taking the value 1 for cows culled at or before the end of lactation and 0 otherwise in cows with ($Y^1_i$ ) and without ($Y^0_i$) clinical mastitis in the first month of lactation respectively. Of course, in each cow, only one of the 2 outcomes can be observed. This estimand is a risk difference, but risk ratios or odds ratios could have been used as well.
+
+But maybe, the cows who got mastitis are different from the cows who did not, for reasons other that having experienced the disease, and therefore have a different probability of being culled. $Y^{A=a}_i|A=1$ denotes the outcome associated with having mastitis given that animal $i$ experienced mastitis. We could make the hypothesis that $Y^1_i|A=a \neq Y^1_i|A=a$ and calculate the following estimand: $$
+\delta_2 = \frac{1}{n} \sum_{i=1}^n \left[ (Y^{1}_i|A=1) - (Y^{0}_i|A=1) \right]
+$$ $\delta_1$ is called the average treatment effect (**ATE**). It is a measure of a treatment (in our case a disease) effect in the whole population. $\delta_2$ is called the average treatment effect in the treated (**ATT**). See for example @igelström2022.
+
+## Directed acyclic graphs
+
+Directed acyclic graphs, commonly called **DAG**s, are graphical representations of a phenomenon which are particularly well suited to model causality. The different parts or components of the phenomenon are represented using circles called nodes. We can represent the hypothesis that mastitis ($M$) causes culling ($C$) as follows:
+
+```{r dag1}
+#| echo: false
+#| fig-width: 3
+#| fig-height: 1
+dag1 <- dagify(
+  C ~ M,
+  coords = list(
+    x = c(M = 0, C = 2),
+    y = c(M = 0, C = 0)
+  )
+)
+
+ggdag(dag1) + theme_dag()
+```
+
+where the arrow indicates causality. DAGs allow to represent complex relationships between variables as well as to account for bias. We now provide a few examples of how DAGs can be useful to get a better picture of causal relationship.
+
+Mastitis could have both direct and indirect effects on culling. As a direct effect, a severe case of clinical mastitis can lead to the death of the cow. As an indirect effect, mastitis could compromise reproductive success. This indirect effect of mastitis is *mediated* by reproduction. One usual way of modelling such data would be to fit a logistic model with culling as the outcome and mastitis and reproduction as covariates. However, if there is an effect of mastitis on reproduction, the true causal effect of mastitis on culling by the logistic model will be underestimated, because part of if will be incorporated into the effect of reproduction on culling.
+
+```{r dag2}
+#| echo: false
+#| fig-width: 3
+#| fig-height: 3
+dag2 <- dagify(
+  C ~ M,
+  R ~ M,
+  C ~ R,
+  coords = list(
+    x = c(M = 0, C = 2, R = 1),
+    y = c(M = 0, C = 0, R = -1)
+  )
+)
+
+ggdag(dag2) + theme_dag()
+```
+
+## Definition of mastitis
+
+Mastitis is an inflammation of a mammary gland, caused by an intramammary infection. Different aetiological agents are associated with differences in disease epidemiology. On the one hand, bacteria of faecal origin such as *Escherichia coli* cause short lived infections with a high rate of spontaneous cure, but often acute clinical signs. On the other hand, some bacteria, such as *Staphylococcus aureus* are adapted to survive in the mammary gland and are associated with chronic infections. In this case, the infection can last for months, with clinical signs observed on rare occasions with regards with the duration of the infection. Because bacteria are shed in the milk of infected cows for long periods, milk is more likely to serve as a reservoir of infection. These infections are therefore described as contagious. All infections result in the recruitment of immune cells in the mammary gland, that are measured on a monthly basis in herds that participate to milk recording. The measured cell concentration is called milk somatic count (**SCC**).
+
+In this study, we chose to consider the following types of mastitis:
+
+-   new case of contagious mastitis in early lactation: primiparous cow with at least 2 out of the first 3 milk recordings above 200 000 cells/mL or multiparous cow with the last milk recording in her previous lactation below 200 000 cells/mL and at least 2 out of the first 3 milk recordings above 200 000 cells/mL
+-   environmental mastitis in early lactation: a case of clinical mastitis with at most one SCC \> 200 000 cells / mL in the period going from one month before to 2 months after the clinical case.
+
+## Definition of culling
+
+## Hypohteses and DAG
+
+# References
