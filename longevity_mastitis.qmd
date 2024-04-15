@@ -9,11 +9,12 @@ bibliography: references.bib
 #| include: false
 library(tidyverse)
 library(ggdag)
+library(DairyHerdData)
 ```
 
 # Introduction
 
-In broad terms, longevity is the length of the life of an animal, although a wide variety of indicators can be used to measure it. A recent study by [@dallago2021] provided evidence of a decrease in dairy cows' longevity between the 1960s and 2010s in the top 10 high milk-producing countries.
+In broad terms, longevity is the length of the life of an animal, although a wide variety of indicators can be used to measure it. A recent study by @dallago2021 provided evidence of a decrease in dairy cows' longevity between the 1960s and 2010s in the top 10 high milk-producing countries.
 
 The departure of a cow from her herd is called culling [@fetrow2006]. In some cases, the farmer has no other choice than to cull a cow, in case of death or when the cow is not pregnant and does not give enough milk anymore to be kept in the herd. This is usually called involuntary culling. In other cases, farmers choose to cull the cows for various reasons, mostly for the presence of a disease. This is called voluntary culling. The main documented causes of culling are reproductive failure, mastitis and lameness.
 
@@ -23,21 +24,29 @@ Our objective in this paper is to analyse longevity and disease occurrence in a 
 
 # Introduction
 
-## Potential outcome framework
+## Causal framework
 
-Estimating the causal effect of the occurrence of an event on an outcome requires to be able to compare the outcome values with and without the event. For example, estimating the effect of mastitis occurrence on the probability of culling in a given cow would require to be able to observe the same cow with and without mastitis and record whether she is culled or not following the disease or its absence. Such data is of course impossible to obtain. This is in fact called *the fundamental problem of causal inference*. But laying out the problem in these terms can help to clarify the research questions, design experiments, analyse the data and interpret the results. [@hernan2024] describe in simple terms and introduce notation for the potential outcome framework, that was developed by several scientists over the course of the XX$^{th}$ century, notably Donald Rubin [@rubin1974]. Let us introduce this notation using the causal effect of mastitis on the probability of culling in a cow as an example. We consider mastitis occurrence as a binary event $A$ with $A=1$ denoting presence of mastitis and $A=0$ denoting the absence of mastitis. We are interested in whether cow $i$ is culled or not at the end of her lactation. We label $Y_i^{A}$ this outcome, with $Y^{A=a}_i=1$ if cow $i$ is culled and $Y^{A=a}_i=0$ if cow $i$ is not culled, when event $A=a$ occurs. In a given cow, only one event $A=a$ and its associated outcome $Y^{A=a}$ can be observed. These event and outcome are called factual, and the unobserved ones are called counterfactual.
+Determining what causes what is an important question in many fields. Philosophers and scientists have come up with various ways of addressing it. In quantitative disciplines such as epidemiology, economics and sociology, the 2 paradigms currently in use are the *potential outcomes framework* who is associated with Donald Rubin [@rubin1974] and *structural causal models* proposed by Judea Pearl [@pearl2009]. Although the 2 paradigms seem to differ in important ways [@markus2021], they are sometimes presented as part of a single causality framework in textbooks [@neal2020; @cunningham2021]. In what follows, we frame our problem using the potential outcomes framework and then decompose it using directed acyclic graphs, most commonly associated with the structural causal framework. Our objectives are to make sound causal inference while keeping the presentation of our research questions to the readers as clear as possible.
+
+## Potential outcomes framework
+
+Estimating the causal effect of the occurrence of an event on an outcome requires to be able to compare the outcome values with and without the event. For example, estimating the effect of mastitis occurrence on the probability of culling in a given cow would require to be able to observe the same cow with and without mastitis and record whether she is culled or not following the disease or its absence. Such data is of course impossible to obtain. This is in fact called *the fundamental problem of causal inference*. But laying out the problem in these terms can help to clarify the research questions, design experiments, analyse the data and interpret the results. @hernan2024 describe in simple terms and introduce notation for the potential outcome framework, that was developed by several scientists over the course of the XX$^{th}$ century, notably Donald Rubin [@rubin1974]. Let us introduce this notation using the causal effect of mastitis on the probability of culling in a cow as an example. We consider mastitis occurrence as a binary event $A$ with $A=1$ denoting presence of mastitis and $A=0$ denoting the absence of mastitis. We are interested in what would happen in cow $i$ if she were to experience mastitis ($Y_i^{1}$) or, on the contrary, if she weren't experiencing mastitis ($Y_i^{0}$). $Y_i^{A}$ represents whether cow $i$ is culled or not at the end of her lactation, with $Y^{A=a}_i=1$ if cow $i$ is culled and $Y^{A=a}_i=0$ if cow $i$ is not culled, when event $A=a$ occurs. In a given cow, only one event $A=a$ and its associated outcome $Y^{A=a}$ can be observed. These event and outcome are called factual, and the unobserved ones are called counterfactual. The factual (realised) outcomes are encoded using the $|$ symbol. For example, $Y_i | A = 0$ is the observed outcome for cow $i$ who did not get mastitis. Problems arise when there are systematic differences in potential outcomes between treated and untreated individuals, for example if $Y^{A = 1}|A = 1 \neq Y^{A = 1}|A = 0$.
 
 ## Estimands: the quantities of interest
 
-An estimand is a quantity whose value is the answer to a precise research question [@kahan2024; @lundberg2021]. Estimands are independent of both the data available and the estimation method used for the analysis. The two minimum components of an estimand are a *unit-specific quantity* and a *target population* [@lundberg2021]. For example, if we wanted to know the causal effect of clinical mastitis in the first month of lactation on the probability of culling before or at the end of lactation in French dairy cows, we could define the following estimand:
+Estimands are quantities whose value is the answer to a precise research question. Estimands are independent of both the data available and the estimation method used for the analysis. They are used in slightly different ways in different disciplines (see for example the different perspectives in sociology in @lundberg2021a and in randomized clinical trials in @kahan2024 ). Following @lundberg2021a, the two minimum components of an estimand are a *unit-specific quantity* and a *target population* [@lundberg2021]. These authors make a further distinction between theoretical estimands which are the quantities of interest to the researchers and empirical estimands which are approximations that can be computed from observed data.
+
+For example, if we wanted to know the causal effect of clinical mastitis in early lactation on the probability of culling before or at the end of lactation in French dairy cows, we could define the following theoretical estimand:
 
 $$
 \delta_1 = \frac{1}{n} \sum_{i=1}^n Y^{1}_i - Y^{0}_i
-$$ where $n$ is the total number of cows in the French dairy cow population, $Y^1_i$ and $Y^0_i$ are binary variables taking the value 1 for cows culled at or before the end of lactation and 0 otherwise in cows with ($Y^1_i$ ) and without ($Y^0_i$) clinical mastitis in the first month of lactation respectively. Of course, in each cow, only one of the 2 outcomes can be observed. This estimand is a risk difference, but risk ratios or odds ratios could have been used as well.
+$$ where $n$ is the total number of cows in the French dairy cow population, $Y^1_i$ and $Y^0_i$ are binary variables taking the value 1 for cows culled at or before the end of lactation and 0 otherwise in cows with ($Y^1_i$ ) and without ($Y^0_i$) clinical mastitis in early lactation respectively. Of course, in each cow, only one of the 2 outcomes can be observed. This estimand is a risk difference, but risk ratios or odds ratios could have been used as well.
 
-But maybe, the cows who got mastitis are different from the cows who did not, for reasons other that having experienced the disease, and therefore have a different probability of being culled. $Y^{A=a}_i|A=1$ denotes the outcome associated with having mastitis given that animal $i$ experienced mastitis. We could make the hypothesis that $Y^1_i|A=a \neq Y^1_i|A=a$ and calculate the following estimand: $$
+But maybe, the cows who got mastitis are different from the cows who did not, for reasons other than having experienced the disease, and therefore have a different probability of being culled. $Y^{A=a}_i|A=1$ denotes the outcome associated with having mastitis given that animal $i$ experienced mastitis. We could make the hypothesis that $Y^1_i|A=1 \neq Y^1_i|A=0$ and choose to focus our interest on cows who actually got mastitis. A theoretical estimand of interest in this situation could be: $$
 \delta_2 = \frac{1}{n} \sum_{i=1}^n \left[ (Y^{1}_i|A=1) - (Y^{0}_i|A=1) \right]
-$$ $\delta_1$ is called the average treatment effect (**ATE**). It is a measure of a treatment (in our case a disease) effect in the whole population. $\delta_2$ is called the average treatment effect in the treated (**ATT**). See for example @igelström2022.
+$$
+
+$\delta_1$ is called the average treatment effect (**ATE**). It is a measure of a treatment (in our case a disease) effect in the whole population. $\delta_2$ is called the average treatment effect in the treated (**ATT**). In our case, it is more relevant to consider the ATE, since our interest is in evaluating the consequences of preventing mastitis in cows who experienced the disease, not really on the whole population.
 
 ## Directed acyclic graphs
 
@@ -58,7 +67,7 @@ dag1 <- dagify(
 ggdag(dag1) + theme_dag()
 ```
 
-where the arrow indicates causality. DAGs allow to represent complex relationships between variables as well as to account for bias. We now provide a few examples of how DAGs can be useful to get a better picture of causal relationship.
+where the arrow indicates causality. DAGs allow to represent complex relationships between variables. We now provide a few examples of how DAGs can be useful to get a better picture of causal relationship.
 
 Mastitis could have both direct and indirect effects on culling. As a direct effect, a severe case of clinical mastitis can lead to the death of the cow. As an indirect effect, mastitis could compromise reproductive success. This indirect effect of mastitis is *mediated* by reproduction. One usual way of modelling such data would be to fit a logistic model with culling as the outcome and mastitis and reproduction as covariates. However, if there is an effect of mastitis on reproduction, the true causal effect of mastitis on culling by the logistic model will be underestimated, because part of if will be incorporated into the effect of reproduction on culling.
 
@@ -86,10 +95,69 @@ Mastitis is an inflammation of a mammary gland, caused by an intramammary infect
 In this study, we chose to consider the following types of mastitis:
 
 -   new case of contagious mastitis in early lactation: primiparous cow with at least 2 out of the first 3 milk recordings above 200 000 cells/mL or multiparous cow with the last milk recording in her previous lactation below 200 000 cells/mL and at least 2 out of the first 3 milk recordings above 200 000 cells/mL
--   environmental mastitis in early lactation: a case of clinical mastitis with at most one SCC \> 200 000 cells / mL in the period going from one month before to 2 months after the clinical case.
+-   environmental mastitis in early lactation
 
 ## Definition of culling
 
 ## Hypohteses and DAG
+
+# Data analysis
+
+Unité statistique = lactation Y = réforme \<-\> revêlage
+
+Using the `DairyHerdData` package.
+
+```{r milk-recording-ai-data}
+## milk recording data
+rec <- rec
+## artificial insemination data
+ai <- ai |> 
+  mutate(ai_date = as.Date(ai_date))
+
+## days in milk added to milk recording data
+rec <- rec |> 
+  mutate(dim = as.integer(ctrl_date - calv_date))
+
+## making a list of lactations
+lac <- rec |> 
+  group_by(anim_id, calv_date) |> 
+  summarise(lac_id = NA,
+            parity = unique(parity),
+            n_ctrl = length(unique(ctrl_date)),
+            n_scc_high = length(scc[scc > 200]),
+            n_scc_early = length(dim[dim < 91]),
+            n_scc_early_high = length(scc[scc > 200 & dim < 91]))
+
+lac$lac_id <- 1:nrow(lac)
+
+lac <- lac |> 
+  group_by(anim_id) |> 
+  mutate(calv_nxt = lead(calv_date))
+
+## first date of calving
+calv_first <- min(lac$calv_date)
+
+ai <- ai |> 
+  filter(ai_date > calv_first)
+
+ai1 <- left_join(lac |> 
+                   select(anim_id, lac_id, calv_date, calv_nxt), 
+                 ai |> 
+                   select(herd_id, cow_id, ai_date),
+                 join_by(anim_id == cow_id)) |> 
+           filter(ai_date > calv_date & (ai_date < calv_nxt | is.na(calv_nxt))) |> 
+  select(herd_id, anim_id, lac_id, calv_date, calv_nxt, ai_date)
+
+ai_lac <- ai1 |> 
+  arrange(lac_id, ai_date) |> 
+  group_by(lac_id) |> 
+  summarise(ai_N = length(unique(ai_date)),
+            ai_first = min(ai_date),
+            ai_last = max(ai_date),
+            ai_calv_days = as.integer(unique(calv_nxt) - max(ai_date)))
+
+lac <- left_join(lac, ai_lac)
+
+```
 
 # References

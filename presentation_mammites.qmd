@@ -1,0 +1,69 @@
+---
+title: "Etude des liens entre mammites et réformes chez les vaches laitières"
+author: "Aurélien"
+format: revealjs
+---
+
+```{r r-setup}
+#| echo: false
+#| message: false
+#| warning: false
+library(tidyverse)
+library(ggplot2)
+library(ggdag)
+```
+
+
+
+## Objectif général et hypothèses
+
+- Objectif : étude des relations entre mammites et réformes chez les vaches laitières
+
+- Problème complexe :
+  - Une mammite peut induire une réforme par plusieurs voies : mort de la vache, non-mise à la reproduction à cause d'une contribution de l'animal à des pénalités cellules, baisse de production laitière...
+  - La réforme d'une vache en mammite chronique peut contribuer à la maîtrise des infections au niveau troupeau en diminuant le nombre de sources
+
+## Intérêts d'une approche causale
+  
+- Réfléchir en termes de causalité permet de s'assurer en amont de la pertinence des réponses qu'on va obtenir
+  - Quelles questions se pose-t-on ?
+  - Comment poser les questions ?
+  
+- Illustration avec la question de l'effet de la survenue d'une mammite sur la probabilité de réforme
+
+## Impact des mammites sur la réforme
+
+- Qu'appelle t-on réforme ?
+  - Fait pour une vache de ne pas démarrer une nouvelle lactation
+  - $Y = 0 \rightarrow$ la vache a une date de vêlage postérieure à la mammite
+  - $Y = 1 \rightarrow$ la vache ne re-vêle pas
+
+## Impact des mammites sur la réforme
+
+- DAG
+
+```{r}
+dag1 <- dagify(
+  Y ~ A + X1 + X2 + X4,
+  X1 ~ A,
+  X2 ~ A,
+  X3 ~ A,
+  X4 ~ X3,
+  outcome = "Y",
+  exposure = "A",
+  labels = c(
+    Y = "Réforme",
+    A = "Mammite",
+    X1 = "Mort",
+    X2 = "Production laitière",
+    X3 = "Mise à la reproduction",
+    X4 = "Conception"
+  )
+)
+
+set.seed(123)
+ggdag(dag1,
+      use_labels = "label") +
+  theme_dag()
+```
+
