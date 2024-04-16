@@ -168,13 +168,15 @@ Etablissons le lien entre mammites et mise à la reproduction (décision prise p
 On va donc émettre l'hypothèse que si n >= 2 alors la vache à fait un épisode de mammite chronique et ce qu'on cherche à savoir c'est si ce résultat à un impact sur la décision par l'éleveur d'inséminer sa vache. 
 
 ## création d'une colonne miserepro qui donne la valeur 1 si la vache à été inséminée et qu'elle présente un n_scc_early_high >= 2
-?repla
+
 ```{r}
 lac[,10] <- replace(lac[,10], is.na(lac[,10]), 0)
 lac <- lac |> 
-  mutate(miserepro = case_when(n_scc_early_high >= 2 & ai_N >= 1 ~ "1",
-                               n_scc_early_high >= 2 & ai_N < 1 ~ "0"))
-head(lac)
+  mutate(miserepro = case_when(ai_N >= 1 ~ "1",
+                               ai_N < 1 ~ "0")) |>
+  mutate(mamchro = ifelse(n_scc_early_high >= 2, "1", "0")) 
+
+lac[,14] <- replace(lac[,14], is.na(lac[,14]), "0")
 ```
 
 ## création d'un nouveau tableau avec que les animaux atteints de mammites chronique dans les premiers 91 jours de lactation 
@@ -204,4 +206,7 @@ geom_text(aes(label = paste(Prop*100, "%")), position = position_stack(vjust = 0
 # theme_void()= suppression des axes
 p+theme_void()
 ```
-
+ On remarque que sur les vaches qui présentent une mammite chronique précoce, 74% des vaches sont quand même mises à la reproduction. 
+ 
+ 
+ 
