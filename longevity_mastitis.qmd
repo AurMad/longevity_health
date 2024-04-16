@@ -174,7 +174,7 @@ lac[,10] <- replace(lac[,10], is.na(lac[,10]), 0)
 lac <- lac |> 
   mutate(miserepro = case_when(ai_N >= 1 ~ "1",
                                ai_N < 1 ~ "0")) |>
-  mutate(mamchro = ifelse(n_scc_early_high >= 2, "1", "0")) 
+  mutate(mamchro = ifelse(n_scc_early_high >= 2, 1, 0)) 
 
 lac[,14] <- replace(lac[,14], is.na(lac[,14]), "0")
 ```
@@ -261,6 +261,15 @@ p-value < 0,05, il existe donc un lien entre la présence d'une mammite chroniqu
 ```{r}
 library(lme4)
 ```
+```{r}
+myreg <- glm(as.numeric(miserepro)~mamchro, family= binomial, data = lac)
+summary(myreg)
+```
+
+Ce résultat nous indique que le choix de la mise à la reproduction est influencé par la présence ou non de mammite lors des 91 premiers jours de lactation. Or pour ce premier modèle j'ai totalement ignoré les autres variables qui peuvent influencer ce résultat comme : 
+- la parité 
+- la production laitière
+- la présence d'une autre affection concomitante 
 
 
 
