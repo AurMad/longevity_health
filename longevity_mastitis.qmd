@@ -255,3 +255,12 @@ missing.include=FALSE, format=c("SAS","SPSS"))
 ```
 
 p-value < 0,05, il existe donc un lien entre la présence d'une mammite chronique et la mise à la reproduction....
+
+## régression logistique pour identifier la présence ou non de mammite comme facteur de risque à la non mise à la reproduction 
+
+```{r}
+library(lme4)
+```
+
+
+
