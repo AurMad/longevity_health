@@ -10,6 +10,8 @@ bibliography: references.bib
 library(tidyverse)
 library(ggdag)
 library(DairyHerdData)
+library(ggplot2)
+library(scales)
 ```
 
 # Introduction
@@ -126,7 +128,8 @@ lac <- rec |>
             n_ctrl = length(unique(ctrl_date)),
             n_scc_high = length(scc[scc > 200]),
             n_scc_early = length(dim[dim < 91]),
-            n_scc_early_high = length(scc[scc > 200 & dim < 91]))
+            n_scc_early_high = length(scc[scc > 200 & dim < 91])) |> 
+  ungroup(anim_id)
 
 lac$lac_id <- 1:nrow(lac)
 
@@ -162,14 +165,22 @@ lac <- left_join(lac, ai_lac)
 
 # References
 
-# Essai Joanna 
+# Essai Joanna
 
-Etablissons le lien entre mammites et mise à la reproduction (décision prise par l'éleveur). n_scc_early_high donne le nombre de contrôles pour lesquelles le taux de cellules est supérieur à 200 000 dans les 91 premiers jours de lactation. 
-On va donc émettre l'hypothèse que si n >= 2 alors la vache à fait un épisode de mammite chronique et ce qu'on cherche à savoir c'est si ce résultat à un impact sur la décision par l'éleveur d'inséminer sa vache. 
+@Joanna : 
+- Je mets un eval = false sur certains chunks. De cette manière, les chunks ne sont pas évalués quand tu exécutes le fichier ('render').
+- Il est recommandé de nommer les chunks pour faciliter la lecture quand on extrait le code R.
+- Eviter de modifier les jeux de données par les numéros de colonnes. C'est peu lisible et ça favorise les erreurs.
+- Charger les packages en début de code. Encore une fois, c'est plus lisbile. Ca évite de les charger plusieurs fois.
 
-## création d'une colonne miserepro qui donne la valeur 1 si la vache à été inséminée et qu'elle présente un n_scc_early_high >= 2
+
+
+Etablissons le lien entre mammites et mise à la reproduction (décision prise par l'éleveur). n_scc_early_high donne le nombre de contrôles pour lesquelles le taux de cellules est supérieur à 200 000 dans les 91 premiers jours de lactation. On va donc émettre l'hypothèse que si n \>= 2 alors la vache à fait un épisode de mammite chronique et ce qu'on cherche à savoir c'est si ce résultat à un impact sur la décision par l'éleveur d'inséminer sa vache.
+
+## création d'une colonne miserepro qui donne la valeur 1 si la vache à été inséminée et qu'elle présente un n_scc_early_high \>= 2
 
 ```{r}
+#| eval: false
 lac[,10] <- replace(lac[,10], is.na(lac[,10]), 0)
 lac <- lac |> 
   mutate(miserepro = case_when(ai_N >= 1 ~ "1",
@@ -179,17 +190,33 @@ lac <- lac |>
 lac[,14] <- replace(lac[,14], is.na(lac[,14]), "0")
 ```
 
-## création d'un nouveau tableau avec que les animaux atteints de mammites chronique dans les premiers 91 jours de lactation 
+Le code suivant doit faire la même chose que celui du chunk précédent.
+
+-   Une variable `miserepro` est créée. Elle vaut 1 si le nombre d'IA est supérieur à 0 ce qui signe une décision de l'élveur de mettre la vache à la reproduction.
+- une variable `mamchro`  est créée. Elle vaut 1 pour les lactations qui ont plus de 2 CCS supérieures à 200 000 cellules sur les 3 premiers contrôles du début de lactation.
+
+```{r miserepro-mamchro-definition}
+lac <- lac |> 
+  mutate(miserepro = ifelse(ai_N == 0 | is.na(ai_N), 0, 1),
+         mamchro = ifelse(n_scc_early_high >= 2, 1, 0))
+```
+
+## création d'un nouveau tableau avec que les animaux atteints de mammites chronique dans les premiers 91 jours de lactation
+
+- Je te conseille de faire cette opération directement dans le code ci-dessous, sans créer de jeu de données intermédiaire. Encore une fois, c'est plus lisbible.
 
 ```{r}
+#| eval: false
 Lacmam <- lac |> 
   filter(n_scc_early_high >= 2)
 ```
 
-## création d'un camembert pour illustrer la part de mise à la repro parmis les vaches atteintes de mammites chroniques 
+## création d'un camembert pour illustrer la part de mise à la repro parmis les vaches atteintes de mammites chroniques
+
+@Joanna : je ne suis pas sûr que ce code fasse ce que tu veux qu'il fasse. Tu regardes la proportion de vaches mises à la repro quand mamchro = 1. Il me semble qu'il faudrait comparer mamchro = 0 et mamchro = 1. Voir mon code ci-dessous.
+Je n'aime pas trop les camemberts en tant que représentations graphiques. Préférer des diagrammes en barres.
 
 ```{r}
-
 library(ggplot2, scales)
 Tab<-as.data.frame(table(Lacmam$miserepro))
 colnames(Tab)<-c("miserepro","Effectif")
@@ -206,15 +233,33 @@ geom_text(aes(label = paste(Prop*100, "%")), position = position_stack(vjust = 0
 # theme_void()= suppression des axes
 p+theme_void()
 ```
- On remarque que sur les vaches qui présentent une mammite chronique précoce, 74% des vaches sont quand même mises à la reproduction. 
- 
- on veut savoir s'il y a un lien entre la présence ou non de mammite et la mise à la reproduction (attention on ne met pas en évidence une relation de cause à effet)
- 
+
+Je pense que tu veux le tableau suivant :
+
+```{r}
+tab_repro_mam <- lac |> 
+  select(miserepro, mamchro) |> 
+  table()
+
+print(tab_repro_mam)
+```
+Ci-dessous, les proportions de vaches mises à la repro en fonction de la présence d'une mammite chronique. La relation est conforme à ce qui est attendu. Utilisation d'une fonction apply. Je pourrai t'expliquer comment ça fonctionne.
+
+```{r}
+apply(tab_repro_mam, 2, function(x) round(x / sum(x), 3))
+```
+
+
+
+
+On remarque que sur les vaches qui présentent une mammite chronique précoce, 74% des vaches sont quand même mises à la reproduction.
+
+on veut savoir s'il y a un lien entre la présence ou non de mammite et la mise à la reproduction (attention on ne met pas en évidence une relation de cause à effet)
+
 ```{r}
 str(lac)
 ```
- 
- 
+
 ```{r}
 library(questionr)
 library(gmodels)
@@ -222,10 +267,11 @@ library(gmodels)
 tab1 <- table(lac$miserepro, lac$mamchro)
 tab1
 ```
- 
+
 ```{r}
 lprop(tab1)
 ```
+
 ```{r}
 CrossTable(lac$miserepro, lac$mamchro, digits=3, max.width = 5,
 expected=FALSE, prop.r=TRUE, prop.c=TRUE,
@@ -234,7 +280,7 @@ resid=FALSE, sresid=FALSE, asresid=FALSE,
 missing.include=FALSE, format=c("SAS","SPSS"))
 ```
 
-représentation sous un diagramme en barre 
+représentation sous un diagramme en barre
 
 ```{r}
 p<-ggplot(lac) +
@@ -254,22 +300,43 @@ resid=FALSE, sresid=FALSE, asresid=FALSE,
 missing.include=FALSE, format=c("SAS","SPSS"))
 ```
 
-p-value < 0,05, il existe donc un lien entre la présence d'une mammite chronique et la mise à la reproduction....
+p-value \< 0,05, il existe donc un lien entre la présence d'une mammite chronique et la mise à la reproduction....
 
-## régression logistique pour identifier la présence ou non de mammite comme facteur de risque à la non mise à la reproduction 
+## régression logistique pour identifier la présence ou non de mammite comme facteur de risque à la non mise à la reproduction
 
 ```{r}
 library(lme4)
 ```
+
 ```{r}
 myreg <- glm(as.numeric(miserepro)~mamchro, family= binomial, data = lac)
 summary(myreg)
 ```
 
-Ce résultat nous indique que le choix de la mise à la reproduction est influencé par la présence ou non de mammite lors des 91 premiers jours de lactation. Or pour ce premier modèle j'ai totalement ignoré les autres variables qui peuvent influencer ce résultat comme : 
-- la parité 
-- la production laitière
-- la présence d'une autre affection concomitante 
+```{r simple-log-reg}
+myreg <- glm(miserepro ~ mamchro, family= binomial(link = "logit"), data = lac)
+summary(myreg)
+```
+
+On peut regarder l'odds-ratio de la mise à la repro en fonction du statut.
+
+```{r log-reg-OR-1}
+## coefficients
+coef(myreg)
+
+## OR
+exp(coef(myreg)[1])
+```
+Version mixed de ce modèle avec effet aléatoire animal. Pas forcément pertinent. Idéalement, il faudrait mettre l'élevage en effet aléatoire. La colonne correspondante devra être ajoutée.
+
+```{r mixed-log-reg}
+myreg_mixed <- glmer(miserepro ~ mamchro + (1 | anim_id) , 
+                    family= binomial(link = "logit"), data = lac)
+summary(myreg_mixed)
+```
 
 
 
+
+
+Ce résultat nous indique que le choix de la mise à la reproduction est influencé par la présence ou non de mammite lors des 91 premiers jours de lactation. Or pour ce premier modèle j'ai totalement ignoré les autres variables qui peuvent influencer ce résultat comme : - la parité - la production laitière - la présence d'une autre affection concomitante
