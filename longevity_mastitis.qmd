@@ -208,5 +208,50 @@ p+theme_void()
 ```
  On remarque que sur les vaches qui présentent une mammite chronique précoce, 74% des vaches sont quand même mises à la reproduction. 
  
+ on veut savoir s'il y a un lien entre la présence ou non de mammite et la mise à la reproduction (attention on ne met pas en évidence une relation de cause à effet)
+ 
+```{r}
+str(lac)
+```
  
  
+```{r}
+library(questionr)
+library(gmodels)
+
+tab1 <- table(lac$miserepro, lac$mamchro)
+tab1
+```
+ 
+```{r}
+lprop(tab1)
+```
+```{r}
+CrossTable(lac$miserepro, lac$mamchro, digits=3, max.width = 5,
+expected=FALSE, prop.r=TRUE, prop.c=TRUE,
+prop.t=TRUE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
+resid=FALSE, sresid=FALSE, asresid=FALSE,
+missing.include=FALSE, format=c("SAS","SPSS"))
+```
+
+représentation sous un diagramme en barre 
+
+```{r}
+p<-ggplot(lac) +
+aes(x = mamchro, fill = miserepro) +
+geom_bar(position="dodge") +
+xlab("présence de mammite chronique ou non") +
+ylab("Effectifs") +
+labs(fill = "mise à la reproduction")
+p+theme_bw()
+```
+
+```{r}
+CrossTable(lac$mamchro,lac$miserepro, digits=3, max.width = 5,
+prop.t=FALSE, prop.chisq=FALSE, chisq = TRUE, fisher=FALSE, mcnemar=FALSE,
+expected=TRUE, prop.r=FALSE, prop.c=FALSE,
+resid=FALSE, sresid=FALSE, asresid=FALSE,
+missing.include=FALSE, format=c("SAS","SPSS"))
+```
+
+p-value < 0,05, il existe donc un lien entre la présence d'une mammite chronique et la mise à la reproduction....
