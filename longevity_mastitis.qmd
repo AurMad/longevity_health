@@ -129,8 +129,10 @@ lac <- rec |>
             parity = unique(parity),
             n_ctrl = length(unique(ctrl_date)),
             n_scc_high = length(scc[scc > 200]),
-            n_scc_early = length(dim[dim < 91]),
-            n_scc_early_high = length(scc[scc > 200 & dim < 91])) |> 
+            n_scc_early = length(scc[dim < 91]),
+            n_scc_early_high = length(scc[scc > 200 & dim < 91]),
+            #rajout de la moyenne de la PL les 91 premiers jours de lactation
+            early_plmoy = mean(milk[dim < 91])) |> 
   ungroup(anim_id)
 
 lac$lac_id <- 1:nrow(lac)
@@ -369,20 +371,37 @@ Il faudrait peut-être calculer la moyenne de la PL sur l'ensemble des contrôle
 ```{r}
 rec_plmoy_parite <- rec |> 
   group_by(anim_id, parity) |> 
-  summarize(plmoy = mean(milk, na.rm = TRUE))
+  summarize(plmoy = mean(milk, na.rm = TRUE),
+            herd_id = unique(herd_id))
 ```
 
 ```{r}
 lacpl <- inner_join(lac |> 
-                     select(anim_id, parity, miserepro, mamchro), 
+                     select(anim_id, parity, miserepro, mamchro, early_plmoy), 
                    rec_plmoy_parite |> 
-                     select(anim_id, parity, plmoy),
-                   join_by(anim_id, parity))
+                     select(anim_id, herd_id, parity, plmoy),
+                   join_by(anim_id, parity)) |> 
+  select(herd_id, anim_id, parity, early_plmoy, plmoy, mamchro, miserepro)
+  
 ```
 
 ```{r}
-myreg3 <- glm(miserepro ~ mamchro + parity + plmoy, family= binomial(link = "logit"), data = lacpl)
+myreg3 <- glm(miserepro ~ mamchro +factor(parity) + plmoy, family= binomial(link = "logit"), data = lacpl)
 summary(myreg3)
 ```
 
+```{r}
+#nouvelle régression mais avec early_plmoy 
+myreg4 <- glm(miserepro ~ mamchro +factor(parity) + early_plmoy, family= binomial(link = "logit"), data = lacpl)
+summary(myreg4)
+```
+
+
+ajout de la variable aléatoire de troupeau
+
+```{r}
+myreg_mixed2 <- glmer(miserepro ~ mamchro + factor(parity) + early_plmoy + (1 | herd_id) , 
+                    family= binomial(link = "logit"), data = lacpl)
+summary(myreg_mixed2)
+```
 
