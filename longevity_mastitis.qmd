@@ -6,7 +6,6 @@ bibliography: references.bib
 ---
 
 ```{r setup}
-#| include: false
 library(tidyverse)
 library(ggdag)
 library(DairyHerdData)
@@ -366,5 +365,24 @@ Le coefficient semble logique, plus la parité augmente et moins la probabilité
 Il faudrait égalemement ajouter la production laitière (simplement la production en kg sans prendre en compte le TB et le TP)
 le problème c'est que la production laitière se trouve dans le data frame rec qui ne se présente pas de la même manière. 
 Il faudrait peut-être calculer la moyenne de la PL sur l'ensemble des contrôles fait avant 91j de lactation et se servir de la moyenne dans le calcul ? 
+
+```{r}
+rec_plmoy_parite <- rec |> 
+  group_by(anim_id, parity) |> 
+  summarize(plmoy = mean(milk, na.rm = TRUE))
+```
+
+```{r}
+lacpl <- inner_join(lac |> 
+                     select(anim_id, parity, miserepro, mamchro), 
+                   rec_plmoy_parite |> 
+                     select(anim_id, parity, plmoy),
+                   join_by(anim_id, parity))
+```
+
+```{r}
+myreg3 <- glm(miserepro ~ mamchro + parity + plmoy, family= binomial(link = "logit"), data = lacpl)
+summary(myreg3)
+```
 
 
