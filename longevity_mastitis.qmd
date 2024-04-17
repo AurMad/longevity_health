@@ -351,3 +351,20 @@ summary(myreg_mixed)
 
 
 Ce résultat nous indique que le choix de la mise à la reproduction est influencé par la présence ou non de mammite lors des 91 premiers jours de lactation. Or pour ce premier modèle j'ai totalement ignoré les autres variables qui peuvent influencer ce résultat comme : - la parité - la production laitière - la présence d'une autre affection concomitante
+
+
+rajout d'une nouvelle variable à ce modèle : prenons le rang de lactation 
+
+```{r}
+#rajout de la variable parité dans la régression logistique 
+myreg2 <- glm(miserepro ~ mamchro + parity, family= binomial(link = "logit"), data = lac)
+summary(myreg2)
+```
+
+Le coefficient semble logique, plus la parité augmente et moins la probabilité de mise à la repro est élevée. On voit également que la valeur est très significative 
+
+Il faudrait égalemement ajouter la production laitière (simplement la production en kg sans prendre en compte le TB et le TP)
+le problème c'est que la production laitière se trouve dans le data frame rec qui ne se présente pas de la même manière. 
+Il faudrait peut-être calculer la moyenne de la PL sur l'ensemble des contrôles fait avant 91j de lactation et se servir de la moyenne dans le calcul ? 
+
+
