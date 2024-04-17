@@ -12,6 +12,9 @@ library(ggdag)
 library(DairyHerdData)
 library(ggplot2)
 library(scales)
+library(questionr)
+library(gmodels)
+library(lme4)
 ```
 
 # Introduction
@@ -216,8 +219,10 @@ Lacmam <- lac |>
 @Joanna : je ne suis pas sûr que ce code fasse ce que tu veux qu'il fasse. Tu regardes la proportion de vaches mises à la repro quand mamchro = 1. Il me semble qu'il faudrait comparer mamchro = 0 et mamchro = 1. Voir mon code ci-dessous.
 Je n'aime pas trop les camemberts en tant que représentations graphiques. Préférer des diagrammes en barres.
 
+--> oui je vais essayer de modifier ça, effectivement il est plus pertinent de comparer mamchro = 1 et mamchro = 0 
+
 ```{r}
-library(ggplot2, scales)
+#| eval: false
 Tab<-as.data.frame(table(Lacmam$miserepro))
 colnames(Tab)<-c("miserepro","Effectif")
 Tab$Prop<-round(prop.table(table(Lacmam$miserepro)), 3)
@@ -235,15 +240,42 @@ p+theme_void()
 ```
 
 Je pense que tu veux le tableau suivant :
+--> il y a un problème avec ce tableau les valeurs de mise à la repro ne correspondent pas à celles du tableau lac
 
 ```{r}
+#comparaison de la mise à la reproduction selon la présence ou non d'une mammite chronique en début de lactation
 tab_repro_mam <- lac |> 
   select(miserepro, mamchro) |> 
   table()
-
-print(tab_repro_mam)
+  head(tab_repro_mam)
 ```
+je me suis permise d'en créer un nouveau pour refaire un essai : 
+
+
+```{r}
+tab_repro_mam_1 <- lac |> 
+  select(miserepro,mamchro) |> 
+  mutate(miserepro = as.character(miserepro), mamchro = as.character(mamchro))
+```
+```{r}
+str(tab_repro_mam_1)
+```
+
+
+```{r}
+p<-ggplot(tab_repro_mam_1) +
+aes(x = mamchro, fill = miserepro) +
+geom_bar(position="fill") +
+xlab("mise à la repro selon mammite chronique ou non") +
+ylab("Proportion") +
+labs(fill = "miserepro")
+p+theme_bw()
+```
+
+
 Ci-dessous, les proportions de vaches mises à la repro en fonction de la présence d'une mammite chronique. La relation est conforme à ce qui est attendu. Utilisation d'une fonction apply. Je pourrai t'expliquer comment ça fonctionne.
+
+--> je ne comprend pas ce que ce chunk est censé faire. Si j'ai bien compris la fonction apply() applique la même fonction a tout les élements d'une ligne ou d'une colonne. Mais pourquoi faire la proportion de vaches mises à la repro pour chaque colonne ? 
 
 ```{r}
 apply(tab_repro_mam, 2, function(x) round(x / sum(x), 3))
@@ -261,14 +293,9 @@ str(lac)
 ```
 
 ```{r}
-library(questionr)
-library(gmodels)
 
 tab1 <- table(lac$miserepro, lac$mamchro)
 tab1
-```
-
-```{r}
 lprop(tab1)
 ```
 
@@ -278,18 +305,6 @@ expected=FALSE, prop.r=TRUE, prop.c=TRUE,
 prop.t=TRUE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
 resid=FALSE, sresid=FALSE, asresid=FALSE,
 missing.include=FALSE, format=c("SAS","SPSS"))
-```
-
-représentation sous un diagramme en barre
-
-```{r}
-p<-ggplot(lac) +
-aes(x = mamchro, fill = miserepro) +
-geom_bar(position="dodge") +
-xlab("présence de mammite chronique ou non") +
-ylab("Effectifs") +
-labs(fill = "mise à la reproduction")
-p+theme_bw()
 ```
 
 ```{r}
@@ -303,10 +318,6 @@ missing.include=FALSE, format=c("SAS","SPSS"))
 p-value \< 0,05, il existe donc un lien entre la présence d'une mammite chronique et la mise à la reproduction....
 
 ## régression logistique pour identifier la présence ou non de mammite comme facteur de risque à la non mise à la reproduction
-
-```{r}
-library(lme4)
-```
 
 ```{r}
 myreg <- glm(as.numeric(miserepro)~mamchro, family= binomial, data = lac)
