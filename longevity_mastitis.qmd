@@ -46,7 +46,8 @@ $$
 \delta_1 = \frac{1}{n} \sum_{i=1}^n Y^{1}_i - Y^{0}_i
 $$ where $n$ is the total number of cows in the French dairy cow population, $Y^1_i$ and $Y^0_i$ are binary variables taking the value 1 for cows culled at or before the end of lactation and 0 otherwise in cows with ($Y^1_i$ ) and without ($Y^0_i$) clinical mastitis in early lactation respectively. Of course, in each cow, only one of the 2 outcomes can be observed. This estimand is a risk difference, but risk ratios or odds ratios could have been used as well.
 
-But maybe, the cows who got mastitis are different from the cows who did not, for reasons other than having experienced the disease, and therefore have a different probability of being culled. $Y^{A=a}_i|A=1$ denotes the outcome associated with having mastitis given that animal $i$ experienced mastitis. We could make the hypothesis that $Y^1_i|A=1 \neq Y^1_i|A=0$ and choose to focus our interest on cows who actually got mastitis. A theoretical estimand of interest in this situation could be: $$
+But maybe, the cows who got mastitis are different from the cows who did not, for reasons other than having experienced the disease, and therefore have a different probability of being culled. $Y^{A=a}_i|A=1$ denotes the outcome associated with having mastitis given that animal $i$ experienced mastitis. We could make the hypothesis that $Y^1_i|A=1 \neq Y^1_i|A=0$ and choose to focus our interest on cows who actually got mastitis. A theoretical estimand of interest in this situation could be: 
+$$
 \delta_2 = \frac{1}{n} \sum_{i=1}^n \left[ (Y^{1}_i|A=1) - (Y^{0}_i|A=1) \right]
 $$
 
@@ -206,6 +207,7 @@ tab_repro_mam <- lac |>
   table()
   head(tab_repro_mam)
 ```
+
 je me suis permise d'en créer un nouveau pour refaire un essai : 
 
 
@@ -232,6 +234,7 @@ Ci-dessous, les proportions de vaches mises à la repro en fonction de la prése
 
 ```{r}
 apply(tab_repro_mam, 2, function(x) round(x / sum(x), 5))
+
 ```
 
 
@@ -246,6 +249,7 @@ tab1 <- table(lac$miserepro, lac$early_mamchro)
 tab1
 lprop(tab1)
 ```
+
 
 ```{r}
 CrossTable(lac$miserepro, lac$early_mamchro, digits=3, max.width = 5,
@@ -385,6 +389,21 @@ on considère cette fois 3 types de mammites :
 -mammite chronique de début de lactation (2 ctrl scc > 200 000)
 -mammite chronique de fin de lactation (idem)
 -mammite aiguë (1 scc < 200 000 suivi d'un scc > 200 000 et a nouveau suivi d'un scc < 200 000)
+
+
+
+
+```{r}
+head(rec)
+
+
+rec <- rec |>
+  arrange(anim_id, ctrl_date) |> 
+  group_by(anim_id, parity) |> 
+  mutate(scc_prev = lag(scc),
+         scc_nxt = lead(scc))
+```
+
 
 ```{r}
 str(rec)
