@@ -131,6 +131,7 @@ lac <- rec |>
             n_scc_high = length(scc[scc > 200]),
             n_scc_early = length(scc[dim < 91]),
             n_scc_early_high = length(scc[scc > 200 & dim < 91]),
+            n_scc_late_high = length(scc[scc > 200 & dim > 91]),
             #rajout de la moyenne de la PL les 91 premiers jours de lactation
             early_plmoy = mean(milk[dim < 91])) |> 
   ungroup(anim_id)
@@ -185,12 +186,12 @@ Etablissons le lien entre mammites et mise à la reproduction (décision prise p
 
 
 -   Une variable `miserepro` est créée. Elle vaut 1 si le nombre d'IA est supérieur à 0 ce qui signe une décision de l'élveur de mettre la vache à la reproduction.
-- une variable `mamchro`  est créée. Elle vaut 1 pour les lactations qui ont plus de 2 CCS supérieures à 200 000 cellules sur les 3 premiers contrôles du début de lactation.
+- une variable `early_mamchro`  est créée. Elle vaut 1 pour les lactations qui ont plus de 2 CCS supérieures à 200 000 cellules sur les 3 premiers contrôles du début de lactation.
 
-```{r miserepro-mamchro-definition}
+```{r miserepro-early_mamchro-definition}
 lac <- lac |> 
   mutate(miserepro = ifelse(ai_N == 0 | is.na(ai_N), 0, 1),
-         mamchro = ifelse(n_scc_early_high >= 2, 1, 0))
+         early_mamchro = ifelse(n_scc_early_high >= 2, 1, 0))
 ```
 
 ## création d'un nouveau tableau avec que les animaux atteints de mammites chronique dans les premiers 91 jours de lactation
@@ -201,7 +202,7 @@ Je pense que tu veux le tableau suivant :
 ```{r}
 #comparaison de la mise à la reproduction selon la présence ou non d'une mammite chronique en début de lactation
 tab_repro_mam <- lac |> 
-  select(miserepro, mamchro) |> 
+  select(miserepro, early_mamchro) |> 
   table()
   head(tab_repro_mam)
 ```
@@ -210,13 +211,13 @@ je me suis permise d'en créer un nouveau pour refaire un essai :
 
 ```{r}
 tab_repro_mam_1 <- lac |> 
-  select(miserepro,mamchro) |> 
-  mutate(miserepro = as.character(miserepro), mamchro = as.character(mamchro))
+  select(miserepro,early_mamchro) |> 
+  mutate(miserepro = as.factor(miserepro), early_mamchro = as.factor(early_mamchro))
 ```
 
 ```{r}
 p<-ggplot(tab_repro_mam_1) +
-aes(x = mamchro, fill = miserepro) +
+aes(x = early_mamchro, fill = miserepro) +
 geom_bar(position="fill") +
 xlab("mise à la repro selon mammite chronique ou non") +
 ylab("Proportion") +
@@ -230,7 +231,7 @@ Ci-dessous, les proportions de vaches mises à la repro en fonction de la prése
 --> je ne comprend pas ce que ce chunk est censé faire. Si j'ai bien compris la fonction apply() applique la même fonction a tout les élements d'une ligne ou d'une colonne. Mais pourquoi faire la proportion de vaches mises à la repro pour chaque colonne ? 
 
 ```{r}
-apply(tab_repro_mam, 2, function(x) round(x / sum(x), 3))
+apply(tab_repro_mam, 2, function(x) round(x / sum(x), 5))
 ```
 
 
@@ -241,13 +242,13 @@ on veut savoir s'il y a un lien entre la présence ou non de mammite et la mise 
 
 ```{r}
 #
-tab1 <- table(lac$miserepro, lac$mamchro)
+tab1 <- table(lac$miserepro, lac$early_mamchro)
 tab1
 lprop(tab1)
 ```
 
 ```{r}
-CrossTable(lac$miserepro, lac$mamchro, digits=3, max.width = 5,
+CrossTable(lac$miserepro, lac$early_mamchro, digits=3, max.width = 5,
 expected=FALSE, prop.r=TRUE, prop.c=TRUE,
 prop.t=TRUE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
 resid=FALSE, sresid=FALSE, asresid=FALSE,
@@ -255,7 +256,7 @@ missing.include=FALSE, format=c("SAS","SPSS"))
 ```
 
 ```{r}
-CrossTable(lac$mamchro,lac$miserepro, digits=3, max.width = 5,
+CrossTable(lac$early_mamchro,lac$miserepro, digits=3, max.width = 5,
 prop.t=FALSE, prop.chisq=FALSE, chisq = TRUE, fisher=FALSE, mcnemar=FALSE,
 expected=TRUE, prop.r=FALSE, prop.c=FALSE,
 resid=FALSE, sresid=FALSE, asresid=FALSE,
@@ -268,12 +269,12 @@ p-value \< 0,05, il existe donc un lien entre la présence d'une mammite chroniq
 
 ```{r}
 # première tentative de régression logistique
-myreg <- glm(as.numeric(miserepro)~mamchro, family= binomial, data = lac)
+myreg <- glm(as.numeric(miserepro)~ early_mamchro, family= binomial, data = lac)
 summary(myreg)
 ```
 
 ```{r simple-log-reg}
-myreg <- glm(miserepro ~ mamchro, family= binomial(link = "logit"), data = lac)
+myreg <- glm(miserepro ~ early_mamchro, family= binomial(link = "logit"), data = lac)
 summary(myreg)
 ```
 
@@ -289,7 +290,7 @@ exp(coef(myreg)[1])
 Version mixed de ce modèle avec effet aléatoire animal. Pas forcément pertinent. Idéalement, il faudrait mettre l'élevage en effet aléatoire. La colonne correspondante devra être ajoutée.
 
 ```{r mixed-log-reg}
-myreg_mixed <- glmer(miserepro ~ mamchro + (1 | anim_id) , 
+myreg_mixed <- glmer(miserepro ~ early_mamchro + (1 | anim_id) , 
                     family= binomial(link = "logit"), data = lac)
 summary(myreg_mixed)
 ```
@@ -305,7 +306,7 @@ rajout d'une nouvelle variable à ce modèle : prenons le rang de lactation
 
 ```{r}
 #rajout de la variable parité dans la régression logistique 
-myreg2 <- glm(miserepro ~ mamchro + parity, family= binomial(link = "logit"), data = lac)
+myreg2 <- glm(miserepro ~ early_mamchro + parity, family= binomial(link = "logit"), data = lac)
 summary(myreg2)
 ```
 
@@ -325,22 +326,22 @@ rec_plmoy_parite <- rec |>
 
 ```{r}
 lacpl <- inner_join(lac |> 
-                     select(anim_id, parity, miserepro, mamchro, early_plmoy), 
+                     select(anim_id, parity, miserepro, early_mamchro, early_plmoy), 
                    rec_plmoy_parite |> 
                      select(anim_id, herd_id, parity, plmoy),
                    join_by(anim_id, parity)) |> 
-  select(herd_id, anim_id, parity, early_plmoy, plmoy, mamchro, miserepro)
+  select(herd_id, anim_id, parity, early_plmoy, plmoy, early_mamchro, miserepro)
   
 ```
 
 ```{r}
-myreg3 <- glm(miserepro ~ mamchro +factor(parity) + plmoy, family= binomial(link = "logit"), data = lacpl)
+myreg3 <- glm(miserepro ~ early_mamchro +factor(parity) + plmoy, family= binomial(link = "logit"), data = lacpl)
 summary(myreg3)
 ```
 
 ```{r}
 #nouvelle régression mais avec early_plmoy 
-myreg4 <- glm(miserepro ~ mamchro +factor(parity) + early_plmoy, family= binomial(link = "logit"), data = lacpl)
+myreg4 <- glm(miserepro ~ early_mamchro +factor(parity) + early_plmoy, family= binomial(link = "logit"), data = lacpl)
 summary(myreg4)
 ```
 
@@ -348,7 +349,7 @@ summary(myreg4)
 ajout de la variable aléatoire de troupeau
 
 ```{r}
-myreg_mixed2 <- glmer(miserepro ~ mamchro + factor(parity) + early_plmoy + (1 | herd_id), 
+myreg_mixed2 <- glmer(miserepro ~ early_mamchro + factor(parity) + early_plmoy + (1 | herd_id), 
                     family= binomial(link = "logit"), data = lacpl)
 summary(myreg_mixed2)
 ```
@@ -371,8 +372,57 @@ lacpl <- lacpl |>
 ```
 ```{r}
 #Régression logistique finale 2 pour la décision de mise à la repro
-myreg_mixed3 <- glmer(miserepro ~ mamchro + factor(C9parite) + early_plmoy + (1 | herd_id), 
+myreg_mixed3 <- glmer(miserepro ~ early_mamchro + factor(C9parite) + early_plmoy + (1 | herd_id), 
                     family= binomial(link = "logit"), data = lacpl)
 summary(myreg_mixed3)
+```
+
+# Evaluation de l'impact des mammites sur la mort de l'animal 
+
+Dans le tableau "mvt" on considère M = mort et E = équarissage qui est équivalent à mort
+
+on considère cette fois 3 types de mammites : 
+-mammite chronique de début de lactation (2 ctrl scc > 200 000)
+-mammite chronique de fin de lactation (idem)
+-mammite aiguë (1 scc < 200 000 suivi d'un scc > 200 000 et a nouveau suivi d'un scc < 200 000)
+
+```{r}
+str(rec)
+```
+
+
+```{r}
+rec <- rec |> 
+  group_by(anim_id, parity) 
+```
+
+```{r}
+rec$scc_aig = rep(NA, nrow(rec))
+```
+
+
+```{r}
+rec <- rec[order(rec$anim_id, rec$parity),]
+```
+
+
+```{r}
+for(i in 2 : (nrow(rec)-1)){
+    rec$scc_aig[i] = ifelse(rec$scc[i] >= 200
+           & rec$scc[i-1] < 200
+           & rec$scc[i+1] < 200
+           & rec$anim_id[i-1] == rec$anim_id[i]
+           & rec$anim_id[i] == rec$anim_id[i+1]
+           & rec$parity[i-1] == rec$parity[i]
+           & rec$parity[i] == rec$parity[i+1],
+           1,
+           0)
+    }
+```
+
+
+```{r}
+
+  
 ```
 
