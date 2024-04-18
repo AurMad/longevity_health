@@ -183,18 +183,6 @@ Etablissons le lien entre mammites et mise à la reproduction (décision prise p
 
 ## création d'une colonne miserepro qui donne la valeur 1 si la vache à été inséminée et qu'elle présente un n_scc_early_high \>= 2
 
-```{r}
-#| eval: false
-lac[,10] <- replace(lac[,10], is.na(lac[,10]), 0)
-lac <- lac |> 
-  mutate(miserepro = case_when(ai_N >= 1 ~ "1",
-                               ai_N < 1 ~ "0")) |>
-  mutate(mamchro = ifelse(n_scc_early_high >= 2, 1, 0)) 
-
-lac[,14] <- replace(lac[,14], is.na(lac[,14]), "0")
-```
-
-Le code suivant doit faire la même chose que celui du chunk précédent.
 
 -   Une variable `miserepro` est créée. Elle vaut 1 si le nombre d'IA est supérieur à 0 ce qui signe une décision de l'élveur de mettre la vache à la reproduction.
 - une variable `mamchro`  est créée. Elle vaut 1 pour les lactations qui ont plus de 2 CCS supérieures à 200 000 cellules sur les 3 premiers contrôles du début de lactation.
@@ -206,39 +194,6 @@ lac <- lac |>
 ```
 
 ## création d'un nouveau tableau avec que les animaux atteints de mammites chronique dans les premiers 91 jours de lactation
-
-- Je te conseille de faire cette opération directement dans le code ci-dessous, sans créer de jeu de données intermédiaire. Encore une fois, c'est plus lisbible.
-
-```{r}
-#| eval: false
-Lacmam <- lac |> 
-  filter(n_scc_early_high >= 2)
-```
-
-## création d'un camembert pour illustrer la part de mise à la repro parmis les vaches atteintes de mammites chroniques
-
-@Joanna : je ne suis pas sûr que ce code fasse ce que tu veux qu'il fasse. Tu regardes la proportion de vaches mises à la repro quand mamchro = 1. Il me semble qu'il faudrait comparer mamchro = 0 et mamchro = 1. Voir mon code ci-dessous.
-Je n'aime pas trop les camemberts en tant que représentations graphiques. Préférer des diagrammes en barres.
-
---> oui je vais essayer de modifier ça, effectivement il est plus pertinent de comparer mamchro = 1 et mamchro = 0 
-
-```{r}
-#| eval: false
-Tab<-as.data.frame(table(Lacmam$miserepro))
-colnames(Tab)<-c("miserepro","Effectif")
-Tab$Prop<-round(prop.table(table(Lacmam$miserepro)), 3)
-
-p<-ggplot(data = Tab, mapping = aes(x = "", y = Prop, fill = miserepro)) +
-geom_bar(width=1, stat = "identity", color="white") +
-coord_polar(theta = "y", start=0) +
-scale_fill_brewer(type = "seq", palette= "Pastel1")+
-xlab("")+
-ylab("")+
-# pour afficher les % de chaque modalité à l'intérieur du camembert
-geom_text(aes(label = paste(Prop*100, "%")), position = position_stack(vjust = 0.5))
-# theme_void()= suppression des axes
-p+theme_void()
-```
 
 Je pense que tu veux le tableau suivant :
 --> il y a un problème avec ce tableau les valeurs de mise à la repro ne correspondent pas à celles du tableau lac
@@ -258,10 +213,6 @@ tab_repro_mam_1 <- lac |>
   select(miserepro,mamchro) |> 
   mutate(miserepro = as.character(miserepro), mamchro = as.character(mamchro))
 ```
-```{r}
-str(tab_repro_mam_1)
-```
-
 
 ```{r}
 p<-ggplot(tab_repro_mam_1) +
@@ -283,18 +234,13 @@ apply(tab_repro_mam, 2, function(x) round(x / sum(x), 3))
 ```
 
 
-
-
 On remarque que sur les vaches qui présentent une mammite chronique précoce, 74% des vaches sont quand même mises à la reproduction.
 
 on veut savoir s'il y a un lien entre la présence ou non de mammite et la mise à la reproduction (attention on ne met pas en évidence une relation de cause à effet)
 
-```{r}
-str(lac)
-```
 
 ```{r}
-
+#
 tab1 <- table(lac$miserepro, lac$mamchro)
 tab1
 lprop(tab1)
@@ -321,6 +267,7 @@ p-value \< 0,05, il existe donc un lien entre la présence d'une mammite chroniq
 ## régression logistique pour identifier la présence ou non de mammite comme facteur de risque à la non mise à la reproduction
 
 ```{r}
+# première tentative de régression logistique
 myreg <- glm(as.numeric(miserepro)~mamchro, family= binomial, data = lac)
 summary(myreg)
 ```
@@ -369,6 +316,7 @@ le problème c'est que la production laitière se trouve dans le data frame rec 
 Il faudrait peut-être calculer la moyenne de la PL sur l'ensemble des contrôles fait avant 91j de lactation et se servir de la moyenne dans le calcul ? 
 
 ```{r}
+#Création d'un nouveau jeu de données qui donne la production laitière moyenne par lactation
 rec_plmoy_parite <- rec |> 
   group_by(anim_id, parity) |> 
   summarize(plmoy = mean(milk, na.rm = TRUE),
@@ -400,8 +348,31 @@ summary(myreg4)
 ajout de la variable aléatoire de troupeau
 
 ```{r}
-myreg_mixed2 <- glmer(miserepro ~ mamchro + factor(parity) + early_plmoy + (1 | herd_id) , 
+myreg_mixed2 <- glmer(miserepro ~ mamchro + factor(parity) + early_plmoy + (1 | herd_id), 
                     family= binomial(link = "logit"), data = lacpl)
 summary(myreg_mixed2)
+```
+
+Regroupement des parités selon des classes plus pertinentes : On voit que sur la régression linéaire, le résultat est significatif jusqu'a une parité de 10 on peut donc regrouper les classes de parité 9 et plus. 
+
+```{r}
+#Création d'une nouvelle variable parité en 9 classes
+lacpl <- lacpl |> 
+  mutate(C9parite = case_when(parity == 1 ~ "1",
+                            parity == 2 ~ "2",
+                            parity == 3 ~ "3",
+                            parity == 4 ~ "4",
+                            parity == 5 ~ "5",
+                            parity == 6 ~ "6",
+                            parity == 7 ~ "7",
+                            parity == 8 ~ "8",
+                            parity >= 9 ~ "9 et plus",
+                            TRUE~NA))
+```
+```{r}
+#Régression logistique finale 2 pour la décision de mise à la repro
+myreg_mixed3 <- glmer(miserepro ~ mamchro + factor(C9parite) + early_plmoy + (1 | herd_id), 
+                    family= binomial(link = "logit"), data = lacpl)
+summary(myreg_mixed3)
 ```
 
