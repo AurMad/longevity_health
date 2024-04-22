@@ -48,7 +48,6 @@ san <- read_excel(path_to_file) |>
     event_date = as.Date(event_date)
   )
 
-glimpse(san)
 ```
 
 Ce jeu de données contient :
@@ -358,6 +357,7 @@ lac <- rec |>
             dim,
             n_ctrl = length(unique(ctrl_date)),
             frpacl,
+            calv_date = dadela,
             n_scc_high = length(scc[scc > 200]),
             n_scc_early = length(scc[dim < 91]),
             n_scc_early_high = length(scc[scc > 200 & dim < 91]),
@@ -368,7 +368,7 @@ lac <- rec |>
 
 ```
 
-Estimation de la proportion de vaches a plus de 10 contrôles annuels 
+##Estimation de la proportion de vaches en fonction du nombre de contrôles  
 
 ```{r}
 effectif_ctrl <- lac |> 
@@ -378,12 +378,19 @@ glimpse(effectif_ctrl)
 
 
 ```
-tableau qui ne sélectionne que les animaux qui ont plus de 10 contrôles 
+tableau qui ne sélectionne que les animaux qui ont plus de 9 contrôles 
 
+HELP : j'aimerais faire un tableau simplifié avec les vaches qui ont eu plus de 9 controles et toutes les dates de vêlage après 2015 (car ici on remonte jusqu'en 1989...)
 ```{r}
-lac_corr = lac[lac$n_ctrl > 9,]
+lac_corr = (lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
 ```
 
+
+## ajout des données de reproduction
+
+```{r}
+calv_first <- min(lac_corr$calv_date)
+```
 
 
 
