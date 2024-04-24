@@ -178,7 +178,7 @@ rec_final <- left_join(test_days_sel |>
 Tu peux enregistrer le fichier final pour ne pas avoir à refaire tourner ce script à chaque fois. Ne pas inclure ces fichiers de données générés dans les commits.
 
 ```{r saving-final-milk-recording-data}
-write.csv2(rec_final, "generated_datasets/rec_final.csv")
+write.csv2(rec_final, here :: here  ("generated_datasets/rec_final.csv"))
 ```
 
 

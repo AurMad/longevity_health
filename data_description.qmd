@@ -116,10 +116,12 @@ san |>
 ```
 
 
-# Données Idele
+# Données Idele : 
+
 
 Les données transmises par Philippe contiennent 11 fichiers.
 
+On commence par appeler les données une a une et le tri se fera ensuite. 
 
 ## Format des données
 
@@ -171,7 +173,7 @@ glimpse(cnais)
 
 ```{r cnais-rang-velage}
 #| equal : false
-barplot(table(cnais$RV))
+#barplot(table(cnais$RV))
 ```
 
 
@@ -184,7 +186,7 @@ Les poids de naissance sont renseignés pour `r round(length(cnais$PONAIS[!is.na
 
 
 ```{r cnais-ditrib-poids-naiss}
-hist(cnais$PONAIS)
+#hist(cnais$PONAIS)
 ```
 
 ## Contrôles laitiers
@@ -198,11 +200,20 @@ rec <- read.csv2(path_to_file)
 
 colnames(rec) <- tolower(colnames(rec))
 
+#modification du nom des colonnes pour simplifier
 rec <- rec |> 
-  rename(parity = nulact,
+  rename(anim_id = anim,
+         parity = nulact,
          ctrl_date = dapaul,
-         dure_lac_ = dulact,
-         scc = colelc)
+         dure_lac = dulact,
+         scc = colelc,
+         milk = lai24h,
+         prot = tplaco,
+         fat = tblaco)
+
+#conversion de la PL en kg 
+rec <- rec |> 
+  mutate(milk = milk/10)
 
 glimpse(rec)
 ```
@@ -227,32 +238,20 @@ prd <- read.csv2(path_to_file)
 
 colnames(prd) <- tolower(colnames(prd))
 
+#modification du nom des colonnes pour simplifier
 prd <- prd |> 
-  rename(parity = nulact)
+  rename(parity = nulact,
+         anim_id = anim,
+         calv_date = dadela,
+         total_milk  = latolad,
+         total_MG = mgtolad,
+         total_MP = mptolad,
+         total_tb = tbtolad,
+         total_tp = tptolad)
+         
 
 glimpse(prd)
 ```
-
-
-
-
-```{r}
-rec <- inner_join(rec,
-                  prd |> 
-                    select(anim, parity, dadela),
-                  join_by(anim, parity))
- 
-```
-
-```{r}
-rec <- rec |> 
-  mutate(dadela = as.Date(dadela), ctrl_date = as.Date(ctrl_date))
-
-
-rec <- rec |> 
-  mutate(dim = as.integer(ctrl_date - dadela))
-```
-
 
 ## Inséminations artificielles
 
@@ -262,6 +261,15 @@ path_to_file <- paste0(path_to_data, "extra_femia_20240415.csv")
 ia <- read.csv(path_to_file)
 
 colnames(ia) <- tolower(colnames(ia))
+
+ia <- ia |> 
+  rename(anim_id = anim,
+         date_ia = dainar,
+         prev_calv = dafigep,
+         nxt_calv = dafiges,
+         num_ia = rangia,
+         prev_parity = ravelap,
+         nxt_parity = ravelas)
 
 glimpse(ia)
 ```
@@ -346,69 +354,76 @@ mvt <- read.csv2(path_to_file)
 
 colnames(mvt) <- tolower(colnames(mvt))
 
+mvt <- mvt |> 
+  rename(anim_id = anim)
+
 glimpse(mvt)
 ```
 
-# création d'un tableau de troupeaux
 
-## création d'un premier tableau qui regroupe touts les mouvements avec leur dates
+# Ajout du numéro de cheptel a chaque vache dans les données du contrôle laitier 
 
-```{r}
-mvt2 <- inner_join(mvt |> 
-                     select(anim, num_exp_nais, daench, num_exp_det, dasort),
-                   gna |> 
-                     select(anim, datenai, nuchnac),
-                   join_by(anim))
-```
-
-le tableau mvt2 est plus petit que mvt, on a une perte d'informations, pourquoi ? 
-
+fait dans "rec_selection.qmd", il suffit de charger le fichier de données généré par le code. 
 
 ```{r}
-mvt_corr = mvt2[mvt2$num_exp_nais == mvt2$num_exp_det,]
+
+rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
+
+rec_final <- rec_final |> 
+  rename(ctrl_date = rec_date)
+
+rec_final <- rec_final |> 
+  mutate(ctrl_date = as.Date(ctrl_date))
 ```
 
- Pour l'instant je vais juste sélectionner les animaux qui n'ont jamais changé de cheptel ca va être plus simple pour commencer 
+
+
+# modifications et tri des tableaux de données 
+
+Rajout des dates de vêlage au tableau rec_final afin de calculer le stade de lactation "dim"
+
+```{r}
+rec_final <- inner_join(rec_final,
+                  prd |> 
+                    select(anim_id, parity, calv_date),
+                  join_by(anim_id, parity))
  
-
-j'aimerais pouvoir créer un tableau "herd" avec pour chaque troupeau, par année, le nb de lactations, le nombre de vêlage, le nb d'ia, et le nb de contrôles par lactation...
+```
 
 ```{r}
-## création d'un tableau "herd" qui comptabilise les troupeau et leur effectif par année....en partant de disons 2015 à 2024 ?
-herd <- mvt_corr |> 
-  group_by(nuchnac) |> 
-  summarize(year = NA,
-            n_anx = length(unique(anim))
-            )
+rec_final <- rec_final |> 
+  mutate(calv_date = as.Date(calv_date), ctrl_date = as.Date(ctrl_date))
+
+
+rec_final <- rec_final |> 
+  mutate(dim = as.integer(ctrl_date - calv_date))
 ```
-d'après ce tableau, il y aurait 4299 élevages...impossible car ls_elv = 308....
 
 
 # Création d'une liste de lactations 
 
+Ce tableau permet de regrouper toutes les infos de cellules et de production laitière par lactation 
+
 ```{r - lac-list of lactations}
-lac <- rec |> 
-  group_by(anim, dadela) |> 
+lac <- rec_final |> 
+  group_by(herd_id, anim_id,calv_date) |> 
   summarize(parity = unique(parity),
-            lac_id = NA,
             n_ctrl = length(unique(ctrl_date)),
             n_scc_high = length(scc[scc > 200]),
             n_scc_early = length(scc[dim < 91]),
             n_scc_early_high = length(scc[scc > 200 & dim < 91]),
             n_scc_late_high = length(scc[scc > 200 & dim > 91]),
-            early_pl = mean((lai24h[dim < 91]))) 
+            early_milk = mean((milk[dim < 91]))) 
   
 
 
 ```
-```{r}
-lac <- lac |> 
-  rename(calv_date = dadela)
-```
+
+Le but est d'utiliser lac pour travailler les régressions logistiques 
 
 ```{r}
 lac <- lac |> 
-  group_by(anim) |> 
+  group_by(anim_id) |> 
   mutate(calv_nxt = lead(calv_date))
 ```
 
@@ -422,64 +437,65 @@ glimpse(effectif_ctrl)
 
 
 ```
-tableau qui ne sélectionne que les animaux qui ont plus de 9 contrôles 
 
-HELP : j'aimerais faire un tableau simplifié avec les vaches qui ont eu plus de 9 controles et toutes les dates de vêlage après 2015 (car ici on remonte jusqu'en 1989...).
+tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrôles ainsi que les animaux qui ont vêler après le 1 janvier 2015. 
+
 
 ```{r}
 lac_corr = lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
 
 ```
 
+## ajout des données de troupeau 
+
+
 ```{r}
 lac_corr$lac_id <- 1:nrow(lac_corr)
 ```
-
-
 
 ## ajout des données de reproduction
 
 ```{r}
 ia <- ia |> 
-  rename(ai_date = dainar, 
-         prev_calv = dafigep, 
-         next_calv = dafiges) |> 
-  mutate(ai_date = as.Date(ai_date, "%d/%m/%Y"), 
+  mutate(date_ia = as.Date(date_ia, "%d/%m/%Y"), 
          prev_calv = as.Date(prev_calv, "%d/%m/%Y"), 
-         next_calv = as.Date(next_calv, "%d/%m/%Y"))
+         nxt_calv = as.Date(nxt_calv, "%d/%m/%Y"))
 ```
 
 
 ```{r séléction des dates d'ia supérieurs au premier vêlage du tableau la_corr}
-calv_first <- min(lac_corr$calv_date)
+calv_first <- min(lac_corr$calv_date, na.rm  = TRUE)
+calv_first <- as.Date(calv_first)
 
 ia <- ia |> 
-  filter(ai_date > calv_first)
+  filter(date_ia > calv_first)
 ```
+
 
 ```{r}
 ## sélection des dates d'ia comprises entre le vêlage précédent et le vêlage suivant, pour un même animal et pour une même lactation il y a plusieurs dates d'ia car elle a été inséminée plusieurs fois. 
 ai1 <- left_join(lac_corr |> 
-                   select(anim, lac_id, calv_date, calv_nxt), 
+                   select(anim_id, lac_id, calv_date, calv_nxt), 
                  ia |> 
-                   select(anim, ai_date),
-                 join_by(anim)) |> 
-           filter(ai_date > calv_date & (ai_date < calv_nxt | is.na(calv_nxt))) |> 
-  select(anim, lac_id, calv_date, calv_nxt, ai_date)
+                   select(anim_id, date_ia),
+                 join_by(anim_id)) |> 
+           filter(date_ia > calv_date & (date_ia < calv_nxt | is.na(calv_nxt))) |> 
+  select(anim_id, lac_id, calv_date, calv_nxt, date_ia)
 ```
-
-Je ne sais pas pourquoi il m'a supprimé certaines lactation, notamment lac_id 1 : le précedent vêlage date de 2014 donc il n'a pas été sélectionné par lac_corr mais donc cela voudrait dire qu'il n'a pas été réinséminé et donc plus de données dans ai ?...vérifié dans ai et rec, effectivement le dernier vêlage date de 2016-03-13
+Les lignes qui se rajoutent correspondent aux animaux qui ont plusieurs dates d'ia pour une même lactation
 
 
 ```{r}
 ai_lac <- ai1 |> 
-  arrange(lac_id, ai_date) |> 
+  arrange(lac_id, date_ia) |> 
   group_by(lac_id) |> 
-  summarise(ai_N = length(unique(ai_date)),
-            ai_first = min(ai_date),
-            ai_last = max(ai_date),
-            ai_calv_days = as.integer(unique(calv_nxt) - max(ai_date)))
+  summarise(ai_N = length(unique(date_ia)),
+            ai_first = min(date_ia),
+            ai_last = max(date_ia),
+            ai_calv_days = as.integer(unique(calv_nxt) - max(date_ia)))
 ```
+
+
 
 ```{r}
 lac_corr <- left_join(lac_corr, ai_lac)
@@ -494,5 +510,7 @@ lac_corr <- lac_corr |>
 ```
 
 
-Il me parait difficile de continuer car tant que je n'aurais pas réussit à associer pour chaque vache et chaque lactation, un numéro de cheptel il ne sert à rien de se lancer dans des tentatives de régressions linéaires....
+
+
+
 
