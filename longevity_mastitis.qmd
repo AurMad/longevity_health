@@ -401,7 +401,11 @@ rec <- rec |>
   arrange(anim_id, ctrl_date) |> 
   group_by(anim_id, parity) |> 
   mutate(scc_prev = lag(scc),
-         scc_nxt = lead(scc),
+```
+
+
+```{r}
+scc_nxt = lead(scc),
          scc_aig = ifelse(scc >= 200 & scc_prev < 200 & scc_nxt < 200, 1, 0))
 ```
 

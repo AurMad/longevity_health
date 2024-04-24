@@ -348,6 +348,7 @@ colnames(mvt) <- tolower(colnames(mvt))
 
 glimpse(mvt)
 ```
+
 # création d'un tableau de troupeaux
 
 ## création d'un premier tableau qui regroupe touts les mouvements avec leur dates
