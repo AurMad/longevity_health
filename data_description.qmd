@@ -510,6 +510,13 @@ lac_corr <- lac_corr |>
 ```
 
 
+# Régressions logistiques 
+
+## impact des mammites sur la décision de mise à la reproduction
+
+```{r}
+
+```
 
 
 
