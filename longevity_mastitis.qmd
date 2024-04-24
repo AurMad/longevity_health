@@ -427,6 +427,7 @@ rec <- rec[order(rec$anim_id, rec$parity),]
 
 
 ```{r}
+#| eval : false
 for(i in 2 : (nrow(rec)-1)){
     rec$scc_aig[i] = ifelse(scc >= 200
            & rec$scc[i-1] < 200
