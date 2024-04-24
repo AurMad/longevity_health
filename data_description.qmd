@@ -366,14 +366,30 @@ glimpse(mvt)
 fait dans "rec_selection.qmd", il suffit de charger le fichier de données généré par le code. 
 
 ```{r}
-
-rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
+rec_final <- read.csv2("generated_datasets/rec_final.csv")
+# rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
 
 rec_final <- rec_final |> 
   rename(ctrl_date = rec_date)
 
 rec_final <- rec_final |> 
   mutate(ctrl_date = as.Date(ctrl_date))
+```
+
+
+Génération d'une liste d'élevages uniques.
+
+```{r}
+herd_list <- unique(rec_final$herd_id)
+```
+
+On sélectionne un échantillon de 10 élevages au hasard.
+
+```{r}
+set.seed(42)
+herd_random_sample <- sample(herd_list, 10, replace = FALSE)
+rec_final <- rec_final |> 
+  filter(herd_id %in% herd_random_sample)
 ```
 
 
