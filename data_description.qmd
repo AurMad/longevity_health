@@ -427,6 +427,7 @@ lac <- rec_final |>
   group_by(herd_id, anim_id,calv_date) |> 
   summarize(parity = unique(parity),
             lac_id = NA,
+            n_prim = NA,
             n_ctrl = length(unique(ctrl_date)),
             n_scc_high = length(scc[scc > 200]),
             n_scc_early = length(scc[dim < 91]),
@@ -562,5 +563,15 @@ nb_prim <- prim |>
   summarize(n_prim = length(date_ia)) |> 
   arrange(herd_id)
 ```
+
+# Ajout du nombre de génisses autour des périodes d'insémination par lactation
+
+```{r}
+lac_corr1 <- left_join(lac_corr,
+                       nb_prim,
+                       join_by(herd_id, per_ins == date_ia))
+```
+
+
 
 
