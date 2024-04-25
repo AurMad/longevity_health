@@ -412,6 +412,9 @@ rec_final <- rec_final |>
 
 rec_final <- rec_final |> 
   mutate(dim = as.integer(ctrl_date - calv_date))
+
+rec_final <- rec_final |> 
+  mutate(herd_id = as.character(herd_id))
 ```
 
 
@@ -457,6 +460,13 @@ tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrô
 ```{r création d'un sous-groupe de lac}
 lac_corr = lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
 
+```
+
+Création d'une variable semblble à la période d'insémination correspondant à 90 jours après la date de vêlage
+
+```{r création de la variable "période insémination"}
+lac_corr <- lac_corr |> 
+  mutate(per_ins = calv_date + 90)
 ```
 
 ## ajout des données de reproduction
@@ -518,6 +528,39 @@ lac_corr <- lac_corr |>
 
 # Recherche des génisses par troupeau 
 
+## création d'un premier tableau qui regroupe toutes les primipares 
 
+```{r tableau prim}
+prim <- ia |> 
+  group_by(anim_id) |> 
+  filter(prev_parity == 0 & iafok == 1) |> 
+  select(anim_id, date_ia, chepia, nxt_calv, prev_parity, iafok)
+
+prim <- prim |> 
+  rename(herd_id = chepia)
+```
+
+
+(Ajout d'une colonne pour les mois et l'année) --> pas utilisé pour l'instant  
+
+```{r}
+#prim <- prim |> 
+ # mutate(m_y_génisse = format(date_ia, format = "%Y/%m"))
+```
+
+
+
+Attention dans le jeu de données "ia", une vache peut passer de la parité 0 à la parité 3 => il ne faut pas se fier à "nxt_parity". 
+
+Maintenant il faut calculer le nombre de primipares mises à la repro, présentes dans le troupeau pour chaque lactation  de vache. 
+
+
+
+```{r}
+nb_prim <- prim |> 
+  group_by(herd_id, date_ia) |> 
+  summarize(n_prim = length(date_ia)) |> 
+  arrange(herd_id)
+```
 
 
