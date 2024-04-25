@@ -365,9 +365,11 @@ glimpse(mvt)
 
 fait dans "rec_selection.qmd", il suffit de charger le fichier de données généré par le code. 
 
-```{r}
+```{r Chargement du fichier "rec_final"}
 
-rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
+rec_final <- read.csv2("generated_datasets/rec_final.csv")
+
+#rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
 
 rec_final <- rec_final |> 
   rename(ctrl_date = rec_date)
@@ -376,7 +378,20 @@ rec_final <- rec_final |>
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
 
+Génération d'une liste d'élevages uniques.
 
+```{r}
+herd_list <- unique(rec_final$herd_id)
+```
+
+On sélectionne un échantillon de 10 élevages au hasard.
+
+```{r Sélection d'un échantillon de 10 élevages}
+set.seed(42) #On garde la même graine si on veut conserver le même échantillon
+herd_random_sample <- sample(herd_list, 10, replace = FALSE)
+rec_final <- rec_final |> 
+  filter(herd_id %in% herd_random_sample)
+```
 
 # modifications et tri des tableaux de données 
 
@@ -408,6 +423,7 @@ Ce tableau permet de regrouper toutes les infos de cellules et de production lai
 lac <- rec_final |> 
   group_by(herd_id, anim_id,calv_date) |> 
   summarize(parity = unique(parity),
+            lac_id = NA,
             n_ctrl = length(unique(ctrl_date)),
             n_scc_high = length(scc[scc > 200]),
             n_scc_early = length(scc[dim < 91]),
@@ -415,47 +431,37 @@ lac <- rec_final |>
             n_scc_late_high = length(scc[scc > 200 & dim > 91]),
             early_milk = mean((milk[dim < 91]))) 
   
-
+lac$lac_id <- 1:nrow(lac)
 
 ```
 
+
+
+```{r Enregistrement de "lac"}
+write.csv2(lac, "generated_datasets/lac.csv")
+```
+
+
 Le but est d'utiliser lac pour travailler les régressions logistiques 
 
-```{r}
+```{r estimation de la date du prochain vêlage}
 lac <- lac |> 
   group_by(anim_id) |> 
   mutate(calv_nxt = lead(calv_date))
 ```
 
-##Estimation de la proportion de vaches en fonction du nombre de contrôles  
-
-```{r}
-effectif_ctrl <- lac |> 
-  group_by(n_ctrl) |> 
-  summarize(nvaches = n())
-glimpse(effectif_ctrl)
-
-
-```
 
 tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrôles ainsi que les animaux qui ont vêler après le 1 janvier 2015. 
 
 
-```{r}
+```{r création d'un sous-groupe de lac}
 lac_corr = lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
 
 ```
 
-## ajout des données de troupeau 
-
-
-```{r}
-lac_corr$lac_id <- 1:nrow(lac_corr)
-```
-
 ## ajout des données de reproduction
 
-```{r}
+```{r conversion des dates}
 ia <- ia |> 
   mutate(date_ia = as.Date(date_ia, "%d/%m/%Y"), 
          prev_calv = as.Date(prev_calv, "%d/%m/%Y"), 
@@ -472,8 +478,8 @@ ia <- ia |>
 ```
 
 
-```{r}
-## sélection des dates d'ia comprises entre le vêlage précédent et le vêlage suivant, pour un même animal et pour une même lactation il y a plusieurs dates d'ia car elle a été inséminée plusieurs fois. 
+```{r sélection des dates d'ia comprises entre le vêlage précédent et le vêlage suivant, pour un même animal et pour une même lactation il y a plusieurs dates d'ia car elle a été inséminée plusieurs fois. }
+ 
 ai1 <- left_join(lac_corr |> 
                    select(anim_id, lac_id, calv_date, calv_nxt), 
                  ia |> 
@@ -510,7 +516,8 @@ lac_corr <- lac_corr |>
 ```
 
 
-# Régressions logistiques 
+# Recherche des génisses par troupeau 
+
 
 
 
