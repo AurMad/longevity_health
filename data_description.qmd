@@ -479,6 +479,17 @@ test <- left_join(data_inter,
                   join_by(anim_id, ctrl_date))
 ```
 
+les dates semblent correspondre. On remarque aussi que les mammites cliniques semblent parfois correspondre à un pic de scc, parfois elle arrive après plusieurs controles sup à 200.
+On va commencer à essayer de faire des catégories de mammites...Pour l'instant c'est fastidieux...
+
+```{r AMELIORABLE, bcp de NA qui devraient être des O}
+test <- test |> 
+  mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
+  mutate(chronic_mam = ifelse(chronic_scc == 1 & mam_cl ==1, 1,0)) |> 
+  mutate(brief_mam = ifelse(brief_scc ==1 & mam_cl ==1, 1,0))
+```
+
+
 ## enregistrement de rec_final
 
 ```{r enregistrement de rec_final}
