@@ -427,7 +427,6 @@ lac <- rec_final |>
   group_by(herd_id, anim_id,calv_date) |> 
   summarize(parity = unique(parity),
             lac_id = NA,
-            n_prim = NA,
             n_ctrl = length(unique(ctrl_date)),
             n_scc_high = length(scc[scc > 200]),
             n_scc_early = length(scc[dim < 91]),
@@ -439,15 +438,6 @@ lac$lac_id <- 1:nrow(lac)
 
 ```
 
-
-
-```{r Enregistrement de "lac"}
-write.csv2(lac, "generated_datasets/lac.csv")
-```
-
-
-Le but est d'utiliser lac pour travailler les régressions logistiques 
-
 ```{r estimation de la date du prochain vêlage}
 lac <- lac |> 
   group_by(anim_id) |> 
@@ -455,19 +445,17 @@ lac <- lac |>
 ```
 
 
-tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrôles ainsi que les animaux qui ont vêler après le 1 janvier 2015. 
-
-
-```{r création d'un sous-groupe de lac}
-lac_corr = lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
-
-```
-
 Création d'une variable semblble à la période d'insémination correspondant à 90 jours après la date de vêlage
 
 ```{r création de la variable "période insémination"}
-lac_corr <- lac_corr |> 
+lac <- lac |> 
   mutate(per_ins = calv_date + 90)
+```
+
+
+```{r date du premier vêlage}
+calv_first <- min(lac$calv_date, na.rm  = TRUE)
+calv_first <- as.Date(calv_first)
 ```
 
 ## ajout des données de reproduction
@@ -477,13 +465,8 @@ ia <- ia |>
   mutate(date_ia = as.Date(date_ia, "%d/%m/%Y"), 
          prev_calv = as.Date(prev_calv, "%d/%m/%Y"), 
          nxt_calv = as.Date(nxt_calv, "%d/%m/%Y"))
-```
 
-
-```{r séléction des dates d'ia supérieurs au premier vêlage du tableau la_corr}
-calv_first <- min(lac_corr$calv_date, na.rm  = TRUE)
-calv_first <- as.Date(calv_first)
-
+#séléction des dates d'ia supérieurs au premier vêlage 
 ia <- ia |> 
   filter(date_ia > calv_first)
 ```
@@ -491,7 +474,7 @@ ia <- ia |>
 
 ```{r sélection des dates d'ia comprises entre le vêlage précédent et le vêlage suivant, pour un même animal et pour une même lactation il y a plusieurs dates d'ia car elle a été inséminée plusieurs fois. }
  
-ai1 <- left_join(lac_corr |> 
+ai1 <- left_join(lac |> 
                    select(anim_id, lac_id, calv_date, calv_nxt), 
                  ia |> 
                    select(anim_id, date_ia),
@@ -513,16 +496,32 @@ ai_lac <- ai1 |>
 ```
 
 
+```{r ajout des données de reproduction à lac}
+lac <- left_join(lac, ai_lac)
+```
 
-```{r}
-lac_corr <- left_join(lac_corr, ai_lac)
+On va maintenant ajouter des variables binaires permettant de caractériser la décision ou non de mise à la repro
+
+```{r miserepro-early_mamchro-definition}
+lac <- lac |> 
+  mutate(miserepro = ifelse(ai_N == 0 | is.na(ai_N), 0, 1))
+
 ```
 
 
-```{r miserepro-early_mamchro-definition}
-lac_corr <- lac_corr |> 
-  mutate(miserepro = ifelse(ai_N == 0 | is.na(ai_N), 0, 1),
-         early_mamchro = ifelse(n_scc_early_high >= 2, 1, 0))
+```{r Enregistrement de "lac"}
+write.csv2(lac, "generated_datasets/lac.csv")
+```
+
+
+Le but est d'utiliser lac pour travailler les régressions logistiques 
+
+
+tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrôles ainsi que les animaux qui ont vêler après le 1 janvier 2015. 
+
+
+```{r création d'un sous-groupe de lac}
+lac_corr = lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
 
 ```
 
@@ -563,15 +562,5 @@ nb_prim <- prim |>
   summarize(n_prim = length(date_ia)) |> 
   arrange(herd_id)
 ```
-
-# Ajout du nombre de génisses autour des périodes d'insémination par lactation
-
-```{r}
-lac_corr1 <- left_join(lac_corr,
-                       nb_prim,
-                       join_by(herd_id, per_ins == date_ia))
-```
-
-
 
 
