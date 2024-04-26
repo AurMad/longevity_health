@@ -343,6 +343,11 @@ mamt |>
   ggplot(aes(x = damacl)) +
   geom_histogram()
 ```
+```{r}
+mamt <- mamt |> 
+  rename(anim_id = anim,
+         mamcl_date = damacl)
+```
 
 
 ## Mouvements
@@ -378,21 +383,6 @@ rec_final <- rec_final |>
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
 
-Génération d'une liste d'élevages uniques.
-
-```{r}
-herd_list <- unique(rec_final$herd_id)
-```
-
-On sélectionne un échantillon de 10 élevages au hasard.
-
-```{r Sélection d'un échantillon de 10 élevages}
-set.seed(42) #On garde la même graine si on veut conserver le même échantillon
-herd_random_sample <- sample(herd_list, 10, replace = FALSE)
-rec_final <- rec_final |> 
-  filter(herd_id %in% herd_random_sample)
-```
-
 # modifications et tri des tableaux de données 
 
 Rajout des dates de vêlage au tableau rec_final afin de calculer le stade de lactation "dim"
@@ -416,6 +406,102 @@ rec_final <- rec_final |>
 rec_final <- rec_final |> 
   mutate(herd_id = as.character(herd_id))
 ```
+
+
+
+# Définitions des différentes mammites
+
+## Mammites chroniques 
+
+J'ai décidé de définir les mammites chroniques comme une succession de 2 controles avec des SCC > 200 000 cellules. 
+Pour l'instant je me concentre sur le début de lactation donc les 90 premiers jours. 
+on pourra essayer de faire 2 sous-groupes : 
+- le fait d'avoir 2 controles successifs ou plus > 200 000 juste avant l'IA
+- le fait d'avoir le dernier controle de la lactation précédente et le premier controle de cette lactation > 200 000
+
+```{r création d'une variable qui donne la valeur du contôle suivant}
+rec_final <- rec_final |> 
+  arrange(herd_id, anim_id) |> 
+  group_by(anim_id) |> 
+  mutate(scc_succ = lead(scc)) |> 
+  mutate(scc_prev = lag(scc))
+```
+
+```{r création d'une variable qui compare ces valeurs}
+rec_final <- rec_final |> 
+  mutate(chronic_scc = ifelse(scc > 200 & scc_succ > 200, 1, 0)) |> 
+  mutate(brief_scc = ifelse(scc > 200 & scc_succ < 200 & scc_prev < 200, 1, 0))
+```
+
+```{r rangement}
+rec_final <- rec_final |> 
+  select(herd_id, anim_id, parity, calv_date, ctrl_date, dim, milk, fat, prot, scc, scc_succ, scc_prev, chronic_scc, brief_scc )
+```
+
+## mammites cliniques
+
+Le but ici serait d'intégrer les mammites avec leurs dates dans le tableau rec_final, avec les dates de mammites ordonnées entre chaque intervalle de dates de controle qui correspond. 
+
+```{r tentative avec seulement 1 vache, eval=FALSE}
+index_anim = which(rec_final$anim_id == "FR0103005584")
+data_inter = rec_final[index_anim,]
+
+data_inter2 = mamt[which(mamt$anim_id == "FR0103005584"),]
+```
+
+```{r, eval=FALSE}
+range_date = range(data_inter$ctrl_date)
+range1 = paste0(format(as.Date(range_date[1]), "%Y-%m"), "-01")
+range2 = paste0(format(as.Date(range_date[2]), "%Y-%m"), "-30")
+date_seq = seq(as.Date(range1), as.Date(range2), by = "1 day")
+
+date_seq[which(date_seq%in%data_inter2$mamcl_date)]
+
+#which(data_inter2$mamcl_date %in% data_inter$ctrl_date)
+
+#which(between(data_inter2$mamcl_date, range1, range2))
+```
+```{r}
+data_inter2 <- data_inter2 |> 
+  rename(ctrl_date = dacoma)
+
+data_inter2 <- data_inter2 |> 
+  mutate(ctrl_date = as.Date(ctrl_date))
+```
+ 
+J'ai renommé la date des collectes de mammites ctrl_date" car ces dates semblent correspondre aux dates de passage du controle laitier. 
+j'arrive à ajouter comme ca la date de mammite quand il y en a 
+
+```{r tableau test sur 1 seule vache}
+test <- left_join(data_inter,
+                  data_inter2 |> 
+                    select(anim_id, ctrl_date, mamcl_date), 
+                  join_by(anim_id, ctrl_date))
+```
+
+## enregistrement de rec_final
+
+```{r enregistrement de rec_final}
+write.csv2(rec_final, "generated_datasets/rec_final.csv")
+```
+
+## Sélection d'un échantillon
+
+Génération d'une liste d'élevages uniques.
+
+```{r}
+herd_list <- unique(rec_final$herd_id)
+```
+
+On sélectionne un échantillon de 10 élevages au hasard.
+
+```{r Sélection d'un échantillon de 10 élevages}
+set.seed(42) #On garde la même graine si on veut conserver le même échantillon
+herd_random_sample <- sample(herd_list, 10, replace = FALSE)
+rec_final <- rec_final |> 
+  filter(herd_id %in% herd_random_sample)
+```
+
 
 
 # Création d'une liste de lactations 
@@ -562,5 +648,4 @@ nb_prim <- prim |>
   summarize(n_prim = length(date_ia)) |> 
   arrange(herd_id)
 ```
-
 

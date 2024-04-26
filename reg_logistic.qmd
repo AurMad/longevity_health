@@ -1,0 +1,28 @@
+---
+title: "reg_logistic"
+author : "Joanna"
+format: html
+
+---
+
+
+# Setup
+
+```{r setup}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+```
+
+# Appel des bases de données nécessaires 
+
+
+```{r chargement du fichier "lac"}
+lac <- read.csv2("generated_datasets/lac.csv")
+```
+
+
