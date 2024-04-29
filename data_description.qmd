@@ -551,6 +551,9 @@ rec_final <- rec_final |>
 
 Ce tableau permet de regrouper toutes les infos de cellules et de production laitière par lactation 
 
+Commentaire joanna pour Aurélien : J'ai trouvé pourquoi on a une perte de données dans lac, c'est parce que le filtre appliqué à rec qui enlève les années où les élevages ont moins de 11 contrôles, a coupé la lactation de certaines vaches qui chevauchent ces années. Par exemple pour la vache "FR1456171629", les données débutent à partir de janvier 2012 dans rec_final, or cette vache à débuté sa lactation en 2011 donc on perd pas mal d'information notamment sur tout son début de lactation. 
+Or je ne sais pas comment retirer ses animaux du tableau car ils faussent les résultats. le code comprend ses animaux comme n'yant pas de cellules élevés en début de lactation alors qu'on a juste pas l'information...(voir code suivant pour enlever les vaches dont on a pas pu calculer la PL en début de lactation)
+
 ```{r - lac-list of lactations}
 lac <- rec_final |> 
   group_by(herd_id, anim_id,calv_date) |> 
@@ -561,6 +564,7 @@ lac <- rec_final |>
             n_scc_early = length(scc[dim < 91]),
             n_scc_early_high = length(scc[scc > 200 & dim < 91]),
             n_scc_late_high = length(scc[scc > 200 & dim > 91]),
+            mean_milk = mean(milk),
             early_milk = mean((milk[dim < 91])),
             n_mam_cl = length(mam_cl[mam_cl == 1]),
             n_chronic_scc= length(chronic_scc[chronic_scc == 1]),
@@ -572,6 +576,12 @@ lac <- rec_final |>
 lac$lac_id <- 1:nrow(lac)
 
 ```
+
+afin de supprimer les vaches dont on a pas d'information sur le début de lactation. 
+```{r}
+lac <- lac[!is.nan(lac$early_milk),]
+```
+
 
 ```{r estimation de la date du prochain vêlage}
 lac <- lac |> 

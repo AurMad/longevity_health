@@ -27,7 +27,7 @@ library(lme4)
 lac <- read.csv2("generated_datasets/lac.csv")
 ```
 
-# Première régression logistique pour la mise à la reproduction 
+# Première régression logistique pour la décision de mise à la reproduction 
 
 ```{r création de 8 classes de parité}
 lac <- lac |> 
@@ -51,5 +51,17 @@ summary(myreg_miserepro)
 
 Commentaire de Joanna : j'ai pour l'instant décidé d'utiliser seulement 3 types de mammites différentes car il m'est difficile d'associer les épisodes cliniques avec les scc. Pour l'instant on constate que les mam_cl et les pics de scc > 200 ne sont pas du tout significatifs dans le modèle. *
 
-De plus je ne comprend pas pourquoi dans mon tableau lac certaines lactations apparaissent alors qu'elles ne sont pas dans rec_final, alors que lac est géréné à partir de ce dernier...
+Il faudrait également prendre en compte le nombre de génisses disponibles et en attente pour le renouvellement du troupeau. 
+
+bilan de la première régression : 
+on constate qu'il ne semble pas y avoir de lien prouvé entre la présence d'une mammite clinique ou d'un pic fugace de cellules en début de lactation et la décision de mise à la reproduction. 
+
+# deuxième régression logistique : impact des mammites sur la mort 
+
+
+
+# troisième régression logistique : impact des mammites sur la production laitière moyenne 
+
+Ici il faudrait prendre en compte la saison, l'alimentation, la suvenue de troubles métaboliques en début de lactation, etc...mais ce sont des informations que l'on a pas. On peut émettre l'hypothèse que ce sont des variables non observées mais qui touchent toutes les vaches avec la même proba...(pas tout a fait vrai)
+Il est impossible de faire une régression logistique sur la PL seule car ce n'est pas une varable binaire...
 
