@@ -376,8 +376,6 @@ rec_final <- read.csv2("generated_datasets/rec_final.csv")
 
 #rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
 
-rec_final <- rec_final |> 
-  rename(ctrl_date = rec_date)
 
 rec_final <- rec_final |> 
   mutate(ctrl_date = as.Date(ctrl_date))
@@ -435,7 +433,7 @@ rec_final <- rec_final |>
 
 ```{r rangement}
 rec_final <- rec_final |> 
-  select(herd_id, anim_id, parity, calv_date, ctrl_date, dim, milk, fat, prot, scc, scc_succ, scc_prev, chronic_scc, brief_scc )
+  select(herd_id, anim_id, parity, calv_date, ctrl_date, dim, milk, fat, prot, scc, scc_succ, scc_prev, chronic_scc, brief_scc, out_cause, out_date )
 ```
 
 ## mammites cliniques
@@ -571,7 +569,9 @@ lac <- rec_final |>
             n_brief_scc = length(brief_scc[brief_scc == 1]),
             n_early_mam_cl = length(mam_cl[mam_cl == 1 & dim < 91]),
             n_early_chronic_scc = length(chronic_scc[chronic_scc == 1 & dim < 91]),
-            n_early_brief_scc = length(brief_scc[brief_scc == 1 & dim < 91]))
+            n_early_brief_scc = length(brief_scc[brief_scc == 1 & dim < 91]),
+            out_cause = unique(out_cause),
+            out_date = unique(out_date))
   
 lac$lac_id <- 1:nrow(lac)
 
