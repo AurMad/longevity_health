@@ -461,7 +461,9 @@ date_seq[which(date_seq%in%data_inter2$mamcl_date)]
 
 #which(between(data_inter2$mamcl_date, range1, range2))
 ```
-```{r}
+
+
+```{r, eval=FALSE}
 data_inter2 <- data_inter2 |> 
   rename(ctrl_date = dacoma)
 
@@ -469,24 +471,54 @@ data_inter2 <- data_inter2 |>
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
  
+```{r date de collecte mammite = date de contrôle}
+mamt<- mamt |> 
+  rename(ctrl_date = dacoma)
+
+mamt <- mamt|> 
+  mutate(ctrl_date = as.Date(ctrl_date))
+
+```
+
+ 
 J'ai renommé la date des collectes de mammites ctrl_date" car ces dates semblent correspondre aux dates de passage du controle laitier. 
 j'arrive à ajouter comme ca la date de mammite quand il y en a 
 
-```{r tableau test sur 1 seule vache}
+```{r tableau test sur 1 seule vache, eval = FALSE}
 test <- left_join(data_inter,
                   data_inter2 |> 
                     select(anim_id, ctrl_date, mamcl_date), 
                   join_by(anim_id, ctrl_date))
 ```
 
+```{r}
+rec_final <- left_join(rec_final,
+                       mamt |> 
+                         select(anim_id, ctrl_date, mamcl_date),
+                       join_by(anim_id, ctrl_date)) |> 
+  arrange(herd_id, anim_id, ctrl_date)
+```
+
+
 les dates semblent correspondre. On remarque aussi que les mammites cliniques semblent parfois correspondre à un pic de scc, parfois elle arrive après plusieurs controles sup à 200.
 On va commencer à essayer de faire des catégories de mammites...Pour l'instant c'est fastidieux...
 
-```{r AMELIORABLE, bcp de NA qui devraient être des O}
+```{r AMELIORABLE, bcp de NA qui devraient être des O, eval=FALSE}
 test <- test |> 
   mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
   mutate(chronic_mam = ifelse(chronic_scc == 1 & mam_cl ==1, 1,0)) |> 
   mutate(brief_mam = ifelse(brief_scc ==1 & mam_cl ==1, 1,0))
+```
+
+```{r}
+rec_final <- rec_final |> 
+  mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
+  mutate(chronic_mam = ifelse(chronic_scc == 1 & mam_cl ==1, 1,0)) |> 
+  mutate(brief_mam = ifelse(brief_scc ==1 & mam_cl ==1, 1,0)) 
+
+rec_final$mam_cl[is.na(rec_final$mam_cl)] <- 0
+rec_final$chronic_scc[is.na(rec_final$chronic_scc)] <- 0
+rec_final$brief_scc[is.na(rec_final$brief_scc)] <- 0
 ```
 
 
@@ -529,7 +561,13 @@ lac <- rec_final |>
             n_scc_early = length(scc[dim < 91]),
             n_scc_early_high = length(scc[scc > 200 & dim < 91]),
             n_scc_late_high = length(scc[scc > 200 & dim > 91]),
-            early_milk = mean((milk[dim < 91]))) 
+            early_milk = mean((milk[dim < 91])),
+            n_mam_cl = length(mam_cl[mam_cl == 1]),
+            n_chronic_scc= length(chronic_scc[chronic_scc == 1]),
+            n_brief_scc = length(brief_scc[brief_scc == 1]),
+            n_early_mam_cl = length(mam_cl[mam_cl == 1 & dim < 91]),
+            n_early_chronic_scc = length(chronic_scc[chronic_scc == 1 & dim < 91]),
+            n_early_brief_scc = length(brief_scc[brief_scc == 1 & dim < 91]))
   
 lac$lac_id <- 1:nrow(lac)
 

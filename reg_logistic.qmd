@@ -16,6 +16,8 @@ format: html
 library(tidyverse)
 library(readxl)
 library(ggplot2)
+library(gmodels)
+library(lme4)
 ```
 
 # Appel des bases de données nécessaires 
@@ -25,4 +27,29 @@ library(ggplot2)
 lac <- read.csv2("generated_datasets/lac.csv")
 ```
 
+# Première régression logistique pour la mise à la reproduction 
+
+```{r création de 8 classes de parité}
+lac <- lac |> 
+  mutate(C8parity = case_when(parity == 1 ~ "1",
+                            parity == 2 ~ "2",
+                            parity == 3 ~ "3",
+                            parity == 4 ~ "4",
+                            parity == 5 ~ "5",
+                            parity == 6 ~ "6",
+                            parity == 7 ~ "7",
+                            parity == 8 ~ "8 et plus",
+                            TRUE~NA))
+```
+
+
+```{r : régrssion logistique, premier essai}
+myreg_miserepro <- glmer(miserepro ~ n_early_chronic_scc + n_early_brief_scc + n_early_mam_cl + factor(C8parity) + early_milk + (1 | herd_id), 
+                    family= binomial(link = "logit"), data = lac)
+summary(myreg_miserepro)
+```
+
+Commentaire de Joanna : j'ai pour l'instant décidé d'utiliser seulement 3 types de mammites différentes car il m'est difficile d'associer les épisodes cliniques avec les scc. Pour l'instant on constate que les mam_cl et les pics de scc > 200 ne sont pas du tout significatifs dans le modèle. *
+
+De plus je ne comprend pas pourquoi dans mon tableau lac certaines lactations apparaissent alors qu'elles ne sont pas dans rec_final, alors que lac est géréné à partir de ce dernier...
 
