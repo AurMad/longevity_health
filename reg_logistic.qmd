@@ -65,11 +65,18 @@ lac <- lac |>
 ```
 
 ```{r régression logistique}
-myreg_mort <- glmer(mort ~ n_chronic_scc + n_brief_scc + n_mam_cl + factor(C8parity) + mean_milk + (1 | herd_id), 
+myreg_mort0 <- glmer(mort ~ n_chronic_scc + n_brief_scc + n_mam_cl + factor(C8parity) + mean_milk + (1 | herd_id), 
                     family= binomial(link = "logit"), data = lac)
-summary(myreg_mort)
+summary(myreg_mort0)
 ```
 pas logique...la parité n'aurait pas de lien, ni les mammites cliniques mais la prodution laitière oui....ce modèle me semble non exploitable
+
+nouvel essai : 
+cette fois j'ai regroupé toutes les mammites fugaces en "mammites environnementales" et j'ai fait 2 périodes de temps : entre 1 et 90 jours et entre 91 et 180 jours. 
+```{r régression logistique 1}
+myreg_mort1 <- glmer(mort ~ n_early_chronic_scc + n_mid_chronic_scc  + n_early_env_mam + n_mid_env_mam + factor(C8parity) + mid_milk + early_milk + (1 | herd_id), family= binomial(link = "logit"), data = lac)
+summary(myreg_mort1)
+```
 
 # troisième régression logistique : impact des mammites sur la production laitière moyenne 
 

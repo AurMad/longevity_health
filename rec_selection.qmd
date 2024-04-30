@@ -175,6 +175,60 @@ rec_final <- left_join(test_days_sel |>
                    select(herd_id, ctrl_date),
                  rec)
 ```
+
+```{r formatage}
+
+rec_final <- rec_final |> 
+  mutate(ctrl_date = as.Date(ctrl_date))
+```
+
+
+## Produtcion
+
+Ce fichier contient moins de lignes et plus de colonnes que le précédent. Je ne comprends pas bien la différence.
+
+```{r prd-chargment}
+path_to_file <- paste0(path_to_data, "production.txt")
+
+prd <- read.csv2(path_to_file)
+
+colnames(prd) <- tolower(colnames(prd))
+
+#modification du nom des colonnes pour simplifier
+prd <- prd |> 
+  rename(parity = nulact,
+         anim_id = anim,
+         calv_date = dadela,
+         total_milk  = latolad,
+         total_MG = mgtolad,
+         total_MP = mptolad,
+         total_tb = tbtolad,
+         total_tp = tptolad)
+```       
+
+Rajout des dates de vêlage au tableau rec_final afin de calculer le stade de lactation "dim"
+
+```{r}
+rec_final <- inner_join(rec_final,
+                  prd |> 
+                    select(anim_id, parity, calv_date),
+                  join_by(anim_id, parity))
+ 
+```
+
+```{r}
+rec_final <- rec_final |> 
+  mutate(calv_date = as.Date(calv_date), ctrl_date = as.Date(ctrl_date))
+
+
+rec_final <- rec_final |> 
+  mutate(dim = as.integer(ctrl_date - calv_date))
+
+rec_final <- rec_final |> 
+  mutate(herd_id = as.character(herd_id))
+```
+
+
 Tu peux enregistrer le fichier final pour ne pas avoir à refaire tourner ce script à chaque fois. Ne pas inclure ces fichiers de données générés dans les commits.
 
 ```{r saving-final-milk-recording-data}

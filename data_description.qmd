@@ -375,37 +375,7 @@ fait dans "rec_selection.qmd", il suffit de charger le fichier de données gén�
 rec_final <- read.csv2("generated_datasets/rec_final.csv")
 
 #rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
-
-
-rec_final <- rec_final |> 
-  mutate(ctrl_date = as.Date(ctrl_date))
 ```
-
-# modifications et tri des tableaux de données 
-
-Rajout des dates de vêlage au tableau rec_final afin de calculer le stade de lactation "dim"
-
-```{r}
-rec_final <- inner_join(rec_final,
-                  prd |> 
-                    select(anim_id, parity, calv_date),
-                  join_by(anim_id, parity))
- 
-```
-
-```{r}
-rec_final <- rec_final |> 
-  mutate(calv_date = as.Date(calv_date), ctrl_date = as.Date(ctrl_date))
-
-
-rec_final <- rec_final |> 
-  mutate(dim = as.integer(ctrl_date - calv_date))
-
-rec_final <- rec_final |> 
-  mutate(herd_id = as.character(herd_id))
-```
-
-
 
 # Définitions des différentes mammites
 
@@ -504,15 +474,19 @@ On va commencer à essayer de faire des catégories de mammites...Pour l'instant
 ```{r AMELIORABLE, bcp de NA qui devraient être des O, eval=FALSE}
 test <- test |> 
   mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
-  mutate(chronic_mam = ifelse(chronic_scc == 1 & mam_cl ==1, 1,0)) |> 
-  mutate(brief_mam = ifelse(brief_scc ==1 & mam_cl ==1, 1,0))
+  mutate(env_mam = case_when(brief_scc == 1 & mam_cl == 0 ~ "1",
+                             brief_scc == 0 & mam_cl == 1 & chronic_scc == 0 & scc_succ < 200 ~ "1",
+                             brief_scc == 1 & mam_cl ==1 ~ "1",
+                             TRUE ~ "0"))
 ```
 
 ```{r}
 rec_final <- rec_final |> 
   mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
-  mutate(chronic_mam = ifelse(chronic_scc == 1 & mam_cl ==1, 1,0)) |> 
-  mutate(brief_mam = ifelse(brief_scc ==1 & mam_cl ==1, 1,0)) 
+  mutate(env_mam = case_when(brief_scc == 1 & mam_cl == 0 ~ "1",
+                             brief_scc == 0 & mam_cl == 1 & chronic_scc == 0 & scc_succ < 200 ~ "1",
+                             brief_scc == 1 & mam_cl ==1 ~ "1",
+                             TRUE ~ "0"))
 
 rec_final$mam_cl[is.na(rec_final$mam_cl)] <- 0
 rec_final$chronic_scc[is.na(rec_final$chronic_scc)] <- 0
@@ -554,24 +528,27 @@ Or je ne sais pas comment retirer ses animaux du tableau car ils faussent les r�
 
 ```{r - lac-list of lactations}
 lac <- rec_final |> 
-  group_by(herd_id, anim_id,calv_date) |> 
+  group_by(herd_id, anim_id, parity) |> 
   summarize(parity = unique(parity),
             lac_id = NA,
+            calv_date = unique(calv_date),
+            out_cause = unique(out_cause),
+            out_date = unique(out_date),
             n_ctrl = length(unique(ctrl_date)),
             n_scc_high = length(scc[scc > 200]),
             n_scc_early = length(scc[dim < 91]),
             n_scc_early_high = length(scc[scc > 200 & dim < 91]),
             n_scc_late_high = length(scc[scc > 200 & dim > 91]),
-            mean_milk = mean(milk),
             early_milk = mean((milk[dim < 91])),
-            n_mam_cl = length(mam_cl[mam_cl == 1]),
-            n_chronic_scc= length(chronic_scc[chronic_scc == 1]),
-            n_brief_scc = length(brief_scc[brief_scc == 1]),
+            mid_milk = mean(milk[dim >= 91 & dim < 181]),
             n_early_mam_cl = length(mam_cl[mam_cl == 1 & dim < 91]),
+            n_mid_mam_cl = length(mam_cl[mam_cl == 1 & dim >= 91 & dim < 181]),
             n_early_chronic_scc = length(chronic_scc[chronic_scc == 1 & dim < 91]),
+            n_mid_chronic_scc= length(chronic_scc[chronic_scc == 1 & dim >= 91 & dim < 181]),
             n_early_brief_scc = length(brief_scc[brief_scc == 1 & dim < 91]),
-            out_cause = unique(out_cause),
-            out_date = unique(out_date))
+            n_mid_brief_scc = length(brief_scc[brief_scc == 1 & dim >= 91 & dim < 181]),
+            n_early_env_mam = length(env_mam[env_mam == 1 & dim < 91]),
+            n_mid_env_mam = length(env_mam[env_mam == 1 & dim >= 91 & dim < 181]))
   
 lac$lac_id <- 1:nrow(lac)
 
@@ -592,7 +569,7 @@ lac <- lac |>
 
 Création d'une variable semblble à la période d'insémination correspondant à 90 jours après la date de vêlage
 
-```{r création de la variable "période insémination"}
+```{r création de la variable "période insémination", eval=FALSE}
 lac <- lac |> 
   mutate(per_ins = calv_date + 90)
 ```
@@ -644,6 +621,12 @@ ai_lac <- ai1 |>
 ```{r ajout des données de reproduction à lac}
 lac <- left_join(lac, ai_lac)
 ```
+Les Données qui sont transmises par ia ne commencent qu'a partir de 2009, donc il faut que lac commence également après cette date pour être sûre que les données soient complètes. 
+
+```{r}
+lac = lac[lac$calv_date >as.Date("2009-01-01"),]
+```
+
 
 On va maintenant ajouter des variables binaires permettant de caractériser la décision ou non de mise à la repro
 
@@ -665,7 +648,7 @@ Le but est d'utiliser lac pour travailler les régressions logistiques
 tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrôles ainsi que les animaux qui ont vêler après le 1 janvier 2015. 
 
 
-```{r création d'un sous-groupe de lac}
+```{r création d'un sous-groupe de lac, eval=FALSE}
 lac_corr = lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
 
 ```
