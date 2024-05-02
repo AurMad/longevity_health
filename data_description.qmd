@@ -12,6 +12,7 @@ format: html
 library(tidyverse)
 library(readxl)
 library(ggplot2)
+library(lme4)
 ```
 
 
@@ -603,6 +604,9 @@ ai1 <- left_join(lac |>
                  join_by(anim_id)) |> 
            filter(date_ia > calv_date & (date_ia < calv_nxt | is.na(calv_nxt))) |> 
   select(anim_id, lac_id, calv_date, calv_nxt, date_ia)
+
+ai1 <- ai1 |> 
+  mutate(calv_nxt = as.Date(calv_nxt))
 ```
 Les lignes qui se rajoutent correspondent aux animaux qui ont plusieurs dates d'ia pour une même lactation
 
@@ -689,5 +693,33 @@ nb_prim <- prim |>
   group_by(herd_id, date_ia) |> 
   summarize(n_prim = length(date_ia)) |> 
   arrange(herd_id)
+```
+
+# Modélisation des courbes de lactation 
+
+```{r}
+rec_wilmink <- rec_final |> 
+  select(herd_id, anim_id, parity, ctrl_date,milk, dim)
+```
+
+
+```{r}
+rec_wilmink <- rec_wilmink |> 
+  mutate(exp_dim = exp(-0.05*dim))
+```
+
+```{r}
+rec_wilmink <- rec_wilmink |> 
+  filter(anim_id == "FR0700520036")
+```
+
+
+```{r régression linéaire}
+
+PL <- lm(milk ~ exp_dim + dim, data = rec_wilmink)
+summary(PL)
+```
+```{r}
+plot(PL)
 ```
 

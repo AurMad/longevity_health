@@ -64,7 +64,7 @@ lac <- lac |>
   mutate(mort = ifelse(out_cause == "M" & parity == max(parity), 1, 0))
 ```
 
-```{r régression logistique}
+```{r régression logistique, eval=FALSE}
 myreg_mort0 <- glmer(mort ~ n_chronic_scc + n_brief_scc + n_mam_cl + factor(C8parity) + mean_milk + (1 | herd_id), 
                     family= binomial(link = "logit"), data = lac)
 summary(myreg_mort0)

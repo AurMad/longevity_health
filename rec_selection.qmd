@@ -17,6 +17,12 @@ library(ggplot2)
 
 # Chargement des données
 
+
+```{r path-data-littoral-normand}
+#| echo: false
+path_to_data <- "data/"
+```
+
 ## Contrôle laitier
 
 Données de contrôle laitier chargées.
@@ -226,6 +232,11 @@ rec_final <- rec_final |>
 
 rec_final <- rec_final |> 
   mutate(herd_id = as.character(herd_id))
+```
+
+```{r}
+rec_final <- rec_final|> 
+  mutate(ctrl_date = as.Date(ctrl_date))
 ```
 
 
