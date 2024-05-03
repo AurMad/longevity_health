@@ -366,12 +366,11 @@ mvt <- mvt |>
 glimpse(mvt)
 ```
 
-
 # Ajout du numéro de cheptel a chaque vache dans les données du contrôle laitier 
 
 fait dans "rec_selection.qmd", il suffit de charger le fichier de données généré par le code. 
 
-```{r Chargement du fichier "rec_final"}
+```{r Chargement du fichier rec-final}
 
 rec_final <- read.csv2("generated_datasets/rec_final.csv")
 
@@ -388,7 +387,7 @@ on pourra essayer de faire 2 sous-groupes :
 - le fait d'avoir 2 controles successifs ou plus > 200 000 juste avant l'IA
 - le fait d'avoir le dernier controle de la lactation précédente et le premier controle de cette lactation > 200 000
 
-```{r création d'une variable qui donne la valeur du contôle suivant}
+```{r creation variable qui donne la valeur du contole suivant}
 rec_final <- rec_final |> 
   arrange(herd_id, anim_id) |> 
   group_by(anim_id) |> 
@@ -396,7 +395,7 @@ rec_final <- rec_final |>
   mutate(scc_prev = lag(scc))
 ```
 
-```{r création d'une variable qui compare ces valeurs}
+```{r creation variable qui compare ces valeurs}
 rec_final <- rec_final |> 
   mutate(chronic_scc = ifelse(scc > 200 & scc_succ > 200, 1, 0)) |> 
   mutate(brief_scc = ifelse(scc > 200 & scc_succ < 200 & scc_prev < 200, 1, 0))
@@ -440,7 +439,7 @@ data_inter2 <- data_inter2 |>
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
  
-```{r date de collecte mammite = date de contrôle}
+```{r date de collecte mammite date de controle}
 mamt<- mamt |> 
   rename(ctrl_date = dacoma)
 
@@ -461,7 +460,8 @@ test <- left_join(data_inter,
 ```
 
 ```{r}
-rec_final <- left_join(rec_final,
+rec_final <- left_join(rec_final |> 
+                         mutate(ctrl_date = as.Date(ctrl_date)),
                        mamt |> 
                          select(anim_id, ctrl_date, mamcl_date),
                        join_by(anim_id, ctrl_date)) |> 
@@ -472,7 +472,7 @@ rec_final <- left_join(rec_final,
 les dates semblent correspondre. On remarque aussi que les mammites cliniques semblent parfois correspondre à un pic de scc, parfois elle arrive après plusieurs controles sup à 200.
 On va commencer à essayer de faire des catégories de mammites...Pour l'instant c'est fastidieux...
 
-```{r AMELIORABLE, bcp de NA qui devraient être des O, eval=FALSE}
+```{r AMELIORABLE, eval=FALSE}
 test <- test |> 
   mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
   mutate(env_mam = case_when(brief_scc == 1 & mam_cl == 0 ~ "1",
@@ -497,7 +497,7 @@ rec_final$brief_scc[is.na(rec_final$brief_scc)] <- 0
 
 ## enregistrement de rec_final
 
-```{r enregistrement de rec_final}
+```{r enregistrement de rec-final}
 write.csv2(rec_final, "generated_datasets/rec_final.csv")
 ```
 
@@ -511,7 +511,7 @@ herd_list <- unique(rec_final$herd_id)
 
 On sélectionne un échantillon de 10 élevages au hasard.
 
-```{r Sélection d'un échantillon de 10 élevages}
+```{r Selection echantillon de 10 elevages}
 set.seed(42) #On garde la même graine si on veut conserver le même échantillon
 herd_random_sample <- sample(herd_list, 10, replace = FALSE)
 rec_final <- rec_final |> 
@@ -527,7 +527,11 @@ Ce tableau permet de regrouper toutes les infos de cellules et de production lai
 Commentaire joanna pour Aurélien : J'ai trouvé pourquoi on a une perte de données dans lac, c'est parce que le filtre appliqué à rec qui enlève les années où les élevages ont moins de 11 contrôles, a coupé la lactation de certaines vaches qui chevauchent ces années. Par exemple pour la vache "FR1456171629", les données débutent à partir de janvier 2012 dans rec_final, or cette vache à débuté sa lactation en 2011 donc on perd pas mal d'information notamment sur tout son début de lactation. 
 Or je ne sais pas comment retirer ses animaux du tableau car ils faussent les résultats. le code comprend ses animaux comme n'yant pas de cellules élevés en début de lactation alors qu'on a juste pas l'information...(voir code suivant pour enlever les vaches dont on a pas pu calculer la PL en début de lactation)
 
-```{r - lac-list of lactations}
+
+```{r lac-list of lactations}
+rec_final$out_cause[rec_final$anim_id == "FR2538643995"] <- NA
+rec_final$out_date[rec_final$anim_id == "FR2538643995"] <- NA
+
 lac <- rec_final |> 
   group_by(herd_id, anim_id, parity) |> 
   summarize(parity = unique(parity),
@@ -552,7 +556,6 @@ lac <- rec_final |>
             n_mid_env_mam = length(env_mam[env_mam == 1 & dim >= 91 & dim < 181]))
   
 lac$lac_id <- 1:nrow(lac)
-
 ```
 
 afin de supprimer les vaches dont on a pas d'information sur le début de lactation. 
@@ -561,7 +564,7 @@ lac <- lac[!is.nan(lac$early_milk),]
 ```
 
 
-```{r estimation de la date du prochain vêlage}
+```{r estimation de la date du prochain velage}
 lac <- lac |> 
   group_by(anim_id) |> 
   mutate(calv_nxt = lead(calv_date))
@@ -570,18 +573,20 @@ lac <- lac |>
 
 Création d'une variable semblble à la période d'insémination correspondant à 90 jours après la date de vêlage
 
-```{r création de la variable "période insémination", eval=FALSE}
+```{r creation de la variable periode insemination, eval=FALSE}
 lac <- lac |> 
   mutate(per_ins = calv_date + 90)
 ```
 
 
-```{r date du premier vêlage}
+```{r date du premier velage}
 calv_first <- min(lac$calv_date, na.rm  = TRUE)
 calv_first <- as.Date(calv_first)
 ```
 
 ## ajout des données de reproduction
+
+Pour les formats date voir ?strptime
 
 ```{r conversion des dates}
 ia <- ia |> 
@@ -595,7 +600,7 @@ ia <- ia |>
 ```
 
 
-```{r sélection des dates d'ia comprises entre le vêlage précédent et le vêlage suivant, pour un même animal et pour une même lactation il y a plusieurs dates d'ia car elle a été inséminée plusieurs fois. }
+```{r selection des dates ia comprises entre le velage precedent et le velage suivant, pour un meme animal et pour une meme lactation il y a plusieurs dates ia car elle a ete inseminee plusieurs fois}
  
 ai1 <- left_join(lac |> 
                    select(anim_id, lac_id, calv_date, calv_nxt), 
@@ -628,7 +633,8 @@ lac <- left_join(lac, ai_lac)
 Les Données qui sont transmises par ia ne commencent qu'a partir de 2009, donc il faut que lac commence également après cette date pour être sûre que les données soient complètes. 
 
 ```{r}
-lac = lac[lac$calv_date >as.Date("2009-01-01"),]
+lac <- lac |> 
+  filter(calv_date > as.Date("2009-01-01"))
 ```
 
 
@@ -641,7 +647,7 @@ lac <- lac |>
 ```
 
 
-```{r Enregistrement de "lac"}
+```{r Enregistrement de lac}
 write.csv2(lac, "generated_datasets/lac.csv")
 ```
 
@@ -652,7 +658,7 @@ Le but est d'utiliser lac pour travailler les régressions logistiques
 tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrôles ainsi que les animaux qui ont vêler après le 1 janvier 2015. 
 
 
-```{r création d'un sous-groupe de lac, eval=FALSE}
+```{r création sous-groupe de lac, eval=FALSE}
 lac_corr = lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
 
 ```
@@ -699,7 +705,7 @@ nb_prim <- prim |>
 
 ```{r}
 rec_wilmink <- rec_final |> 
-  select(herd_id, anim_id, parity, ctrl_date,milk, dim)
+  select(herd_id, anim_id, parity, ctrl_date, milk, dim)
 ```
 
 
@@ -708,18 +714,66 @@ rec_wilmink <- rec_wilmink |>
   mutate(exp_dim = exp(-0.05*dim))
 ```
 
+
+
 ```{r}
-rec_wilmink <- rec_wilmink |> 
-  filter(anim_id == "FR0700520036")
+ggplot(rec_final, aes(x = dim, y = milk)) +
+  geom_point()
+```
+
+```{r}
+rec_final |> 
+  group_by(dim) |> 
+  summarise(milk_mean = mean(milk)) |> 
+  ungroup() |> 
+  ggplot(aes(x = dim, y = milk_mean)) +
+  geom_point()
 ```
 
 
-```{r régression linéaire}
 
-PL <- lm(milk ~ exp_dim + dim, data = rec_wilmink)
+
+```{r régression lineaire}
+PL <- lm(milk ~ exp_dim + dim, 
+         data = rec_wilmink)
+
+# PL <- lm(milk ~ exp_dim + dim, 
+#          data = rec_wilmink,
+#          subset = anim_id == "FR0700520036")
+
 summary(PL)
 ```
+
 ```{r}
 plot(PL)
+```
+
+
+
+```{r}
+coef(PL)
+
+curve(coef(PL)[1] + coef(PL)[2] * (-.05 * x) + coef(PL)[3] * x,
+      from = 0, to = 305)
+```
+
+
+```{r chargement-lme4}
+# ne charger qu'une seule fois
+library(lme4)
+```
+
+```{r régression lineaire mixte}
+k <- -0.065
+
+PL1 <- lmer(milk ~ dim + exp(k * dim) + (1 | herd_id) + (1 | anim_id), 
+         data = rec_final,
+         subset = dim < 350)
+summary(PL1)
+```
+
+```{r}
+curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
+      from = 0, to = 305)
 ```
 
