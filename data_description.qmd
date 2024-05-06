@@ -448,11 +448,10 @@ data_inter2 <- data_inter2 |>
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
  
-<<<<<<< HEAD
-```{r date de collecte mammite date de contrôle}
-=======
+
+
 ```{r date de collecte mammite date de controle}
->>>>>>> f9b7e350e9ad8019d0bbeeacf0801b3dca4ef757
+
 mamt<- mamt |> 
   rename(ctrl_date = dacoma)
 
@@ -566,7 +565,8 @@ lac <- rec_final |>
             n_early_brief_scc = length(brief_scc[brief_scc == 1 & dim < 91]),
             n_mid_brief_scc = length(brief_scc[brief_scc == 1 & dim >= 91 & dim < 181]),
             n_early_env_mam = length(env_mam[env_mam == 1 & dim < 91]),
-            n_mid_env_mam = length(env_mam[env_mam == 1 & dim >= 91 & dim < 181]))
+            n_mid_env_mam = length(env_mam[env_mam == 1 & dim >= 91 & dim < 181]),
+            n_mam_cl = length(mam_cl[mam_cl == 1]))
   
 lac$lac_id <- 1:nrow(lac)
 ```
@@ -714,6 +714,72 @@ nb_prim <- prim |>
   arrange(herd_id)
 ```
 
+# Impact des mammites sur la fertilité 
+
+## tri des animaux qui ont été mis à la reproduction 
+
+```{r tableau qui ne prend que les animaux mis à la repro et reformes en boucherie}
+fertility_lac <- lac |> 
+  filter(miserepro == 1 & out_cause == "B")
+```
+
+
+```{r}
+fertility_lac <- fertility_lac |> 
+  mutate(preg_end = ifelse(calv_nxt == as.Date(calv_nxt), 1, 0))
+
+fertility_lac$preg_end[is.na(fertility_lac$preg_end)] <- 0 
+```
+
+
+
+```{r calcul du temps entre le velage et ia fecondante}
+fertility_lac <- fertility_lac |> 
+  mutate(lac_id = as.character(lac_id))
+
+fertility_lac <- fertility_lac |> 
+  group_by(lac_id) |> 
+  mutate(dim_iaf = difftime(ai_last, calv_date, units = c("days")))
+```
+
+COmmentaire : Certains animaux ont un intervalle supérieur à 900 jours, très étrange il faut demander à IDELE ou regarder si dans le code quelque chose entraine ça. 
+
+```{r tri des animaux qui ont un intervalle inferieur a 300 jours}
+fertility_lac <- fertility_lac |> 
+  mutate(dim_iaf = as.numeric(dim_iaf))
+
+fertility_lac <- fertility_lac |> 
+  filter(dim_iaf <= 300)
+```
+
+```{r calcul de intervalle entre ia1 et iaf }
+fertility_lac <- fertility_lac |> 
+  mutate(iap_iaf = difftime(ai_last, ai_first, units = c("days")))
+
+fertility_lac <- fertility_lac |> 
+  mutate(iap_iaf = as.numeric(iap_iaf))
+```
+
+```{r creation de plusieurs categories pour les intervalles}
+fertility_lac <- fertility_lac |> 
+  mutate(inter_42 = ifelse(iap_iaf >= 42, 1, 0),
+         inter_63 = ifelse(iap_iaf >= 63, 1,0),
+         inter_84 = ifelse(iap_iaf >= 84, 1, 0 ))
+```
+
+```{r}
+fertility_lac <- fertility_lac |> 
+  mutate(n_ia2 = ifelse(ai_N == 2, 1, 0),
+         n_ia3 = ifelse(ai_N == 3, 1,0),
+         n_ia4_plus = ifelse(ai_N >= 4, 1, 0 ))
+```
+
+
+```{r enregistrement}
+write.csv2(fertility_lac, "generated_datasets/fertility_lac.csv")
+```
+
+
 # Modélisation des courbes de lactation 
 
 ```{r}
@@ -744,11 +810,6 @@ rec_final |>
 ```
 
 
-
-<<<<<<< HEAD
-PL <- lm(milk ~ exp_dim + dim , data = rec_wilmink)
-=======
-
 ```{r régression lineaire}
 PL <- lm(milk ~ exp_dim + dim, 
          data = rec_wilmink)
@@ -757,7 +818,7 @@ PL <- lm(milk ~ exp_dim + dim,
 #          data = rec_wilmink,
 #          subset = anim_id == "FR0700520036")
 
->>>>>>> f9b7e350e9ad8019d0bbeeacf0801b3dca4ef757
+
 summary(PL)
 ```
 
@@ -765,7 +826,26 @@ summary(PL)
 plot(PL)
 ```
 
-<<<<<<< HEAD
+
+```{r chargement-lme4}
+# ne charger qu'une seule fois
+library(lme4)
+```
+
+```{r régression lineaire mixte}
+k <- -0.065
+
+PL1 <- lmer(milk ~ dim + exp(k * dim) + (1 | herd_id) + (1 | anim_id), 
+         data = rec_final,
+         subset = dim < 350)
+summary(PL1)
+```
+
+```{r}
+curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
+      from = 0, to = 305)
+
+```
 # DAGs
 
 ```{r dag exemple}
@@ -805,6 +885,8 @@ dag_mammites <- dagify(
 
 ggdag(dag_mammites) + theme_dag()
 ```
+
+
 ```{r DAG mam-mise à la reproduction}
 #| echo: false
 #| fig-width: 3
@@ -823,34 +905,6 @@ dag_mam_repro <- dagify(
 ) 
 
 ggdag(dag_mam_repro) + theme_dag()
-=======
 
 
 ```{r}
-coef(PL)
-
-curve(coef(PL)[1] + coef(PL)[2] * (-.05 * x) + coef(PL)[3] * x,
-      from = 0, to = 305)
-```
-
-
-```{r chargement-lme4}
-# ne charger qu'une seule fois
-library(lme4)
-```
-
-```{r régression lineaire mixte}
-k <- -0.065
-
-PL1 <- lmer(milk ~ dim + exp(k * dim) + (1 | herd_id) + (1 | anim_id), 
-         data = rec_final,
-         subset = dim < 350)
-summary(PL1)
-```
-
-```{r}
-curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
-      from = 0, to = 305)
->>>>>>> f9b7e350e9ad8019d0bbeeacf0801b3dca4ef757
-```
-
