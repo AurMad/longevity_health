@@ -10,6 +10,7 @@ format: html
 #| warning: false
 
 library(tidyverse)
+library(ggdag)
 library(readxl)
 library(ggplot2)
 library(lme4)
@@ -407,6 +408,14 @@ rec_final <- rec_final |>
   select(herd_id, anim_id, parity, calv_date, ctrl_date, dim, milk, fat, prot, scc, scc_succ, scc_prev, chronic_scc, brief_scc, out_cause, out_date )
 ```
 
+```{r}
+rec_final <- rec_final |> 
+  mutate(ctrl_date = as.Date(ctrl_date, format = "%Y-%m-%d")) |> 
+  mutate(calv_date = as.Date(calv_date, format = "%Y-%m-%d")) |> 
+  mutate(out_date = as.Date(out_date, format = "%Y-%m-%d"))
+```
+
+
 ## mammites cliniques
 
 Le but ici serait d'intégrer les mammites avec leurs dates dans le tableau rec_final, avec les dates de mammites ordonnées entre chaque intervalle de dates de controle qui correspond. 
@@ -440,7 +449,7 @@ data_inter2 <- data_inter2 |>
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
  
-```{r date de collecte mammite = date de contrôle}
+```{r date de collecte mammite date de contrôle}
 mamt<- mamt |> 
   rename(ctrl_date = dacoma)
 
@@ -716,10 +725,69 @@ rec_wilmink <- rec_wilmink |>
 
 ```{r régression linéaire}
 
-PL <- lm(milk ~ exp_dim + dim, data = rec_wilmink)
+PL <- lm(milk ~ exp_dim + dim , data = rec_wilmink)
 summary(PL)
 ```
 ```{r}
 plot(PL)
+```
+
+# DAGs
+
+```{r dag exemple}
+#| echo: false
+#| fig-width: 3
+#| fig-height: 3
+dag <- dagify(
+  R ~ M,
+  M ~ P,
+  R ~ P,
+  coords = list(
+    x = c(M = 0, R = 2, P = 1),
+    y = c(M = 0, R = 0, P = 1)
+  )
+)
+
+ggdag(dag) + theme_dag()
+```
+
+```{r DAG mammites}
+#| echo: false
+#| fig-width: 3
+#| fig-height: 3
+dag_mammites <- dagify(
+  PL ~ M,
+  D ~ M,
+  AI ~ M,
+  F ~ AI,
+  R ~ F,
+  R ~ PL,
+  R ~ D,
+  coords = list(
+    x = c(M = 0, R = 3, PL = 1, D = 1, AI = 1, F = 2),
+    y = c(M = 1, R = 1, PL = 1, D = 2, AI = 0, F = 0)
+  )
+)
+
+ggdag(dag_mammites) + theme_dag()
+```
+```{r DAG mam-mise à la reproduction}
+#| echo: false
+#| fig-width: 3
+#| fig-height: 3
+dag_mam_repro <- dagify(
+  PL ~ ~ M,
+  AI ~ M + PL + P + T + G,
+  F ~ AI,
+  R ~ F,
+  coords = list(
+    x = c(M = 0, AI = 1, P = 0.5, T = 1, PL = 1, G = 1.5, F = 2, R = 3),
+    y = c(M = 2, R = 2, F = 2, AI = 2, PL = 3, T = 0, P = 0.5, G = 0.5),
+    exposure = "M",
+    outcome = "AI"
+  )
+) 
+
+ggdag(dag_mam_repro) + theme_dag()
 ```
 
