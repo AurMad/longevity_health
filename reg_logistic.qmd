@@ -132,12 +132,30 @@ myreg_ia4 <- glmer(n_ia4_plus ~ n_scc_high  + factor(C8parity) + (1 | herd_id), 
 
 summary(myreg_ia4) 
 ```
-# impact de la baisse de fertilité sur la réforme (parmis les vaches réformées)
+# impact de la baisse de fertilité sur la réforme 
 
-```{r}
-
+```{r appel des donnees}
+lac_repro <- read.csv2("generated_datasets/lac_repro.csv")
 ```
 
+```{r}
+lac_repro <- lac_repro |> 
+  mutate(C8parity = case_when(parity == 1 ~ "1",
+                            parity == 2 ~ "2",
+                            parity == 3 ~ "3",
+                            parity == 4 ~ "4",
+                            parity == 5 ~ "5",
+                            parity == 6 ~ "6",
+                            parity == 7 ~ "7",
+                            parity >= 8 ~ "8 et plus",
+                            TRUE~NA))
+```
+
+```{r}
+myreg_rep_cull <- glmer(cull ~ ai_N + mean_milk + factor(C8parity) + (1 | herd_id), family = binomial (link = "logit"), data = lac_repro)
+
+summary(myreg_rep_cull) 
+```
 
 # impact des mammites sur la mort 
 

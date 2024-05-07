@@ -239,6 +239,12 @@ rec_final <- rec_final|>
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
 
+commentaire de Joanna : il y a un problème, certaines vaches ont une lactation de plus de 2000 jours...
+```{r}
+rec_final <- rec_final |> 
+  filter(dim <= 300)
+```
+
 
 Tu peux enregistrer le fichier final pour ne pas avoir à refaire tourner ce script à chaque fois. Ne pas inclure ces fichiers de données générés dans les commits.
 

@@ -378,6 +378,7 @@ rec_final <- read.csv2("generated_datasets/rec_final.csv")
 #rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
 ```
 
+
 # Définitions des différentes mammites
 
 ## Mammites chroniques 
@@ -558,6 +559,7 @@ lac <- rec_final |>
             n_scc_late_high = length(scc[scc > 200 & dim > 91]),
             early_milk = mean((milk[dim < 91])),
             mid_milk = mean(milk[dim >= 91 & dim < 181]),
+            mean_milk = mean(milk),
             n_early_mam_cl = length(mam_cl[mam_cl == 1 & dim < 91]),
             n_mid_mam_cl = length(mam_cl[mam_cl == 1 & dim >= 91 & dim < 181]),
             n_early_chronic_scc = length(chronic_scc[chronic_scc == 1 & dim < 91]),
@@ -777,6 +779,29 @@ fertility_lac <- fertility_lac |>
 
 ```{r enregistrement}
 write.csv2(fertility_lac, "generated_datasets/fertility_lac.csv")
+```
+
+# impact de la baisse de fertilité sur la réforme 
+
+```{r selection des vaches mises a la repro}
+lac_repro <- lac |> 
+  filter(miserepro == 1)
+```
+
+```{r retrait des vaches qui sont mortes au cours de la lactation}
+lac_repro <- lac_repro |> 
+  filter(out_cause != "M")
+```
+
+
+```{r varaible qui affiche 1 si reforme a la fin de la lactation et 0 sinon}
+lac_repro <- lac_repro |> 
+  group_by(anim_id) |> 
+  mutate(cull = ifelse(out_cause == "B" & parity == max(parity), 1, 0))
+```
+
+```{r enregistrement}
+write.csv2(lac_repro, "generated_datasets/lac_repro.csv")
 ```
 
 
