@@ -14,6 +14,7 @@ library(ggdag)
 library(readxl)
 library(ggplot2)
 library(lme4)
+library(ggeffects)
 ```
 
 
@@ -963,4 +964,4 @@ dag_mam_repro <- dagify(
 ggdag(dag_mam_repro) + theme_dag()
 
 
-```{r}
+```

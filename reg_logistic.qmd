@@ -1,11 +1,7 @@
 ---
 title: "reg_logistic"
-author : "Joanna"
+author: "Joanna"
 format: html
-```{r}
-
-```
-
 ---
 
 
@@ -144,10 +140,7 @@ lac_repro <- lac_repro |>
                             parity == 2 ~ "2",
                             parity == 3 ~ "3",
                             parity == 4 ~ "4",
-                            parity == 5 ~ "5",
-                            parity == 6 ~ "6",
-                            parity == 7 ~ "7",
-                            parity >= 8 ~ "8 et plus",
+                            parity == 5 ~ "5 et plus",
                             TRUE~NA))
 ```
 
@@ -156,6 +149,63 @@ myreg_rep_cull <- glmer(cull ~ ai_N + mean_milk + factor(C8parity) + (1 | herd_i
 
 summary(myreg_rep_cull) 
 ```
+
+```{r}
+anova(myreg_rep_cull)
+```
+
+
+Rajout des intéractions 
+
+```{r}
+myreg_rep_cull <- glmer(cull ~ ai_N + mean_milk + factor(C8parity) + (1 | herd_id) + ai_N * factor(C8parity) + mean_milk * factor(C8parity), family = binomial (link = "logit"), data = lac_repro)
+
+summary(myreg_rep_cull) 
+```
+```{r}
+diff_optims <- allFit(myreg_rep_cull, maxfun = 1e5)
+```
+```{r}
+diff_optims_OK <- diff_optims[sapply(diff_optims, is, "merMod")]
+lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
+```
+```{r}
+convergence_results <- lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
+working_indices <- sapply(convergence_results, is.null)
+if(sum(working_indices) == 0){
+  print("No algorithms from allFit converged. You may still be able to use the results, but proceed with extreme caution.")
+  first_fit <- NULL
+} else {
+  first_fit <- diff_optims[working_indices][[1]]
+}
+first_fit
+```
+
+
+```{r}
+myreg_rep_cull <- glmer(cull ~ ai_N + early_milk + factor(C8parity) + (1 | herd_id) + factor(C8parity) * early_milk, family = binomial (link = "logit"), data = lac_repro)
+
+summary(myreg_rep_cull) 
+```
+```{r}
+diff_optims <- allFit(myreg_rep_cull, maxfun = 1e5)
+```
+```{r}
+diff_optims_OK <- diff_optims[sapply(diff_optims, is, "merMod")]
+lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
+```
+```{r}
+convergence_results <- lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
+working_indices <- sapply(convergence_results, is.null)
+if(sum(working_indices) == 0){
+  print("No algorithms from allFit converged. You may still be able to use the results, but proceed with extreme caution.")
+  first_fit <- NULL
+} else {
+  first_fit <- diff_optims[working_indices][[1]]
+}
+first_fit
+```
+
 
 # impact des mammites sur la mort 
 
