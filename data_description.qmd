@@ -545,6 +545,13 @@ Or je ne sais pas comment retirer ses animaux du tableau car ils faussent les r�
 rec_final$out_cause[rec_final$anim_id == "FR2538643995"] <- NA
 rec_final$out_date[rec_final$anim_id == "FR2538643995"] <- NA
 
+## Lac_test permet de contrôler qu'on ne perde pas de données lors des modifications du tableau lac
+lac_test <- rec_final |> 
+  group_by(herd_id, anim_id, parity) |> 
+  summarize(parity = unique(parity),
+            lac_id = NA,
+            calv_date = unique(calv_date))
+
 lac <- rec_final |> 
   group_by(herd_id, anim_id, parity) |> 
   summarize(parity = unique(parity),
@@ -560,6 +567,7 @@ lac <- rec_final |>
             early_milk = mean((milk[dim < 91])),
             mid_milk = mean(milk[dim >= 91 & dim < 181]),
             mean_milk = mean(milk),
+            max_milk = max(milk),
             n_early_mam_cl = length(mam_cl[mam_cl == 1 & dim < 91]),
             n_mid_mam_cl = length(mam_cl[mam_cl == 1 & dim >= 91 & dim < 181]),
             n_early_chronic_scc = length(chronic_scc[chronic_scc == 1 & dim < 91]),
@@ -784,7 +792,7 @@ write.csv2(fertility_lac, "generated_datasets/fertility_lac.csv")
 # impact de la baisse de fertilité sur la réforme 
 
 ```{r selection des vaches mises a la repro}
-lac_repro <- lac |> 
+lac_repro <- lac|> 
   filter(miserepro == 1)
 ```
 
@@ -871,6 +879,29 @@ curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
       from = 0, to = 305)
 
 ```
+# effet de la baisse de la lactation sur la réforme 
+
+
+```{r retrait des vaches qui sont mortes au cours de la lactation}
+lac_cull <- lac |> 
+  filter(out_cause != "M")
+```
+
+
+```{r varaible qui affiche 1 si reforme a la fin de la lactation et 0 sinon}
+lac_cull <- lac_cull |> 
+  group_by(anim_id) |> 
+  mutate(cull = ifelse(out_cause == "B" & parity == max(parity), 1, 0))
+```
+
+```{r enregistrement}
+write.csv2(lac_cull, "generated_datasets/lac_cull.csv")
+```
+
+
+
+
+
 # DAGs
 
 ```{r dag exemple}

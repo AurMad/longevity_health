@@ -138,7 +138,7 @@ summary(myreg_ia4)
 lac_repro <- read.csv2("generated_datasets/lac_repro.csv")
 ```
 
-```{r}
+```{r regroupement des parites}
 lac_repro <- lac_repro |> 
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
@@ -151,7 +151,7 @@ lac_repro <- lac_repro |>
                             TRUE~NA))
 ```
 
-```{r}
+```{r regression logistique}
 myreg_rep_cull <- glmer(cull ~ ai_N + mean_milk + factor(C8parity) + (1 | herd_id), family = binomial (link = "logit"), data = lac_repro)
 
 summary(myreg_rep_cull) 
@@ -183,4 +183,36 @@ summary(myreg_mort1)
 
 Ici il faudrait prendre en compte la saison, l'alimentation, la suvenue de troubles métaboliques en début de lactation, etc...mais ce sont des informations que l'on a pas. On peut émettre l'hypothèse que ce sont des variables non observées mais qui touchent toutes les vaches avec la même proba...(pas tout a fait vrai)
 Il est impossible de faire une régression logistique sur la PL seule car ce n'est pas une varable binaire...
+
+# Impact d'une baisse de production laitière sur la probabilité de réforme 
+
+ici il vaut mieux prendre la production laitière du début de lactation avant le pic car la fin de lactation est peu représentative de la production laitière de l'animal. 
+
+( faut-il se servir des index ? )
+
+
+```{r appel des donnees}
+lac_cull <- read.csv2("generated_datasets/lac_cull.csv")
+```
+
+
+```{r regroupement des parites}
+lac_cull <- lac_cull |> 
+  mutate(C8parity = case_when(parity == 1 ~ "1",
+                            parity == 2 ~ "2",
+                            parity == 3 ~ "3",
+                            parity == 4 ~ "4",
+                            parity == 5 ~ "5",
+                            parity == 6 ~ "6",
+                            parity == 7 ~ "7",
+                            parity >= 8 ~ "8 et plus",
+                            TRUE~NA))
+```
+
+
+```{r}
+myreg_milk_cull <- glmer(cull ~  max_milk + factor(C8parity) + (1 | herd_id), family = binomial (link = "logit"), data = lac_cull)
+
+summary(myreg_milk_cull) 
+```
 
