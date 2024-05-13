@@ -1,9 +1,8 @@
 ---
 title: "reg_logistic"
 author: "Joanna"
-format: "html"
+format: pdf
 ---
-
 
 # Setup
 
@@ -19,44 +18,84 @@ library(gmodels)
 library(lme4)
 ```
 
-# Appel des bases de données nécessaires 
-
+# Appel des bases de données nécessaires
 
 ```{r chargement du fichier "lac"}
 lac <- read.csv2("generated_datasets/lac.csv")
 ```
 
-# Première régression logistique pour la décision de mise à la reproduction 
+# Première régression logistique pour la décision de mise à la reproduction
+
+description du nombre de vaches mises à la repro selon les scc élevés en début de lactation 
+
+```{r desciption des données}
+table(lac$miserepro, lac$n_early_chronic_scc)
+```
+
 
 ```{r création de 8 classes de parité}
 lac <- lac |> 
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
                             parity == 3 ~ "3",
-                            parity == 4 ~ "4",
-                            parity == 5 ~ "5",
-                            parity == 6 ~ "6",
-                            parity == 7 ~ "7",
-                            parity >= 8 ~ "8 et plus",
+                            parity == 4 ~ "4 et plus",
                             TRUE~NA))
 ```
 
+```{r}
+lac_scaled <- lac  # Créez une copie de l'ensemble de données
 
-```{r : régrssion logistique, premier essai}
-myreg_miserepro <- glmer(miserepro ~ n_early_chronic_scc + n_early_brief_scc + n_early_mam_cl + factor(C8parity) + early_milk + (1 | herd_id), 
+# Standardisez les prédicteurs numériques
+lac_scaled$n_early_chronic_scc <- scale(lac$n_early_chronic_scc)
+lac_scaled$n_early_brief_scc <- scale(lac$n_early_brief_scc)
+lac_scaled$n_early_mam_cl <- scale(lac$n_early_mam_cl)
+lac_scaled$early_milk <- scale(lac$early_milk)
+```
+
+```{r}
+# Ajustez le modèle avec les prédicteurs standardisés
+myreg_miserepro_scaled <- glmer(miserepro ~ n_early_chronic_scc + n_early_brief_scc + n_early_mam_cl + factor(C8parity) + early_milk + (1 | herd_id), 
+                                family = binomial(link = "logit"), data = lac_scaled)
+summary(myreg_miserepro_scaled)
+```
+
+
+```{r  premier essai}
+myreg_miserepro <- glmer(miserepro ~ n_early_chronic_scc  + n_early_brief_scc + n_early_mam_cl +factor(C8parity) + early_milk + (1 | herd_id), 
                     family= binomial(link = "logit"), data = lac)
 summary(myreg_miserepro)
 ```
 
-Commentaire de Joanna : j'ai pour l'instant décidé d'utiliser seulement 3 types de mammites différentes car il m'est difficile d'associer les épisodes cliniques avec les scc. Pour l'instant on constate que les mam_cl et les pics de scc > 200 ne sont pas du tout significatifs dans le modèle. *
+```{r deuxieme essai}
+myreg_miserepro <- glmer(miserepro ~ n_early_chronic_scc + n_early_chronic_scc*factor(C8parity) + n_early_brief_scc +  n_early_brief_scc*factor(C8parity) + n_early_mam_cl +factor(C8parity) + early_milk + (1 | herd_id), 
+                    family= binomial(link = "logit"), data = lac)
+summary(myreg_miserepro)
+```
 
-Il faudrait également prendre en compte le nombre de génisses disponibles et en attente pour le renouvellement du troupeau. 
 
-bilan de la première régression : 
-on constate qu'il ne semble pas y avoir de lien prouvé entre la présence d'une mammite clinique ou d'un pic fugace de cellules en début de lactation et la décision de mise à la reproduction. 
+```{r : troisième essai}
+myreg_miserepro <- glmer(miserepro ~ n_early_chronic_scc + n_early_chronic_scc*factor(C8parity) + n_early_brief_scc +  n_early_brief_scc*factor(C8parity) + n_early_mam_cl +factor(C8parity) + early_milk + (1 | herd_id), 
+                    family= binomial(link = "logit"), data= lac,control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=2e5)))
+summary(myreg_miserepro)
+```
+```{r}
+myreg_miserepro_scaled <- glmer(miserepro ~ n_early_chronic_scc + n_early_chronic_scc * factor(C8parity) + 
+                                n_early_brief_scc + n_early_brief_scc * factor(C8parity) + 
+                                n_early_mam_cl + factor(C8parity) + early_milk + (1 | herd_id), 
+                                family = binomial(link = "logit"), data = lac_scaled)
+summary(myreg_miserepro_scaled)
+```
 
 
-# impact des mammites sur la fertilité suite à la mise à la repro 
+
+
+Commentaire de Joanna : j'ai pour l'instant décidé d'utiliser seulement 3 types de mammites différentes car il m'est difficile d'associer les épisodes cliniques avec les scc. Pour l'instant on constate que les mam_cl et les pics de scc \> 200 ne sont pas du tout significatifs dans le modèle. \*
+
+Il faudrait également prendre en compte le nombre de génisses disponibles et en attente pour le renouvellement du troupeau.
+
+bilan de la première régression : on constate qu'il ne semble pas y avoir de lien prouvé entre la présence d'une mammite clinique ou d'un pic fugace de cellules en début de lactation et la décision de mise à la reproduction.
+
+# impact des mammites sur la fertilité suite à la mise à la repro
 
 ```{r appel des donnees}
 fertility_lac <- read.csv2("generated_datasets/fertility_lac.csv")
@@ -67,24 +106,18 @@ fertility_lac <- fertility_lac |>
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
                             parity == 3 ~ "3",
-                            parity == 4 ~ "4",
-                            parity == 5 ~ "5",
-                            parity == 6 ~ "6",
-                            parity == 7 ~ "7",
-                            parity >= 8 ~ "8 et plus",
+                            parity == 4 ~ "4 et plus",
                             TRUE~NA))
 ```
 
-
 ```{r regression lineaire pour la probabilité de vêler}
 
-myreg_vel <- glmer(preg_end ~ n_scc_high + factor(C8parity) + ai_N + n_mam_cl + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac)
+myreg_vel <- glmer(preg_end ~ n_scc_high + n_scc_high*factor(C8parity) + factor(C8parity) + ai_N + ai_N*factor(C8parity) + n_mam_cl + n_mam_cl*factor(C8parity) + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac)
 
 summary(myreg_vel) 
 ```
 
-
-```{r regression-lineaire-proba-un ia1 iaf superieur a 42}
+```{r regression-lineaire-proba-un ia1 iaf superieur a 42, eval = FALSE}
 fertility_lac1 <- fertility_lac |> 
   filter(preg_end == 1)
 
@@ -93,29 +126,28 @@ myreg_inter42 <- glmer(inter_42 ~ n_early_chronic_scc + n_early_env_mam + factor
 summary(myreg_inter42) 
 ```
 
-
-```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 63}
+```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 63, eval = FALSE}
 
 myreg_inter63 <- glmer(inter_63 ~ n_early_chronic_scc + n_early_env_mam + factor(C8parity) + ai_N  + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
 summary(myreg_inter63) 
 ```
 
-```{r reg-lineaire pour la probabilité d avoir un ia1 iaf superieur a 84}
+```{r reg-lineaire pour la probabilité d avoir un ia1 iaf superieur a 84, eval = FALSE}
 
 myreg_inter84 <- glmer(inter_84 ~ n_early_chronic_scc + n_early_env_mam  + factor(C8parity) + ai_N  + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
 summary(myreg_inter84) 
 ```
 
-```{r reg-lineaire-proba ia1 iaf superieur a 84}
+```{r reg-lineaire-proba ia1 iaf superieur a 84, eval = FALSE}
 
 myreg_inter84 <- glmer(inter_84 ~ n_scc_h + factor(C8parity) + ai_N  + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
 summary(myreg_inter84) 
 ```
 
-```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 84}
+```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 84, eval = FALSE}
 
 myreg_ia2 <- glmer(n_ia2 ~ n_scc_high  + factor(C8parity) + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
@@ -128,7 +160,8 @@ myreg_ia4 <- glmer(n_ia4_plus ~ n_scc_high  + factor(C8parity) + (1 | herd_id), 
 
 summary(myreg_ia4) 
 ```
-# impact de la baisse de fertilité sur la réforme 
+
+# impact de la baisse de fertilité sur la réforme
 
 ```{r appel-donnees}
 lac_repro <- read.csv2("generated_datasets/lac_repro.csv")
@@ -154,21 +187,23 @@ summary(myreg_rep_cull)
 anova(myreg_rep_cull)
 ```
 
-
-Rajout des intéractions 
+Rajout des intéractions
 
 ```{r}
 myreg_rep_cull <- glmer(cull ~ ai_N + mean_milk + factor(C8parity) + (1 | herd_id) + ai_N * factor(C8parity) + mean_milk * factor(C8parity), family = binomial (link = "logit"), data = lac_repro)
 
 summary(myreg_rep_cull) 
 ```
+
 ```{r}
 diff_optims <- allFit(myreg_rep_cull, maxfun = 1e5)
 ```
+
 ```{r}
 diff_optims_OK <- diff_optims[sapply(diff_optims, is, "merMod")]
 lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
 ```
+
 ```{r}
 convergence_results <- lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
 working_indices <- sapply(convergence_results, is.null)
@@ -180,20 +215,22 @@ if(sum(working_indices) == 0){
 }
 first_fit
 ```
-
 
 ```{r}
 myreg_rep_cull <- glmer(cull ~ ai_N + early_milk + factor(C8parity) + (1 | herd_id) + factor(C8parity) * early_milk, family = binomial (link = "logit"), data = lac_repro)
 
 summary(myreg_rep_cull) 
 ```
+
 ```{r}
 diff_optims <- allFit(myreg_rep_cull, maxfun = 1e5)
 ```
+
 ```{r}
 diff_optims_OK <- diff_optims[sapply(diff_optims, is, "merMod")]
 lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
 ```
+
 ```{r}
 convergence_results <- lapply(diff_optims_OK, function(x) x@optinfo$conv$lme4$messages)
 working_indices <- sapply(convergence_results, is.null)
@@ -206,8 +243,7 @@ if(sum(working_indices) == 0){
 first_fit
 ```
 
-
-# impact des mammites sur la mort 
+# impact des mammites sur la mort
 
 ```{r création de la variable mort ou non}
 lac <- lac |> 
@@ -220,31 +256,29 @@ myreg_mort0 <- glmer(mort ~ n_chronic_scc + n_brief_scc + n_mam_cl + factor(C8pa
                     family= binomial(link = "logit"), data = lac)
 summary(myreg_mort0)
 ```
+
 pas logique...la parité n'aurait pas de lien, ni les mammites cliniques mais la prodution laitière oui....ce modèle me semble non exploitable
 
-nouvel essai : 
-cette fois j'ai regroupé toutes les mammites fugaces en "mammites environnementales" et j'ai fait 2 périodes de temps : entre 1 et 90 jours et entre 91 et 180 jours. 
+nouvel essai : cette fois j'ai regroupé toutes les mammites fugaces en "mammites environnementales" et j'ai fait 2 périodes de temps : entre 1 et 90 jours et entre 91 et 180 jours.
+
 ```{r régression logistique 1}
 myreg_mort1 <- glmer(mort ~ n_early_chronic_scc + n_mid_chronic_scc  + n_early_env_mam + n_mid_env_mam + factor(C8parity) + mid_milk + early_milk + (1 | herd_id), family= binomial(link = "logit"), data = lac)
 summary(myreg_mort1)
 ```
 
-# troisième régression logistique : impact des mammites sur la production laitière moyenne 
+# troisième régression logistique : impact des mammites sur la production laitière moyenne
 
-Ici il faudrait prendre en compte la saison, l'alimentation, la suvenue de troubles métaboliques en début de lactation, etc...mais ce sont des informations que l'on a pas. On peut émettre l'hypothèse que ce sont des variables non observées mais qui touchent toutes les vaches avec la même proba...(pas tout a fait vrai)
-Il est impossible de faire une régression logistique sur la PL seule car ce n'est pas une varable binaire...
+Ici il faudrait prendre en compte la saison, l'alimentation, la suvenue de troubles métaboliques en début de lactation, etc...mais ce sont des informations que l'on a pas. On peut émettre l'hypothèse que ce sont des variables non observées mais qui touchent toutes les vaches avec la même proba...(pas tout a fait vrai) Il est impossible de faire une régression logistique sur la PL seule car ce n'est pas une varable binaire...
 
-# Impact d'une baisse de production laitière sur la probabilité de réforme 
+# Impact d'une baisse de production laitière sur la probabilité de réforme
 
-ici il vaut mieux prendre la production laitière du début de lactation avant le pic car la fin de lactation est peu représentative de la production laitière de l'animal. 
+ici il vaut mieux prendre la production laitière du début de lactation avant le pic car la fin de lactation est peu représentative de la production laitière de l'animal.
 
 ( faut-il se servir des index ? )
-
 
 ```{r appel-donnees-1}
 lac_cull <- read.csv2("generated_datasets/lac_cull.csv")
 ```
-
 
 ```{r regroupement-parites}
 lac_cull <- lac_cull |> 
@@ -259,10 +293,8 @@ lac_cull <- lac_cull |>
                             TRUE~NA))
 ```
 
-
 ```{r}
 myreg_milk_cull <- glmer(cull ~  max_milk + factor(C8parity) + (1 | herd_id), family = binomial (link = "logit"), data = lac_cull)
 
 summary(myreg_milk_cull) 
 ```
-

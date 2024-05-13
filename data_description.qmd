@@ -2,6 +2,9 @@
 title: "Description des données Alonge"
 author: "Aurélien"
 format: html
+editor: 
+  markdown: 
+    wrap: sentence
 ---
 
 ```{r setup}
@@ -16,7 +19,6 @@ library(ggplot2)
 library(lme4)
 library(ggeffects)
 ```
-
 
 # Données Littoral Normand
 
@@ -55,17 +57,15 @@ san <- read_excel(path_to_file) |>
 
 Ce jeu de données contient :
 
-- Nombre d'élevages : `r length(unique(san$herd_id))`
-- Nombre d'animaux : `r length(unique(san$anim_id))`
-- Nombre de lactation : `r length(unique(san$lac_id))`
-
+-   Nombre d'élevages : `r length(unique(san$herd_id))`
+-   Nombre d'animaux : `r length(unique(san$anim_id))`
+-   Nombre de lactation : `r length(unique(san$lac_id))`
 
 Le jeu de données contient les évènements sanitaires survenus entre début 2021 et début 2024.
 
 ```{r san-event-dates-summary}
 summary(san$event_date)
 ```
-
 
 ```{r san-event-dates-dist}
 san |> 
@@ -76,11 +76,9 @@ san |>
 
 La majorité des vaches incluses ont des dates de vêlage entre 2019 et 2024.
 
-
 ```{r san-calv-dates-summary}
 summary(san$calv_date)
 ```
-
 
 ```{r san-calv-dates-dist}
 san |> 
@@ -111,20 +109,17 @@ san |>
 
 ```
 
-
 ## Données parage
 
 ```{r}
 
 ```
 
-
-# Données Idele : 
-
+# Données Idele :
 
 Les données transmises par Philippe contiennent 11 fichiers.
 
-On commence par appeler les données une a une et le tri se fera ensuite. 
+On commence par appeler les données une a une et le tri se fera ensuite.
 
 ## Format des données
 
@@ -146,6 +141,7 @@ ls_anim <- read.csv2(path_to_file)
 
 glimpse(ls_anim)
 ```
+
 ## Liste des élevages
 
 ```{r ls-elv-chargment}
@@ -156,11 +152,10 @@ ls_elv <- read.csv2(path_to_file)
 glimpse(ls_elv)
 ```
 
-
 ## Conditions naissances
 
-Le fichier s'appelle `condition_naiss.txt`. Il contient des informations sur des bovins, notamment des années et conditions de naissance.
-
+Le fichier s'appelle `condition_naiss.txt`.
+Il contient des informations sur des bovins, notamment des années et conditions de naissance.
 
 ```{r conditions-naiss-chargement}
 path_to_file <- paste0(path_to_data, "condition_naiss.txt")
@@ -179,14 +174,13 @@ glimpse(cnais)
 #barplot(table(cnais$RV))
 ```
 
-
 Les codes et effectifs pour les conditions de naissance :
 
 ```{r cnais-conditions-naissance}
 table(cnais$CN)
 ```
-Les poids de naissance sont renseignés pour `r round(length(cnais$PONAIS[!is.na(cnais$PONAIS)]) / nrow(cnais) * 100, 1)`% des animaux Cela me semble très élevé.
 
+Les poids de naissance sont renseignés pour `r round(length(cnais$PONAIS[!is.na(cnais$PONAIS)]) / nrow(cnais) * 100, 1)`% des animaux Cela me semble très élevé.
 
 ```{r cnais-ditrib-poids-naiss}
 #hist(cnais$PONAIS)
@@ -194,7 +188,8 @@ Les poids de naissance sont renseignés pour `r round(length(cnais$PONAIS[!is.na
 
 ## Contrôles laitiers
 
-Le fichier est assez volumineux (241 Mo). Données classiques.
+Le fichier est assez volumineux (241 Mo).
+Données classiques.
 
 ```{r controles-elementaires}
 path_to_file <- paste0(path_to_data, "controle_elem.txt")
@@ -221,7 +216,8 @@ rec <- rec |>
 glimpse(rec)
 ```
 
-Il contient de données pour `r nrow(rec)` contrôles élemntaires sur `r  length(unique(rec$ANIM))` vaches. On remonte assez loin en termes de dates de contrôles.
+Il contient de données pour `r nrow(rec)` contrôles élemntaires sur `r  length(unique(rec$ANIM))` vaches.
+On remonte assez loin en termes de dates de contrôles.
 
 ```{r rec-distrib-dates}
 rec |> 
@@ -232,7 +228,8 @@ rec |>
 
 ## Produtcion
 
-Ce fichier contient moins de lignes et plus de colonnes que le précédent. Je ne comprends pas bien la différence.
+Ce fichier contient moins de lignes et plus de colonnes que le précédent.
+Je ne comprends pas bien la différence.
 
 ```{r prd-chargment}
 path_to_file <- paste0(path_to_data, "production.txt")
@@ -276,6 +273,7 @@ ia <- ia |>
 
 glimpse(ia)
 ```
+
 ## Généalogie
 
 ```{r genea-chargment}
@@ -287,7 +285,6 @@ colnames(gna) <- tolower(colnames(gna))
 
 glimpse(gna)
 ```
-
 
 ## Index
 
@@ -312,23 +309,27 @@ colnames(mamt)<-tolower(colnames(mamt))
 
 glimpse(mamt)
 ```
-- Code origine mammite
 
-Il y a 3 codes mamites différents. Pas de description.
+-   Code origine mammite
+
+Il y a 3 codes mamites différents.
+Pas de description.
 
 ```{r code-mammite-desc}
 mamt |> 
   select(coorco) |> 
   table()
 ```
-- Sévérité mammites
+
+-   Sévérité mammites
 
 ```{r mammite-severite}
 mamt |> 
   select(semacl) |> 
   table()
 ```
-- Combinaison code - sévérité mammite
+
+-   Combinaison code - sévérité mammite
 
 Mammites de code C globalement moins sévères.
 
@@ -338,7 +339,8 @@ mamt |>
   table() |> 
   apply(1, function(x) round(x / sum(x), 3))
 ```
-- Dates des mammites
+
+-   Dates des mammites
 
 ```{r mamites-dsitribution-dates}
 mamt |> 
@@ -346,12 +348,12 @@ mamt |>
   ggplot(aes(x = damacl)) +
   geom_histogram()
 ```
+
 ```{r}
 mamt <- mamt |> 
   rename(anim_id = anim,
          mamcl_date = damacl)
 ```
-
 
 ## Mouvements
 
@@ -368,9 +370,9 @@ mvt <- mvt |>
 glimpse(mvt)
 ```
 
-# Ajout du numéro de cheptel a chaque vache dans les données du contrôle laitier 
+# Ajout du numéro de cheptel a chaque vache dans les données du contrôle laitier
 
-fait dans "rec_selection.qmd", il suffit de charger le fichier de données généré par le code. 
+fait dans "rec_selection.qmd", il suffit de charger le fichier de données généré par le code.
 
 ```{r Chargement du fichier rec-final}
 
@@ -379,19 +381,16 @@ rec_final <- read.csv2("generated_datasets/rec_final.csv")
 #rec_final <- read.csv2(here :: here("data/rec_final.csv"), header = TRUE, sep = ";", dec=",", fileEncoding = "Latin1")
 ```
 
-
 # Définitions des différentes mammites
 
-## Mammites chroniques 
+## Mammites chroniques
 
-J'ai décidé de définir les mammites chroniques comme une succession de 2 controles avec des SCC > 200 000 cellules. 
-Pour l'instant je me concentre sur le début de lactation donc les 90 premiers jours. 
-on pourra essayer de faire 2 sous-groupes : 
-- le fait d'avoir 2 controles successifs ou plus > 200 000 juste avant l'IA
-- le fait d'avoir le dernier controle de la lactation précédente et le premier controle de cette lactation > 200 000
+J'ai décidé de définir les mammites chroniques comme une succession de 2 controles avec des SCC \> 200 000 cellules.
+Pour l'instant je me concentre sur le début de lactation donc les 90 premiers jours.
+on pourra essayer de faire 2 sous-groupes : - le fait d'avoir 2 controles successifs ou plus \> 200 000 juste avant l'IA - le fait d'avoir le dernier controle de la lactation précédente et le premier controle de cette lactation \> 200 000
 
 ```{r creation variable qui donne la valeur du contole suivant}
-rec_final <- rec_final |> 
+rec_final1 <- rec_final |> 
   arrange(herd_id, anim_id) |> 
   group_by(anim_id) |> 
   mutate(scc_succ = lead(scc)) |> 
@@ -399,27 +398,26 @@ rec_final <- rec_final |>
 ```
 
 ```{r creation variable qui compare ces valeurs}
-rec_final <- rec_final |> 
+rec_final1 <- rec_final1 |> 
   mutate(chronic_scc = ifelse(scc > 200 & scc_succ > 200, 1, 0)) |> 
   mutate(brief_scc = ifelse(scc > 200 & scc_succ < 200 & scc_prev < 200, 1, 0))
 ```
 
 ```{r rangement}
-rec_final <- rec_final |> 
+rec_final1 <- rec_final1 |> 
   select(herd_id, anim_id, parity, calv_date, ctrl_date, dim, milk, fat, prot, scc, scc_succ, scc_prev, chronic_scc, brief_scc, out_cause, out_date )
 ```
 
 ```{r}
-rec_final <- rec_final |> 
+rec_final1 <- rec_final1 |> 
   mutate(ctrl_date = as.Date(ctrl_date, format = "%Y-%m-%d")) |> 
   mutate(calv_date = as.Date(calv_date, format = "%Y-%m-%d")) |> 
   mutate(out_date = as.Date(out_date, format = "%Y-%m-%d"))
 ```
 
-
 ## mammites cliniques
 
-Le but ici serait d'intégrer les mammites avec leurs dates dans le tableau rec_final, avec les dates de mammites ordonnées entre chaque intervalle de dates de controle qui correspond. 
+Le but ici serait d'intégrer les mammites avec leurs dates dans le tableau rec_final, avec les dates de mammites ordonnées entre chaque intervalle de dates de controle qui correspond.
 
 ```{r tentative avec seulement 1 vache, eval=FALSE}
 index_anim = which(rec_final$anim_id == "FR0103005584")
@@ -441,7 +439,6 @@ date_seq[which(date_seq%in%data_inter2$mamcl_date)]
 #which(between(data_inter2$mamcl_date, range1, range2))
 ```
 
-
 ```{r, eval=FALSE}
 data_inter2 <- data_inter2 |> 
   rename(ctrl_date = dacoma)
@@ -449,8 +446,6 @@ data_inter2 <- data_inter2 |>
 data_inter2 <- data_inter2 |> 
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
- 
-
 
 ```{r date de collecte mammite date de controle}
 
@@ -462,9 +457,7 @@ mamt <- mamt|>
 
 ```
 
- 
-J'ai renommé la date des collectes de mammites ctrl_date" car ces dates semblent correspondre aux dates de passage du controle laitier. 
-j'arrive à ajouter comme ca la date de mammite quand il y en a 
+J'ai renommé la date des collectes de mammites ctrl_date" car ces dates semblent correspondre aux dates de passage du controle laitier. j'arrive à ajouter comme ca la date de mammite quand il y en a
 
 ```{r tableau test sur 1 seule vache, eval = FALSE}
 test <- left_join(data_inter,
@@ -473,17 +466,18 @@ test <- left_join(data_inter,
                   join_by(anim_id, ctrl_date))
 ```
 
+ERREUR DETECTEE : Certaines vaches comme par exemple "FR2534748533" possèdent des données en doublons pour les informations du contrôle laitier"...je ne sais pas pourquoi car il n'y a aucun doublon dans "rec" ni dans "rec1" donc le problème est lié à la modification de "rec_final". je pense que le problème vient du left_join...pour les vaches qui ont plusieurs mammites cliniques d'enregistrées sur un meme mois voire plusieurs jours qui se suivent, il duplique les contrôles/ou remplace certains contrôles....il faudrait que chaque enregristrement de mammites cliniques qui se suivent sur le mois soient considérés comme un seul et même épisode de mammite. 
+
 ```{r}
-rec_final <- left_join(rec_final |> 
-                         mutate(ctrl_date = as.Date(ctrl_date)),
+rec_final1 <- left_join(rec_final1,
                        mamt |> 
                          select(anim_id, ctrl_date, mamcl_date),
                        join_by(anim_id, ctrl_date)) |> 
   arrange(herd_id, anim_id, ctrl_date)
 ```
 
-
-les dates semblent correspondre. On remarque aussi que les mammites cliniques semblent parfois correspondre à un pic de scc, parfois elle arrive après plusieurs controles sup à 200.
+les dates semblent correspondre.
+On remarque aussi que les mammites cliniques semblent parfois correspondre à un pic de scc, parfois elle arrive après plusieurs controles sup à 200.
 On va commencer à essayer de faire des catégories de mammites...Pour l'instant c'est fastidieux...
 
 ```{r AMELIORABLE, eval=FALSE}
@@ -496,18 +490,18 @@ test <- test |>
 ```
 
 ```{r}
-rec_final <- rec_final |> 
+rec_final1 <- rec_final1 |> 
   mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
   mutate(env_mam = case_when(brief_scc == 1 & mam_cl == 0 ~ "1",
                              brief_scc == 0 & mam_cl == 1 & chronic_scc == 0 & scc_succ < 200 ~ "1",
                              brief_scc == 1 & mam_cl ==1 ~ "1",
                              TRUE ~ "0"))
 
-rec_final$mam_cl[is.na(rec_final$mam_cl)] <- 0
-rec_final$chronic_scc[is.na(rec_final$chronic_scc)] <- 0
-rec_final$brief_scc[is.na(rec_final$brief_scc)] <- 0
+rec_final1$mam_cl[is.na(rec_final$mam_cl)] <- 0
+rec_final1$chronic_scc[is.na(rec_final$chronic_scc)] <- 0
+rec_final1$brief_scc[is.na(rec_final$brief_scc)] <- 0
 ```
-
+ERREUR DETECTEE : Certaines vaches comme par exemple "FR2534748533" possèdent des données en doublons pour les informations du contrôle laitier"...je ne sais pas pourquoi car il n'y a aucun doublon dans "rec" ni dans "rec1" donc le problème est lié à la modification de "rec_final". j'aimerais rectifier le problème à la source mais je ne le trouve pas...
 
 ## enregistrement de rec_final
 
@@ -519,28 +513,27 @@ write.csv2(rec_final, "generated_datasets/rec_final.csv")
 
 Génération d'une liste d'élevages uniques.
 
-```{r}
+```{r, eval = FALSE}
 herd_list <- unique(rec_final$herd_id)
 ```
 
 On sélectionne un échantillon de 10 élevages au hasard.
 
-```{r Selection echantillon de 10 elevages}
+```{r Selection echantillon de 10 elevages, eval = FALSE}
 set.seed(42) #On garde la même graine si on veut conserver le même échantillon
 herd_random_sample <- sample(herd_list, 10, replace = FALSE)
 rec_final <- rec_final |> 
   filter(herd_id %in% herd_random_sample)
 ```
 
+# Création d'une liste de lactations
 
+Ce tableau permet de regrouper toutes les infos de cellules et de production laitière par lactation
 
-# Création d'une liste de lactations 
-
-Ce tableau permet de regrouper toutes les infos de cellules et de production laitière par lactation 
-
-Commentaire joanna pour Aurélien : J'ai trouvé pourquoi on a une perte de données dans lac, c'est parce que le filtre appliqué à rec qui enlève les années où les élevages ont moins de 11 contrôles, a coupé la lactation de certaines vaches qui chevauchent ces années. Par exemple pour la vache "FR1456171629", les données débutent à partir de janvier 2012 dans rec_final, or cette vache à débuté sa lactation en 2011 donc on perd pas mal d'information notamment sur tout son début de lactation. 
-Or je ne sais pas comment retirer ses animaux du tableau car ils faussent les résultats. le code comprend ses animaux comme n'yant pas de cellules élevés en début de lactation alors qu'on a juste pas l'information...(voir code suivant pour enlever les vaches dont on a pas pu calculer la PL en début de lactation)
-
+Commentaire joanna pour Aurélien : J'ai trouvé pourquoi on a une perte de données dans lac, c'est parce que le filtre appliqué à rec qui enlève les années où les élevages ont moins de 11 contrôles, a coupé la lactation de certaines vaches qui chevauchent ces années.
+Par exemple pour la vache "FR1456171629", les données débutent à partir de janvier 2012 dans rec_final, or cette vache à débuté sa lactation en 2011 donc on perd pas mal d'information notamment sur tout son début de lactation.
+Or je ne sais pas comment retirer ses animaux du tableau car ils faussent les résultats.
+le code comprend ses animaux comme n'yant pas de cellules élevés en début de lactation alors qu'on a juste pas l'information...(voir code suivant pour enlever les vaches dont on a pas pu calculer la PL en début de lactation)
 
 ```{r lac-list of lactations}
 rec_final$out_cause[rec_final$anim_id == "FR2538643995"] <- NA
@@ -582,18 +575,17 @@ lac <- rec_final |>
 lac$lac_id <- 1:nrow(lac)
 ```
 
-afin de supprimer les vaches dont on a pas d'information sur le début de lactation. 
+afin de supprimer les vaches dont on a pas d'information sur le début de lactation.
+
 ```{r}
 lac <- lac[!is.nan(lac$early_milk),]
 ```
-
 
 ```{r estimation de la date du prochain velage}
 lac <- lac |> 
   group_by(anim_id) |> 
   mutate(calv_nxt = lead(calv_date))
 ```
-
 
 Création d'une variable semblble à la période d'insémination correspondant à 90 jours après la date de vêlage
 
@@ -602,7 +594,6 @@ lac <- lac |>
   mutate(per_ins = calv_date + 90)
 ```
 
-
 ```{r date du premier velage}
 calv_first <- min(lac$calv_date, na.rm  = TRUE)
 calv_first <- as.Date(calv_first)
@@ -610,7 +601,8 @@ calv_first <- as.Date(calv_first)
 
 ## ajout des données de reproduction
 
-Pour les formats date voir ?strptime
+Pour les formats date voir ?s
+trptime
 
 ```{r conversion des dates}
 ia <- ia |> 
@@ -622,7 +614,6 @@ ia <- ia |>
 ia <- ia |> 
   filter(date_ia > calv_first)
 ```
-
 
 ```{r selection des dates ia comprises entre le velage precedent et le velage suivant, pour un meme animal et pour une meme lactation il y a plusieurs dates ia car elle a ete inseminee plusieurs fois}
  
@@ -637,8 +628,8 @@ ai1 <- left_join(lac |>
 ai1 <- ai1 |> 
   mutate(calv_nxt = as.Date(calv_nxt))
 ```
-Les lignes qui se rajoutent correspondent aux animaux qui ont plusieurs dates d'ia pour une même lactation
 
+Les lignes qui se rajoutent correspondent aux animaux qui ont plusieurs dates d'ia pour une même lactation
 
 ```{r}
 ai_lac <- ai1 |> 
@@ -650,17 +641,16 @@ ai_lac <- ai1 |>
             ai_calv_days = as.integer(unique(calv_nxt) - max(date_ia)))
 ```
 
-
 ```{r ajout des données de reproduction à lac}
 lac <- left_join(lac, ai_lac)
 ```
-Les Données qui sont transmises par ia ne commencent qu'a partir de 2009, donc il faut que lac commence également après cette date pour être sûre que les données soient complètes. 
+
+Les Données qui sont transmises par ia ne commencent qu'a partir de 2009, donc il faut que lac commence également après cette date pour être sûre que les données soient complètes.
 
 ```{r}
 lac <- lac |> 
   filter(calv_date > as.Date("2009-01-01"))
 ```
-
 
 On va maintenant ajouter des variables binaires permettant de caractériser la décision ou non de mise à la repro
 
@@ -670,27 +660,22 @@ lac <- lac |>
 
 ```
 
-
 ```{r Enregistrement de lac}
 write.csv2(lac, "generated_datasets/lac.csv")
 ```
 
+Le but est d'utiliser lac pour travailler les régressions logistiques
 
-Le but est d'utiliser lac pour travailler les régressions logistiques 
-
-
-tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrôles ainsi que les animaux qui ont vêler après le 1 janvier 2015. 
-
+tableau "lac_corr" qui ne sélectionne que les animaux qui ont plus de 9 contrôles ainsi que les animaux qui ont vêler après le 1 janvier 2015.
 
 ```{r création sous-groupe de lac, eval=FALSE}
 lac_corr = lac[lac$n_ctrl > 9 & lac$calv_date >as.Date("2015-01-01"),]
 
 ```
 
+# Recherche des génisses par troupeau
 
-# Recherche des génisses par troupeau 
-
-## création d'un premier tableau qui regroupe toutes les primipares 
+## création d'un premier tableau qui regroupe toutes les primipares
 
 ```{r tableau prim}
 prim <- ia |> 
@@ -702,21 +687,16 @@ prim <- prim |>
   rename(herd_id = chepia)
 ```
 
-
-(Ajout d'une colonne pour les mois et l'année) --> pas utilisé pour l'instant  
+(Ajout d'une colonne pour les mois et l'année) --\> pas utilisé pour l'instant
 
 ```{r}
 #prim <- prim |> 
  # mutate(m_y_génisse = format(date_ia, format = "%Y/%m"))
 ```
 
+Attention dans le jeu de données "ia", une vache peut passer de la parité 0 à la parité 3 =\> il ne faut pas se fier à "nxt_parity".
 
-
-Attention dans le jeu de données "ia", une vache peut passer de la parité 0 à la parité 3 => il ne faut pas se fier à "nxt_parity". 
-
-Maintenant il faut calculer le nombre de primipares mises à la repro, présentes dans le troupeau pour chaque lactation  de vache. 
-
-
+Maintenant il faut calculer le nombre de primipares mises à la repro, présentes dans le troupeau pour chaque lactation de vache.
 
 ```{r}
 nb_prim <- prim |> 
@@ -725,15 +705,14 @@ nb_prim <- prim |>
   arrange(herd_id)
 ```
 
-# Impact des mammites sur la fertilité 
+# Impact des mammites sur la fertilité
 
-## tri des animaux qui ont été mis à la reproduction 
+## tri des animaux qui ont été mis à la reproduction
 
 ```{r tableau qui ne prend que les animaux mis à la repro et reformes en boucherie}
 fertility_lac <- lac |> 
   filter(miserepro == 1 & out_cause == "B")
 ```
-
 
 ```{r}
 fertility_lac <- fertility_lac |> 
@@ -741,8 +720,6 @@ fertility_lac <- fertility_lac |>
 
 fertility_lac$preg_end[is.na(fertility_lac$preg_end)] <- 0 
 ```
-
-
 
 ```{r calcul du temps entre le velage et ia fecondante}
 fertility_lac <- fertility_lac |> 
@@ -753,7 +730,7 @@ fertility_lac <- fertility_lac |>
   mutate(dim_iaf = difftime(ai_last, calv_date, units = c("days")))
 ```
 
-COmmentaire : Certains animaux ont un intervalle supérieur à 900 jours, très étrange il faut demander à IDELE ou regarder si dans le code quelque chose entraine ça. 
+COmmentaire : Certains animaux ont un intervalle supérieur à 900 jours, très étrange il faut demander à IDELE ou regarder si dans le code quelque chose entraine ça.
 
 ```{r tri des animaux qui ont un intervalle inferieur a 300 jours}
 fertility_lac <- fertility_lac |> 
@@ -785,49 +762,43 @@ fertility_lac <- fertility_lac |>
          n_ia4_plus = ifelse(ai_N >= 4, 1, 0 ))
 ```
 
-
-```{r enregistrement}
+```{r, eval=FALSE}
 write.csv2(fertility_lac, "generated_datasets/fertility_lac.csv")
 ```
 
-# impact de la baisse de fertilité sur la réforme 
+# impact de la baisse de fertilité sur la réforme
 
 ```{r selection des vaches mises a la repro}
 lac_repro <- lac|> 
   filter(miserepro == 1)
 ```
 
-```{r retrait des vaches qui sont mortes au cours de la lactation}
+```{r}
 lac_repro <- lac_repro |> 
   filter(out_cause != "M")
 ```
 
-
-```{r varaible qui affiche 1 si reforme a la fin de la lactation et 0 sinon}
+```{r}
 lac_repro <- lac_repro |> 
   group_by(anim_id) |> 
   mutate(cull = ifelse(out_cause == "B" & parity == max(parity), 1, 0))
 ```
 
-```{r enregistrement}
+```{r}
 write.csv2(lac_repro, "generated_datasets/lac_repro.csv")
 ```
 
-
-# Modélisation des courbes de lactation 
+# Modélisation des courbes de lactation
 
 ```{r}
 rec_wilmink <- rec_final |> 
   select(herd_id, anim_id, parity, ctrl_date, milk, dim)
 ```
 
-
 ```{r}
 rec_wilmink <- rec_wilmink |> 
   mutate(exp_dim = exp(-0.05*dim))
 ```
-
-
 
 ```{r}
 ggplot(rec_final, aes(x = dim, y = milk)) +
@@ -842,7 +813,6 @@ rec_final |>
   ggplot(aes(x = dim, y = milk_mean)) +
   geom_point()
 ```
-
 
 ```{r régression lineaire}
 PL <- lm(milk ~ exp_dim + dim, 
@@ -859,7 +829,6 @@ summary(PL)
 ```{r}
 plot(PL)
 ```
-
 
 ```{r chargement-lme4}
 # ne charger qu'une seule fois
@@ -880,14 +849,13 @@ curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
       from = 0, to = 305)
 
 ```
-# effet de la baisse de la lactation sur la réforme 
 
+# effet de la baisse de la lactation sur la réforme
 
 ```{r retrait des vaches qui sont mortes au cours de la lactation}
 lac_cull <- lac |> 
   filter(out_cause != "M")
 ```
-
 
 ```{r varaible qui affiche 1 si reforme a la fin de la lactation et 0 sinon}
 lac_cull <- lac_cull |> 
@@ -898,10 +866,6 @@ lac_cull <- lac_cull |>
 ```{r enregistrement}
 write.csv2(lac_cull, "generated_datasets/lac_cull.csv")
 ```
-
-
-
-
 
 # DAGs
 
@@ -942,7 +906,6 @@ dag_mammites <- dagify(
 
 ggdag(dag_mammites) + theme_dag()
 ```
-
 
 ```{r DAG mam-mise à la reproduction}
 #| echo: false
