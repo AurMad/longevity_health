@@ -62,7 +62,7 @@ on constate qu'il ne semble pas y avoir de lien prouvé entre la présence d'une
 fertility_lac <- read.csv2("generated_datasets/fertility_lac.csv")
 ```
 
-```{r création de 8 classes de parité}
+```{r creation-8-classes-parité}
 fertility_lac <- fertility_lac |> 
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
@@ -84,7 +84,7 @@ summary(myreg_vel)
 ```
 
 
-```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 42}
+```{r regression-lineaire-proba-un ia1 iaf superieur a 42}
 fertility_lac1 <- fertility_lac |> 
   filter(preg_end == 1)
 
@@ -101,14 +101,14 @@ myreg_inter63 <- glmer(inter_63 ~ n_early_chronic_scc + n_early_env_mam + factor
 summary(myreg_inter63) 
 ```
 
-```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 84}
+```{r reg-lineaire pour la probabilité d avoir un ia1 iaf superieur a 84}
 
 myreg_inter84 <- glmer(inter_84 ~ n_early_chronic_scc + n_early_env_mam  + factor(C8parity) + ai_N  + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
 summary(myreg_inter84) 
 ```
 
-```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 84}
+```{r reg-lineaire-proba ia1 iaf superieur a 84}
 
 myreg_inter84 <- glmer(inter_84 ~ n_scc_h + factor(C8parity) + ai_N  + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
@@ -130,7 +130,7 @@ summary(myreg_ia4)
 ```
 # impact de la baisse de fertilité sur la réforme 
 
-```{r appel des donnees}
+```{r appel-donnees}
 lac_repro <- read.csv2("generated_datasets/lac_repro.csv")
 ```
 
@@ -241,12 +241,12 @@ ici il vaut mieux prendre la production laitière du début de lactation avant l
 ( faut-il se servir des index ? )
 
 
-```{r appel des donnees}
+```{r appel-donnees-1}
 lac_cull <- read.csv2("generated_datasets/lac_cull.csv")
 ```
 
 
-```{r regroupement des parites}
+```{r regroupement-parites}
 lac_cull <- lac_cull |> 
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
