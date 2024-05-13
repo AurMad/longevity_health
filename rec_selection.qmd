@@ -14,9 +14,7 @@ library(readxl)
 library(ggplot2)
 ```
 
-
 # Chargement des données
-
 
 ```{r path-data-littoral-normand}
 #| echo: false
@@ -37,6 +35,7 @@ Examen des données.
 ```{r milk-recording-data-glimpse}
 glimpse(rec)
 ```
+
 Les colonnes sont renommées et les données formattées pour faciliter la manipulation.
 
 ```{r milk-recording-formatting}
@@ -67,8 +66,8 @@ Examen des données.
 ```{r mvt-glimpse}
 glimpse(mvt)
 ```
-Les colonnes sont renommées et les données formattées pour faciliter la manipulation.
 
+Les colonnes sont renommées et les données formattées pour faciliter la manipulation.
 
 ```{r mvt-formatting}
 mvt <- mvt |> 
@@ -121,6 +120,7 @@ anim_missing_mvt <- mvt |>
 
 anim_missing <- full_join(anim_missing_rec, anim_missing_mvt)
 ```
+
 Création du jeu de données contrôle laitier final. Il faudra sans doute essayer de retrouver les animaux manquants auprès de l'Idele.
 
 ```{r rec-final}
@@ -138,6 +138,7 @@ test_day <- rec |>
     n_cows = length(unique(anim_id))
   )
 ```
+
 Histogramme du nombre de vaches par contrôle, jusqu'à 50 vaches. L'objectif est d'identifier des contrôles avec peu de vaches qu'on voudrait enlever. On va enlever les contrôles avec moins de 10 vaches.
 
 ```{r number-cows-test-day}
@@ -161,6 +162,7 @@ rec_herd_year <- test_day |>
 ggplot(rec_herd_year, aes(x = n_rec)) +
   geom_bar()
 ```
+
 On sélectionne les élevages-années avec 11 ou 12 contrôles.
 
 ```{r herd-selection-nrec-year}
@@ -188,7 +190,6 @@ rec_final <- rec_final |>
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
 
-
 ## Produtcion
 
 Ce fichier contient moins de lignes et plus de colonnes que le précédent. Je ne comprends pas bien la différence.
@@ -210,7 +211,7 @@ prd <- prd |>
          total_MP = mptolad,
          total_tb = tbtolad,
          total_tp = tptolad)
-```       
+```
 
 Rajout des dates de vêlage au tableau rec_final afin de calculer le stade de lactation "dim"
 
@@ -240,17 +241,14 @@ rec_final <- rec_final|>
 ```
 
 commentaire de Joanna : il y a un problème, certaines vaches ont une lactation de plus de 2000 jours...
+
 ```{r}
 rec_final <- rec_final |> 
   filter(dim <= 300)
 ```
-
 
 Tu peux enregistrer le fichier final pour ne pas avoir à refaire tourner ce script à chaque fois. Ne pas inclure ces fichiers de données générés dans les commits.
 
 ```{r saving-final-milk-recording-data}
 write.csv2(rec_final, "generated_datasets/rec_final.csv")
 ```
-
-
-
