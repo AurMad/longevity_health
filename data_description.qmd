@@ -390,7 +390,7 @@ Pour l'instant je me concentre sur le début de lactation donc les 90 premiers j
 on pourra essayer de faire 2 sous-groupes : - le fait d'avoir 2 controles successifs ou plus \> 200 000 juste avant l'IA - le fait d'avoir le dernier controle de la lactation précédente et le premier controle de cette lactation \> 200 000
 
 ```{r creation variable qui donne la valeur du contole suivant}
-rec_final1 <- rec_final |> 
+rec_final <- rec_final |> 
   arrange(herd_id, anim_id) |> 
   group_by(anim_id) |> 
   mutate(scc_succ = lead(scc)) |> 
@@ -398,18 +398,18 @@ rec_final1 <- rec_final |>
 ```
 
 ```{r creation variable qui compare ces valeurs}
-rec_final1 <- rec_final1 |> 
+rec_final <- rec_final |> 
   mutate(chronic_scc = ifelse(scc > 200 & scc_succ > 200, 1, 0)) |> 
   mutate(brief_scc = ifelse(scc > 200 & scc_succ < 200 & scc_prev < 200, 1, 0))
 ```
 
 ```{r rangement}
-rec_final1 <- rec_final1 |> 
+rec_final <- rec_final |> 
   select(herd_id, anim_id, parity, calv_date, ctrl_date, dim, milk, fat, prot, scc, scc_succ, scc_prev, chronic_scc, brief_scc, out_cause, out_date )
 ```
 
 ```{r}
-rec_final1 <- rec_final1 |> 
+rec_final <- rec_final |> 
   mutate(ctrl_date = as.Date(ctrl_date, format = "%Y-%m-%d")) |> 
   mutate(calv_date = as.Date(calv_date, format = "%Y-%m-%d")) |> 
   mutate(out_date = as.Date(out_date, format = "%Y-%m-%d"))
@@ -419,12 +419,6 @@ rec_final1 <- rec_final1 |>
 
 Le but ici serait d'intégrer les mammites avec leurs dates dans le tableau rec_final, avec les dates de mammites ordonnées entre chaque intervalle de dates de controle qui correspond.
 
-```{r tentative avec seulement 1 vache, eval=FALSE}
-index_anim = which(rec_final$anim_id == "FR0103005584")
-data_inter = rec_final[index_anim,]
-
-data_inter2 = mamt[which(mamt$anim_id == "FR0103005584"),]
-```
 
 ```{r, eval=FALSE}
 range_date = range(data_inter$ctrl_date)
@@ -453,8 +447,32 @@ mamt<- mamt |>
   rename(ctrl_date = dacoma)
 
 mamt <- mamt|> 
-  mutate(ctrl_date = as.Date(ctrl_date))
+  mutate(ctrl_date = as.Date(ctrl_date)) 
 
+```
+
+```{r}
+mamt <- mamt |> 
+  mutate(mamt_months = format(ctrl_date, "%Y-%m"))
+
+mamt$mamt_months = as.Date(mamt$mamt_months, "%Y-%m")
+```
+
+
+```{r}
+mamt2 <- mamt |> 
+  mutate(mamt_months = as.Date(mamt_months,format = "%Y-%m"))
+```
+
+
+```{r}
+mamt1 <- mamt |> 
+ select(anim_id, ctrl_date, mamt_months)
+```
+
+```{r}
+mamt1 <- mamt1 |> 
+ distinct()
 ```
 
 J'ai renommé la date des collectes de mammites ctrl_date" car ces dates semblent correspondre aux dates de passage du controle laitier. j'arrive à ajouter comme ca la date de mammite quand il y en a
@@ -462,19 +480,25 @@ J'ai renommé la date des collectes de mammites ctrl_date" car ces dates semblen
 ```{r tableau test sur 1 seule vache, eval = FALSE}
 test <- left_join(data_inter,
                   data_inter2 |> 
-                    select(anim_id, ctrl_date, mamcl_date), 
-                  join_by(anim_id, ctrl_date))
+                    select(anim_id, ctrl_months, mamcl_date), 
+                  join_by(anim_id, ctrl_months))
 ```
 
 ERREUR DETECTEE : Certaines vaches comme par exemple "FR2534748533" possèdent des données en doublons pour les informations du contrôle laitier"...je ne sais pas pourquoi car il n'y a aucun doublon dans "rec" ni dans "rec1" donc le problème est lié à la modification de "rec_final". je pense que le problème vient du left_join...pour les vaches qui ont plusieurs mammites cliniques d'enregistrées sur un meme mois voire plusieurs jours qui se suivent, il duplique les contrôles/ou remplace certains contrôles....il faudrait que chaque enregristrement de mammites cliniques qui se suivent sur le mois soient considérés comme un seul et même épisode de mammite. 
+SOLUTION : j'ai créer une variable ctrl_month en fonction des dates de controle et j'ai supprimé les doublons. Lorsqu'il y a eu plusieurs mammites cliniques enregristrées le même mois je considère donc que c'est le même épisode
 
 ```{r}
-rec_final1 <- left_join(rec_final1,
-                       mamt |> 
-                         select(anim_id, ctrl_date, mamcl_date),
+rec_final <- left_join(rec_final,
+                       mamt1,
                        join_by(anim_id, ctrl_date)) |> 
   arrange(herd_id, anim_id, ctrl_date)
 ```
+
+```{r verification}
+rec_final <- rec_final |> 
+  distinct()
+```
+
 
 les dates semblent correspondre.
 On remarque aussi que les mammites cliniques semblent parfois correspondre à un pic de scc, parfois elle arrive après plusieurs controles sup à 200.
@@ -490,18 +514,18 @@ test <- test |>
 ```
 
 ```{r}
-rec_final1 <- rec_final1 |> 
-  mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
+rec_final <- rec_final |> 
+  mutate(mam_cl = ifelse(mamt_months != is.na(mamt_months), 1, 0)) |> 
   mutate(env_mam = case_when(brief_scc == 1 & mam_cl == 0 ~ "1",
                              brief_scc == 0 & mam_cl == 1 & chronic_scc == 0 & scc_succ < 200 ~ "1",
                              brief_scc == 1 & mam_cl ==1 ~ "1",
                              TRUE ~ "0"))
 
-rec_final1$mam_cl[is.na(rec_final$mam_cl)] <- 0
-rec_final1$chronic_scc[is.na(rec_final$chronic_scc)] <- 0
-rec_final1$brief_scc[is.na(rec_final$brief_scc)] <- 0
+rec_final$mam_cl[is.na(rec_final$mam_cl)] <- 0
+rec_final$chronic_scc[is.na(rec_final$chronic_scc)] <- 0
+rec_final$brief_scc[is.na(rec_final$brief_scc)] <- 0
 ```
-ERREUR DETECTEE : Certaines vaches comme par exemple "FR2534748533" possèdent des données en doublons pour les informations du contrôle laitier"...je ne sais pas pourquoi car il n'y a aucun doublon dans "rec" ni dans "rec1" donc le problème est lié à la modification de "rec_final". j'aimerais rectifier le problème à la source mais je ne le trouve pas...
+ERREUR DETECTEE : Certaines vaches possèdent des données en doublons pour les informations du contrôle laitier"...je ne sais pas pourquoi car il n'y a aucun doublon dans "rec" ni dans "rec1" donc le problème est lié à la modification de "rec_final". j'aimerais rectifier le problème à la source mais je ne le trouve pas...
 
 ## enregistrement de rec_final
 

@@ -16,6 +16,9 @@ library(readxl)
 library(ggplot2)
 library(gmodels)
 library(lme4)
+library(FSA)
+library(ggpubr)
+library(car)
 ```
 
 # Appel des bases de données nécessaires
@@ -28,8 +31,34 @@ lac <- read.csv2("generated_datasets/lac.csv")
 
 description du nombre de vaches mises à la repro selon les scc élevés en début de lactation 
 
+
 ```{r desciption des données}
-table(lac$miserepro, lac$n_early_chronic_scc)
+CrossTable(lac$miserepro, lac$n_early_chronic_scc, digits=3, max.width = 5,
+expected=FALSE, prop.r=TRUE, prop.c=TRUE,
+prop.t=TRUE, prop.chisq=FALSE, chisq = FALSE, fisher=FALSE, mcnemar=FALSE,
+resid=FALSE, sresid=FALSE, asresid=FALSE,
+missing.include=FALSE, format=c("SAS","SPSS"))
+  
+```
+
+
+```{r}
+names(lac)
+```
+
+```{r}
+lac <- lac |> 
+  mutate(n_early_chronic_scc = as.factor(n_early_chronic_scc))
+```
+
+
+```{r}
+p <-ggplot(lac) +
+aes(x = miserepro, fill = n_early_chronic_scc) +
+geom_bar(position="fill") +
+xlab("décision d'insémination") +
+ylab("proportions")
+p+theme_bw()
 ```
 
 
@@ -38,9 +67,15 @@ lac <- lac |>
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
                             parity == 3 ~ "3",
-                            parity == 4 ~ "4 et plus",
+                            parity >= 4 ~ "4 et plus",
                             TRUE~NA))
 ```
+
+```{r}
+lac <- lac |> 
+  mutate(n_early_chronic_scc = as.numeric(n_early_chronic_scc))
+```
+
 
 ```{r}
 lac_scaled <- lac  # Créez une copie de l'ensemble de données
@@ -54,9 +89,34 @@ lac_scaled$early_milk <- scale(lac$early_milk)
 
 ```{r}
 # Ajustez le modèle avec les prédicteurs standardisés
-myreg_miserepro_scaled <- glmer(miserepro ~ n_early_chronic_scc + n_early_brief_scc + n_early_mam_cl + factor(C8parity) + early_milk + (1 | herd_id), 
-                                family = binomial(link = "logit"), data = lac_scaled)
+myreg_miserepro_scaled <- glmer(miserepro ~ n_early_chronic_scc + n_early_brief_scc + n_early_mam_cl + factor(C8parity) + early_milk + (1 | herd_id), family = binomial(link = "logit"), data = lac_scaled)
 summary(myreg_miserepro_scaled)
+```
+```{r}
+vif_values <- vif(myreg_miserepro_scaled)
+print(vif_values)
+```
+```{r}
+# Calculer les résidus
+residuals <- resid(myreg_miserepro_scaled)
+
+# Tracer un histogramme des résidus
+hist(residuals, breaks = 30, main = "Histogramme des résidus de régression logistique", xlab = "Résidus")
+
+# Tracer un Q-Q plot des résidus
+qqnorm(residuals)
+qqline(residuals, col = "red")
+
+# Exemple de méthode bootstrap pour vérifier la normalité des résidus
+bootstrap_res <- replicate(1000, {
+  sample_res <- residuals[myreg_miserepro_scaled$y == 1]
+  sample_res <- sample_res[sample(length(sample_res), replace = TRUE)]
+  mean(sample_res)
+})
+
+# Tracer un histogramme des moyennes bootstrap
+hist(bootstrap_res, main = "Bootstrap Residuals Mean Distribution", xlab = "Bootstrap Residuals Mean")
+
 ```
 
 

@@ -242,6 +242,11 @@ rec_final <- rec_final |>
   filter(dim <= 350)
 ```
 
+```{r selection des mois de controle}
+rec_final <- rec_final |> 
+  mutate(ctrl_months = format(as.Date(ctrl_date), "%Y-%m"))
+```
+
 
 Tu peux enregistrer le fichier final pour ne pas avoir à refaire tourner ce script à chaque fois. Ne pas inclure ces fichiers de données générés dans les commits.
 
