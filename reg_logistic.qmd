@@ -29,6 +29,8 @@ lac <- read.csv2("generated_datasets/lac.csv")
 
 # Première régression logistique pour la décision de mise à la reproduction
 
+J'ai commencé à essayer de justifier la modélisation par la description des données. 
+
 description du nombre de vaches mises à la repro selon les scc élevés en début de lactation 
 
 
@@ -96,6 +98,9 @@ summary(myreg_miserepro_scaled)
 vif_values <- vif(myreg_miserepro_scaled)
 print(vif_values)
 ```
+
+J'ai voulu voir si les résidus suivaient bien une loi normale...ce n'est pas vraiment le cas. 
+
 ```{r}
 # Calculer les résidus
 residuals <- resid(myreg_miserepro_scaled)
@@ -121,6 +126,7 @@ hist(bootstrap_res, main = "Bootstrap Residuals Mean Distribution", xlab = "Boot
 
 
 ```{r  premier essai}
+## Pas d'interaction
 myreg_miserepro <- glmer(miserepro ~ n_early_chronic_scc  + n_early_brief_scc + n_early_mam_cl +factor(C8parity) + early_milk + (1 | herd_id), 
                     family= binomial(link = "logit"), data = lac)
 summary(myreg_miserepro)
@@ -166,7 +172,7 @@ fertility_lac <- fertility_lac |>
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
                             parity == 3 ~ "3",
-                            parity == 4 ~ "4 et plus",
+                            parity >= 4 ~ "4 et plus",
                             TRUE~NA))
 ```
 
@@ -176,8 +182,8 @@ myreg_vel <- glmer(preg_end ~ n_scc_high + n_scc_high*factor(C8parity) + factor(
 
 summary(myreg_vel) 
 ```
-
-```{r regression-lineaire-proba-un ia1 iaf superieur a 42, eval = FALSE}
+j'avais également tenté de faire des essais en prenant par cycles 
+```{r regression-lineaire-proba-un ia1 iaf superieur a 42}
 fertility_lac1 <- fertility_lac |> 
   filter(preg_end == 1)
 
@@ -186,28 +192,28 @@ myreg_inter42 <- glmer(inter_42 ~ n_early_chronic_scc + n_early_env_mam + factor
 summary(myreg_inter42) 
 ```
 
-```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 63, eval = FALSE}
+```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 63}
 
 myreg_inter63 <- glmer(inter_63 ~ n_early_chronic_scc + n_early_env_mam + factor(C8parity) + ai_N  + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
 summary(myreg_inter63) 
 ```
 
-```{r reg-lineaire pour la probabilité d avoir un ia1 iaf superieur a 84, eval = FALSE}
+```{r reg-lineaire pour la probabilité d avoir un ia1 iaf superieur a 84}
 
 myreg_inter84 <- glmer(inter_84 ~ n_early_chronic_scc + n_early_env_mam  + factor(C8parity) + ai_N  + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
 summary(myreg_inter84) 
 ```
 
-```{r reg-lineaire-proba ia1 iaf superieur a 84, eval = FALSE}
+```{r reg-lineaire-proba ia1 iaf superieur a 84}
 
 myreg_inter84 <- glmer(inter_84 ~ n_scc_h + factor(C8parity) + ai_N  + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
 summary(myreg_inter84) 
 ```
 
-```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 84, eval = FALSE}
+```{r regression lineaire pour la probabilité d avoir un ia1 iaf superieur a 84}
 
 myreg_ia2 <- glmer(n_ia2 ~ n_scc_high  + factor(C8parity) + (1 | herd_id), family = binomial (link = "logit"), data = fertility_lac1)
 
@@ -232,8 +238,7 @@ lac_repro <- lac_repro |>
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
                             parity == 3 ~ "3",
-                            parity == 4 ~ "4",
-                            parity == 5 ~ "5 et plus",
+                            parity >= 4 ~ "4 et plus",
                             TRUE~NA))
 ```
 
@@ -345,11 +350,7 @@ lac_cull <- lac_cull |>
   mutate(C8parity = case_when(parity == 1 ~ "1",
                             parity == 2 ~ "2",
                             parity == 3 ~ "3",
-                            parity == 4 ~ "4",
-                            parity == 5 ~ "5",
-                            parity == 6 ~ "6",
-                            parity == 7 ~ "7",
-                            parity >= 8 ~ "8 et plus",
+                            parity >= 4 ~ "4 et plus",
                             TRUE~NA))
 ```
 

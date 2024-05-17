@@ -369,6 +369,8 @@ mvt <- mvt |>
 
 glimpse(mvt)
 ```
+commentaire de Joanna : c'est à partir d'ici que j'ai commencé les modifications 
+
 
 # Ajout du numéro de cheptel a chaque vache dans les données du contrôle laitier
 
@@ -408,7 +410,7 @@ rec_final <- rec_final |>
   select(herd_id, anim_id, parity, calv_date, ctrl_date, dim, milk, fat, prot, scc, scc_succ, scc_prev, chronic_scc, brief_scc, out_cause, out_date )
 ```
 
-```{r}
+```{r formatage des donnees}
 rec_final <- rec_final |> 
   mutate(ctrl_date = as.Date(ctrl_date, format = "%Y-%m-%d")) |> 
   mutate(calv_date = as.Date(calv_date, format = "%Y-%m-%d")) |> 
@@ -419,27 +421,6 @@ rec_final <- rec_final |>
 
 Le but ici serait d'intégrer les mammites avec leurs dates dans le tableau rec_final, avec les dates de mammites ordonnées entre chaque intervalle de dates de controle qui correspond.
 
-
-```{r, eval=FALSE}
-range_date = range(data_inter$ctrl_date)
-range1 = paste0(format(as.Date(range_date[1]), "%Y-%m"), "-01")
-range2 = paste0(format(as.Date(range_date[2]), "%Y-%m"), "-30")
-date_seq = seq(as.Date(range1), as.Date(range2), by = "1 day")
-
-date_seq[which(date_seq%in%data_inter2$mamcl_date)]
-
-#which(data_inter2$mamcl_date %in% data_inter$ctrl_date)
-
-#which(between(data_inter2$mamcl_date, range1, range2))
-```
-
-```{r, eval=FALSE}
-data_inter2 <- data_inter2 |> 
-  rename(ctrl_date = dacoma)
-
-data_inter2 <- data_inter2 |> 
-  mutate(ctrl_date = as.Date(ctrl_date))
-```
 
 ```{r date de collecte mammite date de controle}
 
@@ -477,12 +458,6 @@ mamt1 <- mamt1 |>
 
 J'ai renommé la date des collectes de mammites ctrl_date" car ces dates semblent correspondre aux dates de passage du controle laitier. j'arrive à ajouter comme ca la date de mammite quand il y en a
 
-```{r tableau test sur 1 seule vache, eval = FALSE}
-test <- left_join(data_inter,
-                  data_inter2 |> 
-                    select(anim_id, ctrl_months, mamcl_date), 
-                  join_by(anim_id, ctrl_months))
-```
 
 ERREUR DETECTEE : Certaines vaches comme par exemple "FR2534748533" possèdent des données en doublons pour les informations du contrôle laitier"...je ne sais pas pourquoi car il n'y a aucun doublon dans "rec" ni dans "rec1" donc le problème est lié à la modification de "rec_final". je pense que le problème vient du left_join...pour les vaches qui ont plusieurs mammites cliniques d'enregistrées sur un meme mois voire plusieurs jours qui se suivent, il duplique les contrôles/ou remplace certains contrôles....il faudrait que chaque enregristrement de mammites cliniques qui se suivent sur le mois soient considérés comme un seul et même épisode de mammite. 
 SOLUTION : j'ai créer une variable ctrl_month en fonction des dates de controle et j'ai supprimé les doublons. Lorsqu'il y a eu plusieurs mammites cliniques enregristrées le même mois je considère donc que c'est le même épisode
@@ -503,15 +478,6 @@ rec_final <- rec_final |>
 les dates semblent correspondre.
 On remarque aussi que les mammites cliniques semblent parfois correspondre à un pic de scc, parfois elle arrive après plusieurs controles sup à 200.
 On va commencer à essayer de faire des catégories de mammites...Pour l'instant c'est fastidieux...
-
-```{r AMELIORABLE, eval=FALSE}
-test <- test |> 
-  mutate(mam_cl = ifelse(mamcl_date == as.Date(mamcl_date), 1, 0)) |> 
-  mutate(env_mam = case_when(brief_scc == 1 & mam_cl == 0 ~ "1",
-                             brief_scc == 0 & mam_cl == 1 & chronic_scc == 0 & scc_succ < 200 ~ "1",
-                             brief_scc == 1 & mam_cl ==1 ~ "1",
-                             TRUE ~ "0"))
-```
 
 ```{r}
 rec_final <- rec_final |> 
@@ -534,6 +500,8 @@ write.csv2(rec_final, "generated_datasets/rec_final.csv")
 ```
 
 ## Sélection d'un échantillon
+
+Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les données du contrôle laitier
 
 Génération d'une liste d'élevages uniques.
 
@@ -601,7 +569,7 @@ lac$lac_id <- 1:nrow(lac)
 
 afin de supprimer les vaches dont on a pas d'information sur le début de lactation.
 
-```{r}
+```{r tri des animaux dont on a pas d'information pour le debut de lactation}
 lac <- lac[!is.nan(lac$early_milk),]
 ```
 
@@ -612,11 +580,6 @@ lac <- lac |>
 ```
 
 Création d'une variable semblble à la période d'insémination correspondant à 90 jours après la date de vêlage
-
-```{r creation de la variable periode insemination, eval=FALSE}
-lac <- lac |> 
-  mutate(per_ins = calv_date + 90)
-```
 
 ```{r date du premier velage}
 calv_first <- min(lac$calv_date, na.rm  = TRUE)
@@ -731,6 +694,13 @@ nb_prim <- prim |>
 
 # Impact des mammites sur la fertilité
 
+Cette partie est encore à retravailler. Je ne suis pas encore sûre de comment bien évaluer la fertilité grâce à nos données. 
+plusieurs options peuvent être utilisées :
+- nombre d'IA avant la fécondation ou non ?
+- nombre de cycles avant fécondation ou non ?
+- IVV ? 
+- IVIAF ? 
+
 ## tri des animaux qui ont été mis à la reproduction
 
 ```{r tableau qui ne prend que les animaux mis à la repro et reformes en boucherie}
@@ -791,6 +761,8 @@ write.csv2(fertility_lac, "generated_datasets/fertility_lac.csv")
 ```
 
 # impact de la baisse de fertilité sur la réforme
+
+Cette partie ne sert qu'à la création d'un tableau de données qui regroupent les animaux réformés en boucherie par l'éleveur .
 
 ```{r selection des vaches mises a la repro}
 lac_repro <- lac|> 
@@ -892,6 +864,8 @@ write.csv2(lac_cull, "generated_datasets/lac_cull.csv")
 ```
 
 # DAGs
+
+quelques essais de création de DAGs. 
 
 ```{r dag exemple}
 #| echo: false
