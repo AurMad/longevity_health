@@ -274,11 +274,36 @@ lac <- left_join(hdyr_sel, lac)
 ```
 # Description des données
 
-# Modèles
+## Obsrvations conservées pour l'analyse
 
-### Covariables
+On ne conserve que les lactations avec au moins 1 contrôle laitier avant 90 jours de lactation.
+
+```{r lac-filter}
+lac <- lac |> 
+  filter(n_ctrl_early > 0)
+```
+
+
+## Covariables
+
+
+### Parité
+
+Une nouvelle variable parité appelée `parKat` est créée. Les patités supérieures à 3 sont mises dans une catégorie 4. La paritté 2 est mise en catégorie de référence pour faciliter la lecture des résultats.
 
 ```{r}
+lac <- lac |> 
+  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "2"))
+```
+
+
+### Production laitière en début de lactation
+
+Le maximum de production laitière sur les contrôles laitiers de 90 premiers jours de lactation sont standardisés : pour chaque valeur, on retranche la moyenne et on divise par l'écart-type de manière à avoir une moyenne de 0 et un écart-type de 1 sur la nouvelle variable centrée-réduite.
+
+Une variable différente est créée pour les primipares et les multipares, de manière à pouvoir prendre en compte un effet différent de la production laitière sur les variables d'intérêt pour ces catégories de vaches.
+
+```{r max-early-milk-scaled}
 milk_early_max_mean <- with(lac[lac$n_ctrl_early > 0,], 
                             mean(milk_early_max))
 
@@ -291,12 +316,16 @@ lac <- lac |>
          milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
            milk_early_max_sd,
   milk_early_max_scaled_p1 = ifelse(parity == 1, milk_early_max_scaled, 0),
-  milk_early_max_scaled_p1plus = ifelse(parity > 1, milk_early_max_scaled, 0))
-
-
+  milk_early_max_scaled_p2 = ifelse(parity == 2, milk_early_max_scaled, 0),
+  milk_early_max_scaled_p3 = ifelse(parity == 3, milk_early_max_scaled, 0),
+  milk_early_max_scaled_p4 = ifelse(parity > 3, milk_early_max_scaled, 0),
+  milk_early_max_scaled_p1plus = ifelse(parity > 1, milk_early_max_scaled, 0)
+  )
 
 hist(lac$milk_early_max_scaled)
 ```
+
+Les moyennes et écart-types de la variable originale sont `r round(milk_early_max_mean, 1)` et `r round(milk_early_max_sd, 1)` respectivement.
 
 
 ### Définition des statuts vis-à-vis des mammites
@@ -306,48 +335,17 @@ Ici on considère :
 - pour les primipares, les données cellules et mammites cliniques du début de lactation, c'est à dire jusqu'à 90 jours post-vêlage
 - pour les multipares, les données cellules du dernier contrôle de la lactation précédente les données cellules et mammites cliniques du début de lactation.
 
-Des catégories mutuellement exclusives sont définies à partir des données cellules et mammites cliniques récoltées avant 90 jours de lactation :
+Une variable `dp_status`(`dp` pour *dry period*) est créée. Les statuts sont :
 
-- `primi_healthy` (réference) : primipares sans mammites clinique et avec toutes les CCS < 200
-- `primi_env` : primipares avec 1 CCS >= 200 et/ou une mammite clinique
-- `primi_cont` : primipares avec > 1 CCS >= 200, quel que soit le nombre de mammites cliniques
-- `multi_healthy` : mulitpare avec dernier CCS de la lacation précedente < 200 et pas de mammites cliniques ni de CCS > 200 dans cette lactation
-- `dpHealthy_lEnv` : mulitpare avec dernier CCS de la lacation précedente < 200 et soit une mammite clinique et/ou 1 CCS > 200 dans cette lactation
-- `dpHealthy_lCont` : mulitpare avec dernier CCS de la lacation précedente < 200 et > 1 CCS > 200 dans cette lactation
-- `dpHigh_lHealthy` : mulitpare avec dernier CCS de la lacation précedente < 200 et aucun CCS > 200 ni mammite clinique dans cette lactation
+- `primi` : primpares, pas de période tarie
+- `dpLow` : au-dessous de seuil de CCS choisi pour définir l'infection au dernier contrôle avant tarissement
+- `dpHigh` : au-dessus de seuil de CCS choisi pour définir l'infection au dernier contrôle avant tarissement
 
+Les primipares sont prises comme référence.
 
-```{r repro-mastitis-cat}
-lac <- lac |> 
-  mutate(mast_cat = case_when(
-    parity == 1 & n_scc_high_early == 0 & n_cm_early == 0 ~ "primi_healthy",
-    parity == 1 & (n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0)) ~ "primi_env",
-    parity == 1 & n_scc_high_early > 1 ~ "primi_cont",
-    parity > 1 & scc_last_prev_lac < scc_high_cutoff & n_scc_high_early == 0 ~ "multi_healthy",
-    parity > 1 & scc_last_prev_lac < scc_high_cutoff & (n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0)) ~ "dpHealthy_lEnv",
-    parity > 1 & scc_last_prev_lac < scc_high_cutoff & n_scc_high_early > 1 ~ "dpHealthy_lCont",
-    parity > 1 & scc_last_prev_lac >= scc_high_cutoff & n_scc_high_early == 0 ~ "dpHigh_lHealthy",
-    parity > 1 & scc_last_prev_lac >= scc_high_cutoff & (n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0)) ~ "dpHigh_lEnv",
-    parity > 1 & scc_last_prev_lac >= scc_high_cutoff & n_scc_high_early > 1 ~ "dpHigh_lCont"
-  ),
-    mast_par_cat = paste0(mast_cat, parKat),
-    mast_cat = relevel(as.factor(mast_cat), ref = "primi_healthy")
-)
-# 
-# lac$mast_cat <- relevel(as.factor(lac$mast_cat), ref = "primi_healthy")
-# 
-# lac$mast_par_cat <- paste0()
-# 
-# lac <- lac |> 
-#   mutate(
-#     mast_par_cat = paste0(mast_cat, parkat),
-#     mast_cat = relevel(as.factor(mast_cat), ref = "primi_healthy")
-# 
-#   )
-```
+Une variable `mast_cat` est créée. Cette variable définit un statut vis-à-vis des mammites en début de lactation. L'objectif est d'avoir des catégories pour vache saine, mammite à réservoir mammaire et mammite à réservoir environnemental. Les vache saines sont prises comme référence.
 
-
-```{r}
+```{r dpStatus-def}
 lac <- lac |> 
   mutate(
     dp_status = case_when(
@@ -356,86 +354,26 @@ lac <- lac |>
       scc_last_prev_lac >= scc_high_cutoff ~ "dpHigh"
     ),
     dp_status = relevel(factor(dp_status), ref = "primi"),
-    mast_cat1 = case_when(
+    mast_cat = case_when(
     n_scc_high_early == 0 & n_cm_early == 0 ~ "healthy",
     n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0) ~ "env",
     n_scc_high_early > 1 ~ "cont"),
-    mast_cat1 = relevel(factor( mast_cat1), ref = "healthy")
+    mast_cat = relevel(factor( mast_cat), ref = "healthy"),
+    mast_cat1 = relevel(factor(paste(dp_status, mast_cat, sep = "_")), ref = "primi_healthy")
   )
 ```
 
 
-
-```{r}
-repro_1 <- glmer(repro ~ dp_status + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0,
-                    family = binomial(link = "logit"))
-
-summary(repro_1)
-```
-
-```{r}
-repro_2 <- glmer(repro ~ mast_cat1 + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0,
-                    family = binomial(link = "logit"))
-
-summary(repro_2)
-```
-
-
-```{r}
-repro_3 <- glmer(repro ~ dp_status*mast_cat1 + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0,
-                    family = binomial(link = "logit"))
-
-summary(repro_3)
-```
-
-
-```{r}
-repro_4 <- glmer(repro ~ dp_status*mast_cat1 + milk_early_max_scaled + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0,
-                    family = binomial(link = "logit"))
-
-summary(repro_4)
-```
-
-```{r}
-repro_5 <- glmer(repro ~ dp_status*mast_cat1 + parKat + milk_early_max_scaled + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0,
-                    family = binomial(link = "logit"))
-summary(repro_5)
-```
+Certaines vaches multipares n'ont pas de CCS pour leur dernière lactation. Elles sont identifiées et exclues de l'analyse.
 
 ```{r}
 lac <- lac |> 
-  mutate(
-    milk_early_max_scaled_p1 = ifelse(parity == 1, milk_early_max_scaled, 0),
-    milk_early_max_scaled_p2 = ifelse(parity == 2, milk_early_max_scaled, 0),
-    milk_early_max_scaled_p3 = ifelse(parity == 3, milk_early_max_scaled, 0),
-    milk_early_max_scaled_p4 = ifelse(parity > 3, milk_early_max_scaled, 0),
-  )
-
-repro_6 <- glmer(repro ~ parKat +
-                   milk_early_max_scaled_p1 + 
-                   milk_early_max_scaled_p2 + 
-                   milk_early_max_scaled_p3 + 
-                   milk_early_max_scaled_p4 + 
-                   (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0,
-                    family = binomial(link = "logit"))
-summary(repro_6)
+  mutate(dp_mis = ifelse(parity > 1 & is.na(scc_last_prev_lac), 1, 0))
 ```
 
-## Probabilité de mise à la reproduction
 
-La variable d'intérêt est ici le fait qu'une vache ait été inséminée au moins une fois au cours de sa lactation. L'unité statistique est donc la lactation.
+
+# Modèles mises à la reproduction
 
 ### Variable d'intérêt
 
@@ -447,76 +385,181 @@ lac <- lac |>
     repro = ifelse(!is.na(n_ai) | !is.na(calv_date_nxt), 1, 0))
 ```
 
-On construit un premier modèle avec un intercept uniquement.
+
+## Modèle de référence
+
+Modèle avec intercept uniquement et effet aléatoire troupeau.
 
 ```{r repro-null-model}
 repro_null <- glmer(repro ~ 1 + (1 | herd_id),
                     data = lac,
-                    subset = n_ctrl_early > 0,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
                     family = binomial(link = "logit"))
-```
 
-
-```{r repro-null-model-summary}
 summary(repro_null)
 ```
 
+On obtient une probabilité de mise à la reproduction de `r as.double(round(invlogit(fixef(repro_null)), 3))`
 
-Modèles avec les catégories mammites. Les vaches de la catégorie de référence sont les primipares dont tous les contrôles sont inférieurs au seuil CCS et sans mammite clinique. Comme attendu, toutes les autres catégories ont une probabilité diminuée d'être mise à la reproduction, tous les coefficients sont significativement négatifs.
+
+## Production laitière et parité
 
 ```{r}
-repro_mast_cat1 <- glmer(repro ~ factor(mast_cat) + factor(parKat) + milk_early_max_scaled + (1 | herd_id),
+repro_parity <- glmer(repro ~ parKat + (1 | herd_id),
                     data = lac,
-                    subset = n_ctrl_early > 0,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
                     family = binomial(link = "logit"))
 
-summary(repro_mast_cat1)
+summary(repro_parity)
 ```
 
+Ce modèle plus complet inclut les catégories de parité et les productions laitières de début de lactation standardisées pour les parités 1, 2, 3 et supérieure à 3. L'hypothèse est qu'il y a un effet additionnel de la parité qui va au-delà de la production laitière.
 
 ```{r}
-repro_mast_cat13 <- glmer(repro ~ factor(mast_par_cat) + milk_early_max_scaled + (1 | herd_id),
+repro_parity_milk <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                      (1 | herd_id),
                     data = lac,
-                    subset = n_ctrl_early > 0,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
                     family = binomial(link = "logit"))
 
-summary(repro_mast_cat13)
+summary(repro_parity_milk)
 ```
 
+## Statuts mamites
+
+Modèle complet 
 
 
-
-```{r}
-repro_mast_cat11 <- glmer(repro ~ factor(mast_cat) + factor(parKat) + (1 | herd_id),
+```{r repro-full}
+repro_full <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                             dp_status + mast_cat +
+                      (1 | herd_id),
                     data = lac,
-                    subset = n_ctrl_early > 0,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
                     family = binomial(link = "logit"))
 
-summary(repro_mast_cat11)
+summary(repro_full)
 ```
 
 
-```{r}
-repro_mast_cat12 <- glmer(repro ~ factor(mast_cat) + milk_early_max_scaled + (1 | herd_id),
+
+```{r repro-full1}
+repro_full1 <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 +
+                      (1 | herd_id),
                     data = lac,
-                    subset = n_ctrl_early > 0,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
                     family = binomial(link = "logit"))
 
-summary(repro_mast_cat12)
+summary(repro_full1)
+```
+
+La figure ci-dessous représente les probabilités prédites qu'une vache soit mise à la reproduction en fonction de son statut vis-à-vis des mammites. Une production laitière moyenne a été prise en compte. Cela avantage les primipares dont la production laitière moyenne est inférieure à la la production laitière moyenne du reste des vaches. On a considéré que les multipares étaient de parité 2.
+
+```{r plot-pred-repro-mast}
+mast_lev_p1 <- lac |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat == 1) |> 
+  distinct(mast_cat1) |>
+  mutate(mast_cat1 = as.character(mast_cat1)) |>
+  pull(mast_cat1)
+
+mast_lev_p2 <- lac |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat != 1) |> 
+  distinct(mast_cat1) |>
+  mutate(mast_cat1 = as.character(mast_cat1)) |>
+  pull(mast_cat1)
+
+
+repro_pred <- tibble(
+  parKat = factor(c(rep(1, length(mast_lev_p1)),
+             rep(2, length(mast_lev_p2)))),
+  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0
+)
+
+prd <- marginaleffects::predictions(model = repro_full1, 
+                             newdata = repro_pred, 
+                           re.form = NA, type = "response")
+
+level_order <- c("primi_healthy",  "primi_env", "primi_cont",
+                 "dpLow_healthy",  "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont") 
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilté de mise à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+Effet de la parité sur la probabilité d'être mise à la reproduction.
+
+```{r plot-pred-repro-parit}
+repro_pred <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = 0
+ ) |> 
+  mutate(
+    milk_early_max_scaled_p1 = 0,
+    milk_early_max_scaled_p2 = 0,
+    milk_early_max_scaled_p3 = 0,
+    milk_early_max_scaled_p4 = 0,
+    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+  )
+
+prd <- marginaleffects::predictions(model = repro_full1,
+                             newdata = repro_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("Parité") + 
+  ylab("Probabilté de mise à la reproduction") 
+```
+
+Effets combinés de la parité et de la production laitière.
+
+```{r plot-pred-repro-milk}
+repro_pred <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = seq(10, 50, by = .1)
+ ) |> 
+  mutate(
+    milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
+           milk_early_max_sd,
+    milk_early_max_scaled_p1 = ifelse(parKat == 1, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p2 = ifelse(parKat == 2, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p3 = ifelse(parKat == 3, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p4 = ifelse(parKat == 4, milk_early_max_scaled, 0),
+    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+  )
+
+prd <- marginaleffects::predictions(model = repro_full1,
+                             newdata = repro_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line()
 ```
 
 
-
-Effet aléatoire troupeau pour l'effet de la production laitière.
-
-```{r}
-repro_mast_cat2 <- glmer(repro ~ factor(mast_cat) + factor(parKat) + milk_early_max + (1 | herd_id) + (milk_early_max | herd_id),
-                    data = lac,
-                    family = binomial(link = "logit"),
-                    subset = n_ctrl_early > 0)
-
-summary(repro_mast_cat2)
-```
 
 ## Probabilité de revêlage pour les vaches mises à la reproduction
 
