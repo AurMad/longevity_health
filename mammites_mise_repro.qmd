@@ -1,0 +1,590 @@
+---
+title: "Impact des mammites sur la reproduction"
+format: html
+---
+
+```{r setup}
+library(tidyverse)
+library(lme4)
+
+
+invlogit <- function(x) exp(x) / (1 + exp(x))
+```
+
+
+Ce fichier reprend le code qui était auparavant dans le fichier "longevity_mastitis.qmd" pour plus de lisibilité. 
+
+Les objectifs sont de modéliser l'impact de différents statuts vis-à-vis des mammites sur la probabilité de réforme. La probabilité de réforme est représentée en différentes composantes :
+
+- Mise à la reproduction : présence d'une première insémination artificielle
+- Succès de la mise à la reproduction : re-vêlage
+- Mort de la vache
+
+L'unité statistique est la lactation.
+
+Les étapes du fichier :
+
+- chargement des données contrôle laitier Idele
+- construction d'un jeu de données lactations à partir des données contrôle laitier
+- chargement des données mammites cliniques
+- chargement des données d'insémination artificielle
+
+
+ Le chunk suivant défini les paramètres de la modélisation. 
+ 
+```{r}
+## nombre de jours en dessous duquel on considère qu'on est en début de lactation
+## en moyenne avant première IA
+early_dim_cutoff <- 90
+## SCC cut-off
+## seuil de cellules au-delà duquel on considère
+## qu'il y a mammite clinique
+scc_high_cutoff <- 200
+```
+
+
+# Données
+
+## Chargement des données contrôle laitier Idele
+
+Un jeu de données construit à partir des données fournies par l'Idele est chargé.
+
+```{r donnees-controle-laitier-idele}
+rec <- read_csv2("generated_datasets/idele_rec_final.csv") |> 
+  mutate(
+    herd_id = as.character(herd_id),
+    ctrl_date = as.Date(ctrl_date),
+    anim_id = as.character(anim_id),
+    parity = as.integer(parity),
+    fat = as.integer(fat),
+    prot = as.integer(prot),
+    scc = as.integer(scc),
+    out_cause = as.character(out_cause),
+    calv_date = as.Date(calv_date),
+    dim = as.integer(dim)
+  ) |> 
+  filter(!is.na(milk) & !is.na(scc))
+```
+
+## Construction d'un jeu de données lactations
+
+Le jeu de données lactation est contruit à partir des données contrôle laitier.
+
+```{r make-lactations}
+lac <- rec |> 
+  group_by(anim_id, parity) |> 
+  summarise(
+    herd_id = herd_id[1],
+    calv_date = unique(calv_date),
+    out_date_last = max(out_date),
+    out_cause_last = unique(out_cause[out_date == out_date_last]),
+    n_ctrl = length(unique(ctrl_date)),
+    n_ctrl_early = length(unique(ctrl_date[dim <= early_dim_cutoff])),
+    n_scc_high_early = length(scc[scc > scc_high_cutoff & dim <= early_dim_cutoff]),
+    milk_early_max = max(milk[dim <= early_dim_cutoff]),
+    dim_last = max(dim),
+    milk_last = milk[dim == dim_last],
+    scc_last = scc[dim == dim_last]
+            ) |> 
+  ungroup() |> 
+  group_by(anim_id) |> 
+  mutate(
+    calv_date_prev = lag(calv_date),
+    milk_last_prev_lac = lag(milk_last),
+    dim_last_prev_lac = lag(dim_last),
+    scc_last_prev_lac = lag(scc_last),
+    calv_date_nxt = lead(calv_date) ) |> 
+  ungroup()
+```
+
+Les causes de sorties possibles sont les suivantes :
+
+- `B` : boucherie
+- `C` : autoconsommation
+- `E` : élevage
+- `H` : prêt ou pension
+- `M` : mort
+
+Le tableau suivant présente les effectifs pour les différentes causes de sortie.
+
+```{r lac-cause-out-table}
+table(lac$out_cause_last)
+```
+
+## Chargement des données mammites cliniques
+
+Le fichier de données est chargé. On ne garde que les dates de mammites cliniques. Il existe également des données sur la sévérité des mammites qui ne sont pas conservées à ce stade.
+
+
+```{r clinical-mastitis-data}
+path_to_file <- "data/mammites.txt"
+mamt <- read_csv2(path_to_file) |> 
+  rename(anim_id = ANIM,
+         cm_date = DAMACL) |> 
+  select(anim_id, cm_date)
+```
+Les données mammites cliniques sont fusionnées avec les données lactation. Pour chaque lactation, on extrait les première et dernière dates de mammite clinique. On considère qu'une lactation commence 30 jours avant vêlage. Cette hypothèse pourra être discutée. 
+
+```{r clinical-mastitis-join-lac}
+lac_cm <- left_join(
+  lac |> 
+  select(anim_id, calv_date, calv_date_nxt) |> 
+  mutate(
+    dim_minus30 = calv_date - 30,
+    dim_early = calv_date + early_dim_cutoff),
+  mamt) |> 
+  filter(!is.na(cm_date)) |> 
+  group_by(anim_id, calv_date) |>
+  summarise(
+    cm_first = min(cm_date[cm_date >= calv_date & (cm_date < calv_date_nxt | is.na(calv_date_nxt))]),
+    cm_last = max(cm_date[cm_date >= calv_date & (cm_date < calv_date_nxt | is.na(calv_date_nxt))]),
+    n_cm_early = length(unique(cm_date[cm_date >= dim_minus30 & cm_date < dim_early])),
+    n_cm_late = length(unique(cm_date[cm_date >= dim_early & (cm_date < calv_date_nxt | is.na(calv_date_nxt))]))
+  ) |> 
+  ungroup()
+
+lac_cm$cm_first[is.infinite(lac_cm$cm_first)] <- NA
+lac_cm$cm_last[is.infinite(lac_cm$cm_last)] <- NA
+```
+Fusion avec le jeu de données `lac` initial.
+
+```{r lac-cm-join}
+lac <- left_join(lac, lac_cm) |> 
+  mutate(
+    n_cm_early = ifelse(is.na(n_cm_early), 0, n_cm_early),
+    n_cm_late = ifelse(is.na(n_cm_late), 0, n_cm_late)
+    )
+
+rm(lac_cm)
+```
+
+## Données d'insémination artificielle
+
+Les données d'insémination sont chargées. On ne garde que les identifiants animaux et les dates d'insémination.
+
+```{r ia-chargment}
+path_to_file <- "data/extra_femia_20240415.csv"
+ai <- read_csv(path_to_file) |> 
+  select(anim, DAINAR) |> 
+  rename(anim_id = anim,
+         ai_date = DAINAR) |> 
+  mutate(ai_date = as.Date(ai_date, "%d/%m/%Y"))
+```
+## Fusion des données d'insémination artificielle avec données lactation
+
+Les données lactations et inséminations artificielles sont fusionnées. On s'assure que chaque date d'IA survient entre un vêlage et le suivant ou entre un vêlage et une absence de vêlage suivant.
+
+```{r}
+nlac <- left_join(lac |> 
+                    select(anim_id, calv_date, calv_date_nxt), 
+                  ai) |> 
+  filter(ai_date > calv_date & (ai_date < calv_date_nxt | is.na(calv_date_nxt))) |>
+  group_by(anim_id, calv_date) |> 
+  summarise(n_ai = length(unique(ai_date)),
+            ai_first = min(ai_date),
+            ai_last = max(ai_date)) |> 
+  ungroup()
+
+lac <- left_join(lac, nlac) |> 
+  mutate(ai1_dim = as.integer(ai_first - calv_date),
+         ai_last_dim = as.integer(ai_last - calv_date))
+```
+## Agrégation des données contrôle laitier par date de contrôle
+
+Les données contrôle laitier sont agrégées par date de contrôle-élevage. Il y a déjà eu une sélection en amont sur le nombre de vaches par contrôle et le nombre de contrôles par élevage par an.
+
+```{r test-days}
+td <- rec |> 
+  group_by(herd_id, ctrl_date) |> 
+  summarise(
+    n_cows = length(unique(anim_id)),
+    milk_mean = round(mean(milk), 1),
+    scc_geo_mean = round(exp(mean(log(scc))), 1),
+    scc_high = round(length(scc[scc > scc_high_cutoff]) / length(scc), 3),
+    bmscc = round(sum(scc * milk)  /sum(milk), 1)) |> 
+  ungroup()
+```
+
+## Agrégation des données à l'échelle élevage-année
+
+Les données contrôle laitier et inséminations artificielles sont agrégées à l'échelle élevage-année. L'objectif est de sélectionner les élevages dans lesquels toutes les vaches sont inséminées.
+
+```{r rec-herd-year}
+rec_hdyr <- rec |> 
+  mutate(year = as.integer(format(ctrl_date, "%Y"))) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_ctrl = length(unique(ctrl_date)),
+            n_cows_rec = length(unique(anim_id)),
+            p_primi_rec = round(length(parity[parity == 1]) / length(parity), 3)) |> 
+  ungroup()
+```
+A partir des données lactation, les premières IA de chaque élevage sont comptées.
+
+
+```{r}
+ai_hdyr <- lac |> 
+  filter(!is.na(n_ai)) |> 
+  mutate(year = as.integer(format(ai_first, "%Y"))) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_cows_ai = length(n_ai[!is.na(n_ai)])) |> 
+  ungroup()
+```
+
+Fusion des 2 jeux de données. Seuls les élevages qui ont à la fois des données contrôles laitier et des données d'IA sont conservés.
+
+```{r rec-ai-herdyear-merge}
+hdyr <- inner_join(rec_hdyr, ai_hdyr) |> 
+  mutate(p_ai = round(n_cows_ai / n_cows_rec, 3))
+```
+
+On regarde également, sur les vaches vêlées, celles qui ont une date d'IA ultérieure. Les différents jeux de données sont fusionnés. On examine les proportions de vaches inséminées parmi les vaches présentes et parmi les vaches qui vêlent. Ces 2 variables sont fortement corrélées. Pour sélectionner les élevages à garder par la suite, je choisis de combiner la proportion de vaches inséminées parmi les vaches contrôlées parce que cette variables est plus facile à calculer et à comprendre. Une sélection est également appliquée sur la proportion de primipares contrôlées.
+
+```{r}
+lac <- lac |> 
+  mutate(year = as.integer(format(calv_date, "%Y")))
+
+lac_hrd_yr <- lac |>
+  group_by(herd_id, year) |> 
+  summarise(
+    n_calvings = length(anim_id),
+    n_calvings_p1 = length(parity[parity == 1]),
+    p_calvings_p1 = round(n_calvings_p1 / n_calvings, 3),
+    n_ai1 = length(n_ai[!is.na(n_ai)]),
+    p_ai_clv = round(n_ai1 / n_calvings, 3)
+  )
+
+hdyr <- left_join(hdyr, lac_hrd_yr)
+
+pairs(hdyr[, c("p_primi_rec", "p_calvings_p1", "p_ai", "p_ai_clv")])
+```
+
+
+```{r}
+plot(p_ai_clv ~ p_calvings_p1, data = hdyr)
+abline(v = c(.15, .5), col = "red")
+abline(h = .7, col = "red")
+```
+
+```{r}
+hdyr_sel <- hdyr |> 
+  filter(p_ai_clv > .7 & p_calvings_p1 > .15 & p_calvings_p1 < .5) |> 
+  select(herd_id, year)
+
+lac <- left_join(hdyr_sel, lac)
+```
+# Description des données
+
+# Modèles
+
+### Covariables
+
+```{r}
+milk_early_max_mean <- with(lac[lac$n_ctrl_early > 0,], 
+                            mean(milk_early_max))
+
+milk_early_max_sd   <- with(lac[lac$n_ctrl_early > 0,], 
+                            sd(milk_early_max))
+
+lac <- lac |> 
+  filter(n_ctrl_early > 0) |> 
+  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "2"),
+         milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
+           milk_early_max_sd,
+  milk_early_max_scaled_p1 = ifelse(parity == 1, milk_early_max_scaled, 0),
+  milk_early_max_scaled_p1plus = ifelse(parity > 1, milk_early_max_scaled, 0))
+
+
+
+hist(lac$milk_early_max_scaled)
+```
+
+
+### Définition des statuts vis-à-vis des mammites
+
+Ici on considère :
+
+- pour les primipares, les données cellules et mammites cliniques du début de lactation, c'est à dire jusqu'à 90 jours post-vêlage
+- pour les multipares, les données cellules du dernier contrôle de la lactation précédente les données cellules et mammites cliniques du début de lactation.
+
+Des catégories mutuellement exclusives sont définies à partir des données cellules et mammites cliniques récoltées avant 90 jours de lactation :
+
+- `primi_healthy` (réference) : primipares sans mammites clinique et avec toutes les CCS < 200
+- `primi_env` : primipares avec 1 CCS >= 200 et/ou une mammite clinique
+- `primi_cont` : primipares avec > 1 CCS >= 200, quel que soit le nombre de mammites cliniques
+- `multi_healthy` : mulitpare avec dernier CCS de la lacation précedente < 200 et pas de mammites cliniques ni de CCS > 200 dans cette lactation
+- `dpHealthy_lEnv` : mulitpare avec dernier CCS de la lacation précedente < 200 et soit une mammite clinique et/ou 1 CCS > 200 dans cette lactation
+- `dpHealthy_lCont` : mulitpare avec dernier CCS de la lacation précedente < 200 et > 1 CCS > 200 dans cette lactation
+- `dpHigh_lHealthy` : mulitpare avec dernier CCS de la lacation précedente < 200 et aucun CCS > 200 ni mammite clinique dans cette lactation
+
+
+```{r repro-mastitis-cat}
+lac <- lac |> 
+  mutate(mast_cat = case_when(
+    parity == 1 & n_scc_high_early == 0 & n_cm_early == 0 ~ "primi_healthy",
+    parity == 1 & (n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0)) ~ "primi_env",
+    parity == 1 & n_scc_high_early > 1 ~ "primi_cont",
+    parity > 1 & scc_last_prev_lac < scc_high_cutoff & n_scc_high_early == 0 ~ "multi_healthy",
+    parity > 1 & scc_last_prev_lac < scc_high_cutoff & (n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0)) ~ "dpHealthy_lEnv",
+    parity > 1 & scc_last_prev_lac < scc_high_cutoff & n_scc_high_early > 1 ~ "dpHealthy_lCont",
+    parity > 1 & scc_last_prev_lac >= scc_high_cutoff & n_scc_high_early == 0 ~ "dpHigh_lHealthy",
+    parity > 1 & scc_last_prev_lac >= scc_high_cutoff & (n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0)) ~ "dpHigh_lEnv",
+    parity > 1 & scc_last_prev_lac >= scc_high_cutoff & n_scc_high_early > 1 ~ "dpHigh_lCont"
+  ),
+    mast_par_cat = paste0(mast_cat, parKat),
+    mast_cat = relevel(as.factor(mast_cat), ref = "primi_healthy")
+)
+# 
+# lac$mast_cat <- relevel(as.factor(lac$mast_cat), ref = "primi_healthy")
+# 
+# lac$mast_par_cat <- paste0()
+# 
+# lac <- lac |> 
+#   mutate(
+#     mast_par_cat = paste0(mast_cat, parkat),
+#     mast_cat = relevel(as.factor(mast_cat), ref = "primi_healthy")
+# 
+#   )
+```
+
+
+```{r}
+lac <- lac |> 
+  mutate(
+    dp_status = case_when(
+      parity == 1 ~ "primi",
+      scc_last_prev_lac < scc_high_cutoff ~ "dpLow",
+      scc_last_prev_lac >= scc_high_cutoff ~ "dpHigh"
+    ),
+    dp_status = relevel(factor(dp_status), ref = "primi"),
+    mast_cat1 = case_when(
+    n_scc_high_early == 0 & n_cm_early == 0 ~ "healthy",
+    n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0) ~ "env",
+    n_scc_high_early > 1 ~ "cont"),
+    mast_cat1 = relevel(factor( mast_cat1), ref = "healthy")
+  )
+```
+
+
+
+```{r}
+repro_1 <- glmer(repro ~ dp_status + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_1)
+```
+
+```{r}
+repro_2 <- glmer(repro ~ mast_cat1 + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_2)
+```
+
+
+```{r}
+repro_3 <- glmer(repro ~ dp_status*mast_cat1 + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_3)
+```
+
+
+```{r}
+repro_4 <- glmer(repro ~ dp_status*mast_cat1 + milk_early_max_scaled + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_4)
+```
+
+```{r}
+repro_5 <- glmer(repro ~ dp_status*mast_cat1 + parKat + milk_early_max_scaled + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+summary(repro_5)
+```
+
+```{r}
+lac <- lac |> 
+  mutate(
+    milk_early_max_scaled_p1 = ifelse(parity == 1, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p2 = ifelse(parity == 2, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p3 = ifelse(parity == 3, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p4 = ifelse(parity > 3, milk_early_max_scaled, 0),
+  )
+
+repro_6 <- glmer(repro ~ parKat +
+                   milk_early_max_scaled_p1 + 
+                   milk_early_max_scaled_p2 + 
+                   milk_early_max_scaled_p3 + 
+                   milk_early_max_scaled_p4 + 
+                   (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+summary(repro_6)
+```
+
+## Probabilité de mise à la reproduction
+
+La variable d'intérêt est ici le fait qu'une vache ait été inséminée au moins une fois au cours de sa lactation. L'unité statistique est donc la lactation.
+
+### Variable d'intérêt
+
+On utilise des modèles logistiques mixtes, avec la fonction `glmer` du package `lme4`. Dans tous les modèles on met un effet aléatoire élevage qui représente la probabilité pour une vache d'être mise à la reproduction.
+
+```{r repro-outcome}
+lac <- lac |> 
+  mutate(
+    repro = ifelse(!is.na(n_ai) | !is.na(calv_date_nxt), 1, 0))
+```
+
+On construit un premier modèle avec un intercept uniquement.
+
+```{r repro-null-model}
+repro_null <- glmer(repro ~ 1 + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+```
+
+
+```{r repro-null-model-summary}
+summary(repro_null)
+```
+
+
+Modèles avec les catégories mammites. Les vaches de la catégorie de référence sont les primipares dont tous les contrôles sont inférieurs au seuil CCS et sans mammite clinique. Comme attendu, toutes les autres catégories ont une probabilité diminuée d'être mise à la reproduction, tous les coefficients sont significativement négatifs.
+
+```{r}
+repro_mast_cat1 <- glmer(repro ~ factor(mast_cat) + factor(parKat) + milk_early_max_scaled + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_mast_cat1)
+```
+
+
+```{r}
+repro_mast_cat13 <- glmer(repro ~ factor(mast_par_cat) + milk_early_max_scaled + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_mast_cat13)
+```
+
+
+
+
+```{r}
+repro_mast_cat11 <- glmer(repro ~ factor(mast_cat) + factor(parKat) + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_mast_cat11)
+```
+
+
+```{r}
+repro_mast_cat12 <- glmer(repro ~ factor(mast_cat) + milk_early_max_scaled + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_mast_cat12)
+```
+
+
+
+Effet aléatoire troupeau pour l'effet de la production laitière.
+
+```{r}
+repro_mast_cat2 <- glmer(repro ~ factor(mast_cat) + factor(parKat) + milk_early_max + (1 | herd_id) + (milk_early_max | herd_id),
+                    data = lac,
+                    family = binomial(link = "logit"),
+                    subset = n_ctrl_early > 0)
+
+summary(repro_mast_cat2)
+```
+
+## Probabilité de revêlage pour les vaches mises à la reproduction
+
+```{r}
+lac <- lac |> 
+  mutate(
+    repro_revel = case_when(
+      repro == 1 & !is.na(calv_date_nxt) ~ 1,
+      repro == 1 & is.na(calv_date_nxt) ~ 0,
+      repro == 0 ~ NA
+    )
+    )
+```
+
+
+```{r}
+repro_revel_null <- glmer(repro_revel ~ 1 + (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                    subset = n_ctrl_early > 0)
+
+summary(repro_revel_null)
+```
+
+Le modèle suivant montre que même lorsqu'elles ont été inséminées au moins une fois, les vaches qui ont une des formes de mammites prises en compte ont une probabilité de revêlage différente. Une possibilté est que les éleveurs inséminent moins ces vaches. L'étape suivante va donc consister à regarder les taux de réussite à la première IA pour voir si les probabilités de succès sont différentes selon le statut mammite.
+
+```{r}
+repro_mast_cat1 <- glmer(repro_revel ~ factor(mast_cat) + factor(parKat) + milk_early_max + (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                         subset = !is.na(repro_revel) & n_ctrl_early > 0)
+
+summary(repro_mast_cat1)
+```
+
+
+### Taux de réussite à la première IA
+
+Une variable succès à la première IA est construite.
+
+```{r}
+lac <- lac |> 
+  mutate(ai1_success = case_when(
+    is.na(n_ai) ~ NA,
+    ai_first == ai_last & !is.na(calv_date_nxt) ~ 1,
+    ai_first != ai_last ~ 0
+  ))
+```
+
+
+```{r}
+ai1_success_null <- glmer(ai1_success ~ 1 + (1 | herd_id),
+                          data = lac,
+                          subset = n_ctrl_early > 0,
+                          family = binomial(link = "logit"))
+
+summary(ai1_success_null)
+```
+
+
+
+```{r}
+ai1_success_mast_cat1 <- glmer(ai1_success ~ factor(mast_cat) + factor(parKat) + I((milk_early_max - 25) / 10) + (1 | herd_id),
+                          data = lac,
+                          subset = n_ctrl_early > 0,
+                          family = binomial(link = "logit"))
+
+summary(ai1_success_mast_cat1)
+```
+
+

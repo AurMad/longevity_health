@@ -1,38 +1,56 @@
 ---
-title: "Ajout des identifiants élevage dans les données de contrôle laitier"
+title: "Préparation des données de contrôle laitier Idele pour l'évaluation de l'impact des mammites sur la probabilité de réforme"
 author: "Aurélien"
 format: html
 ---
 
+Le code ci-dessous génère un jeu de données contrôle laitier à partir de divers jeux de données fournis par l'Idele.
+
+Les packages suivants sont attachés :
+
 ```{r setup}
-#| echo: false
+#| echo: true
 #| message: false
 #| warning: false
-
 library(tidyverse)
 library(readxl)
 library(ggplot2)
 ```
 
-# Chargement des données
+Le code R contenu dans le fichier est exporté pour pouvoir l'éxécuter à part.
 
-```{r path-data-littoral-normand}
-#| echo: false
-path_to_data <- "data/"
+```{r rec-idele-selection-code-R}
+#| eval: false
+knitr::purl("rec_idele_selection.qmd")
 ```
+
+Paramètres de la sélection de données.
+
+```{r selection-param}
+## nombre minimum de vaches pour qu'une date de contrôle soit conservée
+min_cow_per_td <- 10
+## nombre minimum de contrôles annuels pour que l'élevage-année soit conservé
+min_td_year <- 11
+## nombre maximum de contrôles annuels pour que l'élevage-année soit conservé
+max_td_year <- 12
+```
+
+
+# Chargement des données Idele
 
 ## Contrôle laitier
 
 Données de contrôle laitier chargées.
 
 ```{r milk-recording-data}
-path_to_file <- "data/controle_elem.txt"
+path_to_file <- "../data/controle_elem.txt"
 rec <- read.csv2(path_to_file)
 ```
 
 Examen des données.
 
 ```{r milk-recording-data-glimpse}
+#| eval: false
 glimpse(rec)
 ```
 
@@ -57,13 +75,14 @@ rec <- rec |>
 Chargement des donnés de mouvements.
 
 ```{r movement-data}
-path_to_file <- "data/mvt.txt"
+path_to_file <- "../data/mvt.txt"
 mvt <- read.csv2(path_to_file)
 ```
 
 Examen des données.
 
 ```{r mvt-glimpse}
+#| eval: false
 glimpse(mvt)
 ```
 
@@ -100,7 +119,7 @@ rec1 <- left_join(rec,
   filter(ctrl_date >= in_date & (ctrl_date <= out_date | is.na(out_date)))
 ```
 
-On s'aperçoit qu'il manque des données. Le code ci-dessous identifie les erreurs. On dirait qu'il s'agit d'animaux pour lesquels on ne peut pas savoir d'après les dates de mouvements rensignées dans quel élevage ils sont au moment du contrôle laitier. Cela correspond à `r nrow(rec) - nrow(rec1)` lignes de données.
+On s'aperçoit qu'il manque des données. Le code ci-dessous identifie les erreurs. On dirait qu'il s'agit d'animaux pour lesquels on ne peut pas savoir d'après les dates de mouvements renseignées dans quel élevage ils sont au moment du contrôle laitier. Cela correspond à `r nrow(rec) - nrow(rec1)` lignes de données.
 
 ```{r missing-herdid-milk-recording}
 rec2 <- anti_join(rec, rec1)
@@ -149,7 +168,7 @@ On va maintenant compter le nombre de contrôles par an dans chaque élevage.
 
 ```{r}
 rec_herd_year <- test_day |>
-  filter(n_cows > 10) |> 
+  filter(n_cows > min_cow_per_td) |> 
   mutate(rec_year = format(as.Date(ctrl_date), "%Y")) |> 
   group_by(herd_id, rec_year) |> 
   summarise(
@@ -157,6 +176,7 @@ rec_herd_year <- test_day |>
     n_cows_med = median(n_cows)
   )
 ```
+
 
 ```{r ncows-rec-year-dist}
 ggplot(rec_herd_year, aes(x = n_rec)) +
@@ -167,13 +187,15 @@ On sélectionne les élevages-années avec 11 ou 12 contrôles.
 
 ```{r herd-selection-nrec-year}
 herd_year_sel <- rec_herd_year |> 
-  filter(n_rec %in% 11:12)
+  filter(n_rec %in% min_td_year:max_td_year)
 ```
 
 Le jeu de données contient `r nrow(herd_year_sel)` élevages-années dans `r length(unique(herd_year_sel$herd_id))` élevages uniques. On extrait les contrôles laitiers correspondants.
 
 ```{r selected-milk-records}
-test_days_sel <- left_join(herd_year_sel, test_day |> mutate(rec_year = format(as.Date(ctrl_date), "%Y")))
+test_days_sel <- left_join(herd_year_sel, 
+                           test_day |> 
+                             mutate(rec_year = format(as.Date(ctrl_date), "%Y")))
 
 # hist(test_days_sel$n_cows)
 ```
@@ -181,75 +203,48 @@ test_days_sel <- left_join(herd_year_sel, test_day |> mutate(rec_year = format(a
 ```{r final-milk-recording-data}
 rec_final <- left_join(test_days_sel |> 
                    select(herd_id, ctrl_date),
-                 rec)
-```
-
-```{r formatage}
-
-rec_final <- rec_final |> 
+                 rec) |> 
   mutate(ctrl_date = as.Date(ctrl_date))
 ```
 
-## Produtcion
+## Données lactations
 
-Ce fichier contient moins de lignes et plus de colonnes que le précédent. Je ne comprends pas bien la différence.
+Ce fichier contient une ligne par lactation. Il est utilisé pour récupérer les dates de vêlages et rangs de lactation.
 
 ```{r prd-chargment}
-path_to_file <- paste0(path_to_data, "production.txt")
+path_to_file <- "../data/production.txt"
 
 prd <- read.csv2(path_to_file)
 
 colnames(prd) <- tolower(colnames(prd))
 
-#modification du nom des colonnes pour simplifier
+# modification du nom des colonnes pour simplifier
 prd <- prd |> 
   rename(parity = nulact,
          anim_id = anim,
-         calv_date = dadela,
-         total_milk  = latolad,
-         total_MG = mgtolad,
-         total_MP = mptolad,
-         total_tb = tbtolad,
-         total_tp = tptolad)
+         calv_date = dadela) |> 
+  select(anim_id, calv_date, parity)
 ```
 
 Rajout des dates de vêlage au tableau rec_final afin de calculer le stade de lactation "dim"
 
-```{r}
+```{r ajout-dates-velages-rec}
 rec_final <- inner_join(rec_final,
                   prd |> 
                     select(anim_id, parity, calv_date),
                   join_by(anim_id, parity))
- 
+
+rec_final <- rec_final |> 
+  mutate(herd_id = as.character(herd_id),
+         calv_date = as.Date(calv_date), 
+         ctrl_date = as.Date(ctrl_date),
+         dim = as.integer(ctrl_date - calv_date))
 ```
 
-```{r}
-rec_final <- rec_final |> 
-  mutate(calv_date = as.Date(calv_date), ctrl_date = as.Date(ctrl_date))
+# Jeu de données final
 
-
-rec_final <- rec_final |> 
-  mutate(dim = as.integer(ctrl_date - calv_date))
-
-rec_final <- rec_final |> 
-  mutate(herd_id = as.character(herd_id))
-```
-
-commentaire de Joanna : il y a un problème, certaines vaches ont une lactation de plus de 2000 jours...
-
-```{r}
-rec_final <- rec_final |> 
-  filter(dim <= 350)
-```
-
-```{r selection des mois de controle}
-rec_final <- rec_final |> 
-  mutate(ctrl_months = format(as.Date(ctrl_date), "%Y-%m"))
-```
-
-
-Tu peux enregistrer le fichier final pour ne pas avoir à refaire tourner ce script à chaque fois. Ne pas inclure ces fichiers de données générés dans les commits.
+Le fichier final est enregistré au format `.csv`. Ne pas inclure les fichiers `.csv` dans les commits.
 
 ```{r saving-final-milk-recording-data}
-write.csv2(rec_final, "generated_datasets/rec_final.csv")
+write_csv2(rec_final, "../generated_datasets/idele_rec_final.csv"           )
 ```

@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.549">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Impact des mammites sur la reproduction</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="mammites_mise_repro_files/libs/clipboard/clipboard.min.js"></script>
+<script src="mammites_mise_repro_files/libs/quarto-html/quarto.js"></script>
+<script src="mammites_mise_repro_files/libs/quarto-html/popper.min.js"></script>
+<script src="mammites_mise_repro_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="mammites_mise_repro_files/libs/quarto-html/anchor.min.js"></script>
+<link href="mammites_mise_repro_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="mammites_mise_repro_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="mammites_mise_repro_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="mammites_mise_repro_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="mammites_mise_repro_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Impact des mammites sur la reproduction</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.5
+✔ forcats   1.0.0     ✔ stringr   1.5.1
+✔ ggplot2   3.5.1     ✔ tibble    3.2.1
+✔ lubridate 1.9.3     ✔ tidyr     1.3.1
+✔ purrr     1.0.2     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lme4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Le chargement a nécessité le package : Matrix
+
+Attachement du package : 'Matrix'
+
+Les objets suivants sont masqués depuis 'package:tidyr':
+
+    expand, pack, unpack</code></pre>
+</div>
+</div>
+<p>Ce fichier reprend le code qui était auparavant dans le fichier “longevity_mastitis.qmd” pour plus de lisibilité.</p>
+<p>Les objectifs sont de modéliser l’impact de différents statuts vis-à-vis des mammites sur la probabilité de réforme. La probabilité de réforme est représentée en différentes composantes :</p>
+<ul>
+<li>Mise à la reproduction : présence d’une première insémination artificielle</li>
+<li>Succès de la mise à la reproduction : re-vêlage</li>
+<li>Mort de la vache</li>
+</ul>
+<p>L’unité statistique est la lactation.</p>
+<p>Les étapes du fichier :</p>
+<ul>
+<li>chargement des données contrôle laitier Idele</li>
+<li>construction d’un jeu de données lactations à partir des données contrôle laitier</li>
+<li>chargement des données mammites cliniques</li>
+<li>chargement des données d’insémination artificielle</li>
+</ul>
+<p>Le chunk suivant défini les paramètres de la modélisation.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">## nombre de jours en dessous duquel on considère qu'on est en début de lactation</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="do">## en moyenne avant première IA</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>early_dim_cutoff <span class="ot">&lt;-</span> <span class="dv">90</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="do">## SCC cut-off</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="do">## seuil de cellules au-delà duquel on considère</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="do">## qu'il y a mammite clinique</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>scc_high_cutoff <span class="ot">&lt;-</span> <span class="dv">200</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="données" class="level1">
+<h1>Données</h1>
+<section id="chargement-des-données-contrôle-laitier-idele" class="level2">
+<h2 class="anchored" data-anchor-id="chargement-des-données-contrôle-laitier-idele">Chargement des données contrôle laitier Idele</h2>
+<p>Un jeu de données construit à partir des données fournies par l’Idele est chargé.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>rec <span class="ot">&lt;-</span> <span class="fu">read_csv2</span>(<span class="st">"generated_datasets/idele_rec_final.csv"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">herd_id =</span> <span class="fu">as.character</span>(herd_id),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">ctrl_date =</span> <span class="fu">as.Date</span>(ctrl_date),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">anim_id =</span> <span class="fu">as.character</span>(anim_id),</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">parity =</span> <span class="fu">as.integer</span>(parity),</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">fat =</span> <span class="fu">as.integer</span>(fat),</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">prot =</span> <span class="fu">as.integer</span>(prot),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">scc =</span> <span class="fu">as.integer</span>(scc),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">out_cause =</span> <span class="fu">as.character</span>(out_cause),</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">calv_date =</span> <span class="fu">as.Date</span>(calv_date),</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">dim =</span> <span class="fu">as.integer</span>(dim)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(milk) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(scc))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ℹ Using "','" as decimal and "'.'" as grouping mark. Use `read_delim()` for more control.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 1821719 Columns: 13
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ";"
+chr  (3): anim_id, out_cause, ctrl_months
+dbl  (7): herd_id, parity, milk, fat, prot, scc, dim
+date (3): ctrl_date, out_date, calv_date
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+</section>
+<section id="construction-dun-jeu-de-données-lactations" class="level2">
+<h2 class="anchored" data-anchor-id="construction-dun-jeu-de-données-lactations">Construction d’un jeu de données lactations</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>lac <span class="ot">&lt;-</span> rec <span class="sc">|&gt;</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(anim_id, parity) <span class="sc">|&gt;</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">herd_id =</span> herd_id[<span class="dv">1</span>],</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">calv_date =</span> <span class="fu">unique</span>(calv_date),</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">out_date_last =</span> <span class="fu">max</span>(out_date),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">out_cause_last =</span> <span class="fu">unique</span>(out_cause[out_date <span class="sc">==</span> out_date_last]),</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_ctrl =</span> <span class="fu">length</span>(<span class="fu">unique</span>(ctrl_date)),</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_ctrl_early =</span> <span class="fu">length</span>(<span class="fu">unique</span>(ctrl_date[dim <span class="sc">&lt;=</span> early_dim_cutoff])),</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_scc_high_early =</span> <span class="fu">length</span>(scc[scc <span class="sc">&gt;</span> scc_high_cutoff <span class="sc">&amp;</span> dim <span class="sc">&lt;=</span> early_dim_cutoff]),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">milk_early_max =</span> <span class="fu">max</span>(milk[dim <span class="sc">&lt;=</span> early_dim_cutoff]),</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">dim_last =</span> <span class="fu">max</span>(dim),</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">milk_last =</span> milk[dim <span class="sc">==</span> dim_last],</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">scc_last =</span> scc[dim <span class="sc">==</span> dim_last]</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>            ) <span class="sc">|&gt;</span> </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(anim_id) <span class="sc">|&gt;</span> </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">calv_date_prev =</span> <span class="fu">lag</span>(calv_date),</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">milk_last_prev_lac =</span> <span class="fu">lag</span>(milk_last),</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">dim_last_prev_lac =</span> <span class="fu">lag</span>(dim_last),</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">scc_last_prev_lac =</span> <span class="fu">lag</span>(scc_last),</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">calv_date_nxt =</span> <span class="fu">lead</span>(calv_date) ) <span class="sc">|&gt;</span> </span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: There were 21319 warnings in `summarise()`.
+The first warning was:
+ℹ In argument: `milk_early_max = max(milk[dim &lt;= early_dim_cutoff])`.
+ℹ In group 1: `anim_id = "AT445953874"` and `parity = 1`.
+Caused by warning in `max()`:
+! aucun argument pour max ; -Inf est renvoyé
+ℹ Run `dplyr::last_dplyr_warnings()` to see the 21318 remaining warnings.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'anim_id'. You can override using the
+`.groups` argument.</code></pre>
+</div>
+</div>
+</section>
+<section id="chargement-des-données-mammites-cliniques" class="level2">
+<h2 class="anchored" data-anchor-id="chargement-des-données-mammites-cliniques">Chargement des données mammites cliniques</h2>
+<p>Le fichier de données est chargé. On ne garde que les dates de mammites cliniques.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>path_to_file <span class="ot">&lt;-</span> <span class="st">"data/mammites.txt"</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>mamt <span class="ot">&lt;-</span> <span class="fu">read_csv2</span>(path_to_file) <span class="sc">|&gt;</span> </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">anim_id =</span> ANIM,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">cm_date =</span> DAMACL) <span class="sc">|&gt;</span> </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(anim_id, cm_date)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>ℹ Using "','" as decimal and "'.'" as grouping mark. Use `read_delim()` for more control.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 79466 Columns: 7
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ";"
+chr  (2): ANIM, COORCO
+dbl  (3): NUORMA, SEMACL, EXMACL
+date (2): DACOMA, DAMACL
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+<p>Les données mammites cliniques sont fusionnées avec les données lactation. Pour chaque lactation, on extrait les première et dernière dates de mammite clinique. On considère qu’une lactation commence 30 jours avant vêlage. Cette hypothèse pourra être discutée.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>lac_cm <span class="ot">&lt;-</span> <span class="fu">left_join</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  lac <span class="sc">|&gt;</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(anim_id, calv_date, calv_date_nxt) <span class="sc">|&gt;</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">dim_minus30 =</span> calv_date <span class="sc">-</span> <span class="dv">30</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">dim_early =</span> calv_date <span class="sc">+</span> early_dim_cutoff),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  mamt) <span class="sc">|&gt;</span> </span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(cm_date)) <span class="sc">|&gt;</span> </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(anim_id, calv_date) <span class="sc">|&gt;</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">cm_first =</span> <span class="fu">min</span>(cm_date[cm_date <span class="sc">&gt;=</span> calv_date <span class="sc">&amp;</span> (cm_date <span class="sc">&lt;</span> calv_date_nxt <span class="sc">|</span> <span class="fu">is.na</span>(calv_date_nxt))]),</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">cm_last =</span> <span class="fu">max</span>(cm_date[cm_date <span class="sc">&gt;=</span> calv_date <span class="sc">&amp;</span> (cm_date <span class="sc">&lt;</span> calv_date_nxt <span class="sc">|</span> <span class="fu">is.na</span>(calv_date_nxt))]),</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_cm_early =</span> <span class="fu">length</span>(<span class="fu">unique</span>(cm_date[cm_date <span class="sc">&gt;=</span> dim_minus30 <span class="sc">&amp;</span> cm_date <span class="sc">&lt;</span> dim_early])),</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_cm_late =</span> <span class="fu">length</span>(<span class="fu">unique</span>(cm_date[cm_date <span class="sc">&gt;=</span> dim_early <span class="sc">&amp;</span> (cm_date <span class="sc">&lt;</span> calv_date_nxt <span class="sc">|</span> <span class="fu">is.na</span>(calv_date_nxt))]))</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(anim_id)`</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in left_join(mutate(select(lac, anim_id, calv_date, calv_date_nxt), : Detected an unexpected many-to-many relationship between `x` and `y`.
+ℹ Row 24 of `x` matches multiple rows in `y`.
+ℹ Row 1 of `y` matches multiple rows in `x`.
+ℹ If a many-to-many relationship is expected, set `relationship =
+  "many-to-many"` to silence this warning.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: There were 85866 warnings in `summarise()`.
+The first warning was:
+ℹ In argument: `cm_first = min(...)`.
+ℹ In group 1: `anim_id = "DE0352239242"` and `calv_date = 2010-09-13`.
+Caused by warning in `min.default()`:
+! aucun argument trouvé pour min ; Inf est renvoyé
+ℹ Run `dplyr::last_dplyr_warnings()` to see the 85865 remaining warnings.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'anim_id'. You can override using the
+`.groups` argument.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>lac_cm<span class="sc">$</span>cm_first[<span class="fu">is.infinite</span>(lac_cm<span class="sc">$</span>cm_first)] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>lac_cm<span class="sc">$</span>cm_last[<span class="fu">is.infinite</span>(lac_cm<span class="sc">$</span>cm_last)] <span class="ot">&lt;-</span> <span class="cn">NA</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Fusion avec le jeu de données <code>lac</code> initial.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>lac <span class="ot">&lt;-</span> <span class="fu">left_join</span>(lac, lac_cm) <span class="sc">|&gt;</span> </span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_cm_early =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(n_cm_early), <span class="dv">0</span>, n_cm_early),</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_cm_late =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(n_cm_late), <span class="dv">0</span>, n_cm_late)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(anim_id, calv_date)`</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(lac_cm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="données-dinsémination-artificielle" class="level2">
+<h2 class="anchored" data-anchor-id="données-dinsémination-artificielle">Données d’insémination artificielle</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>path_to_file <span class="ot">&lt;-</span> <span class="st">"data/extra_femia_20240415.csv"</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>ai <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(path_to_file) <span class="sc">|&gt;</span> </span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(anim, DAINAR) <span class="sc">|&gt;</span> </span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">anim_id =</span> anim,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">ai_date =</span> DAINAR) <span class="sc">|&gt;</span> </span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ai_date =</span> <span class="fu">as.Date</span>(ai_date, <span class="st">"%d/%m/%Y"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 730452 Columns: 15
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (6): anim, DAINAR, DAFIGEP, DAFIGES, IAGEN, CHEPIA
+dbl (9): SEMSEX, RANGIA, IVV, IVIA1, RACERECT, RACERECV, RAVELAP, RAVELAS, I...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+</section>
+<section id="fusion-des-données-dinsémination-artificielle-avec-données-lactation" class="level2">
+<h2 class="anchored" data-anchor-id="fusion-des-données-dinsémination-artificielle-avec-données-lactation">Fusion des données d’insémination artificielle avec données lactation</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>nlac <span class="ot">&lt;-</span> <span class="fu">left_join</span>(lac <span class="sc">|&gt;</span> </span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">select</span>(anim_id, calv_date, calv_date_nxt), </span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>                  ai) <span class="sc">|&gt;</span> </span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ai_date <span class="sc">&gt;</span> calv_date <span class="sc">&amp;</span> (ai_date <span class="sc">&lt;</span> calv_date_nxt <span class="sc">|</span> <span class="fu">is.na</span>(calv_date_nxt))) <span class="sc">|&gt;</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(anim_id, calv_date) <span class="sc">|&gt;</span> </span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n_ai =</span> <span class="fu">length</span>(<span class="fu">unique</span>(ai_date)),</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">ai_first =</span> <span class="fu">min</span>(ai_date),</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">ai_last =</span> <span class="fu">max</span>(ai_date)) <span class="sc">|&gt;</span> </span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(anim_id)`</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in left_join(select(lac, anim_id, calv_date, calv_date_nxt), ai): Detected an unexpected many-to-many relationship between `x` and `y`.
+ℹ Row 2 of `x` matches multiple rows in `y`.
+ℹ Row 1 of `y` matches multiple rows in `x`.
+ℹ If a many-to-many relationship is expected, set `relationship =
+  "many-to-many"` to silence this warning.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'anim_id'. You can override using the
+`.groups` argument.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>lac <span class="ot">&lt;-</span> <span class="fu">left_join</span>(lac, nlac) <span class="sc">|&gt;</span> </span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ai1_dim =</span> <span class="fu">as.integer</span>(ai_first <span class="sc">-</span> calv_date),</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">ai_last_dim =</span> <span class="fu">as.integer</span>(ai_last <span class="sc">-</span> calv_date))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(anim_id, calv_date)`</code></pre>
+</div>
+</div>
+</section>
+<section id="agrégation-des-données-contrôle-laitier-par-date-de-contrôle" class="level2">
+<h2 class="anchored" data-anchor-id="agrégation-des-données-contrôle-laitier-par-date-de-contrôle">Agrégation des données contrôle laitier par date de contrôle</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>td <span class="ot">&lt;-</span> rec <span class="sc">|&gt;</span> </span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(herd_id, ctrl_date) <span class="sc">|&gt;</span> </span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_cows =</span> <span class="fu">length</span>(<span class="fu">unique</span>(anim_id)),</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">milk_mean =</span> <span class="fu">round</span>(<span class="fu">mean</span>(milk), <span class="dv">1</span>),</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">scc_geo_mean =</span> <span class="fu">round</span>(<span class="fu">exp</span>(<span class="fu">mean</span>(<span class="fu">log</span>(scc))), <span class="dv">1</span>),</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">scc_high =</span> <span class="fu">round</span>(<span class="fu">length</span>(scc[scc <span class="sc">&gt;</span> scc_high_cutoff]) <span class="sc">/</span> <span class="fu">length</span>(scc), <span class="dv">3</span>),</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">bmscc =</span> <span class="fu">round</span>(<span class="fu">sum</span>(scc <span class="sc">*</span> milk)  <span class="sc">/</span><span class="fu">sum</span>(milk), <span class="dv">1</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'herd_id'. You can override using the
+`.groups` argument.</code></pre>
+</div>
+</div>
+</section>
+<section id="agrégation-des-données-à-léchelle-élevage-année" class="level2">
+<h2 class="anchored" data-anchor-id="agrégation-des-données-à-léchelle-élevage-année">Agrégation des données à l’échelle élevage-année</h2>
+<p>Les données contrôle laitier et insémination artificielle sont agrégées à l’échelle élevage-année. L’objectif est de sélectionner les élevages dans lesquels toutes les vaches sont inséminées.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>rec<span class="sc">$</span>year <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">format</span>(rec<span class="sc">$</span>ctrl_date, <span class="st">"%Y"</span>))</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>rec_hdyr <span class="ot">&lt;-</span> rec <span class="sc">|&gt;</span> </span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(herd_id, year) <span class="sc">|&gt;</span> </span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n_ctrl =</span> <span class="fu">length</span>(<span class="fu">unique</span>(ctrl_date)),</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_cows_rec =</span> <span class="fu">length</span>(<span class="fu">unique</span>(anim_id)),</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">p_primi =</span> <span class="fu">round</span>(<span class="fu">length</span>(parity[parity <span class="sc">==</span> <span class="dv">1</span>]) <span class="sc">/</span> <span class="fu">length</span>(parity), <span class="dv">3</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'herd_id'. You can override using the
+`.groups` argument.</code></pre>
+</div>
+</div>
+<p>Les premières IA de chaque élevage sont comptées.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>ai_hdyr <span class="ot">&lt;-</span> lac <span class="sc">|&gt;</span> </span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(n_ai)) <span class="sc">|&gt;</span> </span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.integer</span>(<span class="fu">format</span>(ai_first, <span class="st">"%Y"</span>))) <span class="sc">|&gt;</span> </span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(herd_id, year) <span class="sc">|&gt;</span> </span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n_cows_ai =</span> <span class="fu">length</span>(n_ai[<span class="sc">!</span><span class="fu">is.na</span>(n_ai)])) <span class="sc">|&gt;</span> </span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'herd_id'. You can override using the
+`.groups` argument.</code></pre>
+</div>
+</div>
+<p>Fusion des 2 jeux de données.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>hdyr <span class="ot">&lt;-</span> <span class="fu">full_join</span>(rec_hdyr, ai_hdyr) <span class="sc">|&gt;</span> </span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">p_ai =</span> <span class="fu">round</span>(n_cows_ai <span class="sc">/</span> n_cows_rec, <span class="dv">3</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(herd_id, year)`</code></pre>
+</div>
+</div>
+<p>Ici, réfléchir à un critère pour sélectionner les élevages dans lesquels touts ou la plupart des vaches sont inséminées.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(hdyr<span class="sc">$</span>p_ai, <span class="at">breaks =</span> <span class="dv">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="mammites_mise_repro_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="description-des-données" class="level1">
+<h1>Description des données</h1>
+</section>
+<section id="modèles" class="level1">
+<h1>Modèles</h1>
+<section id="covariables" class="level3">
+<h3 class="anchored" data-anchor-id="covariables">Covariables</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>lac <span class="ot">&lt;-</span> lac <span class="sc">|&gt;</span> </span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parKat =</span> <span class="fu">ifelse</span>(parity <span class="sc">&gt;</span> <span class="dv">3</span>, <span class="dv">4</span>, parity))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="définition-des-statuts-vis-à-vis-des-mammites" class="level3">
+<h3 class="anchored" data-anchor-id="définition-des-statuts-vis-à-vis-des-mammites">Définition des statuts vis-à-vis des mammites</h3>
+<p>Ici on considère :</p>
+<ul>
+<li>pour les primipares, les données cellules et mammites cliniques du début de lactation, c’est à dire jusqu’à 90 jours post-vêlage</li>
+<li>pour les multipares, les données cellules du dernier contrôle de la lactation précédente les données cellules et mammites cliniques du début de lactation.</li>
+</ul>
+<p>Des catégories mutuellement exclusives sont définies à partir des données cellules et mammites cliniques récoltées avant 90 jours de lactation :</p>
+<ul>
+<li><code>primi_healthy</code> (réference) : primipares sans mammites clinique et avec toutes les CCS &lt; 200</li>
+<li><code>primi_env</code> : primipares avec 1 CCS &gt;= 200 et/ou une mammite clinique</li>
+<li><code>primi_cont</code> : primipares avec &gt; 1 CCS &gt;= 200, quel que soit le nombre de mammites cliniques</li>
+<li><code>multi_healthy</code> : mulitpare avec dernier CCS de la lacation précedente &lt; 200 et pas de mammites cliniques ni de CCS &gt; 200 dans cette lactation</li>
+<li><code>dpHealthy_lEnv</code> : mulitpare avec dernier CCS de la lacation précedente &lt; 200 et soit une mammite clinique et/ou 1 CCS &gt; 200 dans cette lactation</li>
+<li><code>dpHealthy_lCont</code> : mulitpare avec dernier CCS de la lacation précedente &lt; 200 et &gt; 1 CCS &gt; 200 dans cette lactation</li>
+<li><code>dpHigh_lHealthy</code> : mulitpare avec dernier CCS de la lacation précedente &lt; 200 et aucun CCS &gt; 200 ni mammite clinique dans cette lactation</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>lac <span class="ot">&lt;-</span> lac <span class="sc">|&gt;</span> </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mast_cat =</span> <span class="fu">case_when</span>(</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> n_scc_high_early <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> n_cm_early <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="st">"primi_healthy"</span>,</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> (n_scc_high_early <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span> (n_scc_high_early <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> n_cm_early <span class="sc">&gt;</span> <span class="dv">0</span>)) <span class="sc">~</span> <span class="st">"primi_env"</span>,</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> n_scc_high_early <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"primi_cont"</span>,</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> scc_last_prev_lac <span class="sc">&lt;</span> scc_high_cutoff <span class="sc">&amp;</span> n_scc_high_early <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="st">"multi_healthy"</span>,</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> scc_last_prev_lac <span class="sc">&lt;</span> scc_high_cutoff <span class="sc">&amp;</span> (n_scc_high_early <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span> (n_scc_high_early <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> n_cm_early <span class="sc">&gt;</span> <span class="dv">0</span>)) <span class="sc">~</span> <span class="st">"dpHealthy_lEnv"</span>,</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> scc_last_prev_lac <span class="sc">&lt;</span> scc_high_cutoff <span class="sc">&amp;</span> n_scc_high_early <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"dpHealthy_lCont"</span>,</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> scc_last_prev_lac <span class="sc">&gt;=</span> scc_high_cutoff <span class="sc">&amp;</span> n_scc_high_early <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="st">"dpHigh_lHealthy"</span>,</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> scc_last_prev_lac <span class="sc">&gt;=</span> scc_high_cutoff <span class="sc">&amp;</span> (n_scc_high_early <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span> (n_scc_high_early <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> n_cm_early <span class="sc">&gt;</span> <span class="dv">0</span>)) <span class="sc">~</span> <span class="st">"dpHigh_lEnv"</span>,</span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>    parity <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> scc_last_prev_lac <span class="sc">&gt;=</span> scc_high_cutoff <span class="sc">&amp;</span> n_scc_high_early <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"dpHigh_lCont"</span></span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="probabilité-de-mise-à-la-reproduction" class="level2">
+<h2 class="anchored" data-anchor-id="probabilité-de-mise-à-la-reproduction">Probabilité de mise à la reproduction</h2>
+<p>La varibale d’intérêt est ici le fait qu’une vache ait été inséminée au moins une fois au cours de sa lactation. L’unité statistique est donc la lactation.</p>
+<section id="variable-dintérêt" class="level3">
+<h3 class="anchored" data-anchor-id="variable-dintérêt">Variable d’intérêt</h3>
+<p>On utilise des modèles logistiques mixtes, avec la fonction <code>glmer</code> du package <code>lme4</code>. Dans tous les modèles on met un effet aléatoire élevage qui représente la probabilité pour une vache d’être mise à la reproduction.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>lac <span class="ot">&lt;-</span> lac <span class="sc">|&gt;</span> </span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">repro =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(n_ai), <span class="dv">1</span>, <span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>On construit un premier modèle avec un intercept uniquement.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>repro_null <span class="ot">&lt;-</span> <span class="fu">glmer</span>(repro <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> herd_id),</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">data =</span> lac,</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">subset =</span> n_ctrl_early <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">"logit"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(repro_null)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: repro ~ 1 + (1 | herd_id)
+   Data: lac
+ Subset: n_ctrl_early &gt; 0
+
+      AIC       BIC    logLik  deviance  df.resid 
+ 229261.4  229281.8 -114628.7  229257.4    196256 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-5.0215 -1.1186  0.5737  0.6904 15.0757 
+
+Random effects:
+ Groups  Name        Variance Std.Dev.
+ herd_id (Intercept) 2.023    1.422   
+Number of obs: 196258, groups:  herd_id, 282
+
+Fixed effects:
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)  0.48252    0.08632    5.59 2.27e-08 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>Modèles avec les catégories mammites. Les vaches de la catégorie de référence sont les primipares dont tous les contrôles sont inférieurs au seuil CCS et sans mammite clinique. Comme attendu, toutes les autres catégories ont une probabilité diminuée d’être mise à la reproduction, tous les coefficients sont significativement négatifs.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>lac<span class="sc">$</span>mast_cat <span class="ot">&lt;-</span> <span class="fu">relevel</span>(<span class="fu">as.factor</span>(lac<span class="sc">$</span>mast_cat), <span class="at">ref =</span> <span class="st">"primi_healthy"</span>)</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>repro_mast_cat1 <span class="ot">&lt;-</span> <span class="fu">glmer</span>(repro <span class="sc">~</span> <span class="fu">factor</span>(mast_cat) <span class="sc">+</span> <span class="fu">factor</span>(parKat) <span class="sc">+</span> milk_early_max <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> herd_id),</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">data =</span> lac,</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">"logit"</span>),</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">subset =</span> n_ctrl_early <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>fixed-effect model matrix is rank deficient so dropping 1 column / coefficient</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(repro_mast_cat1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: repro ~ factor(mast_cat) + factor(parKat) + milk_early_max +  
+    (1 | herd_id)
+   Data: lac
+ Subset: n_ctrl_early &gt; 0
+
+      AIC       BIC    logLik  deviance  df.resid 
+ 212831.3  212963.3 -106402.6  212805.3    190122 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-7.1207 -0.9131  0.4791  0.6580 13.2772 
+
+Random effects:
+ Groups  Name        Variance Std.Dev.
+ herd_id (Intercept) 2.107    1.452   
+Number of obs: 190135, groups:  herd_id, 282
+
+Fixed effects:
+                                  Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)                     -0.7522190  0.0913447  -8.235  &lt; 2e-16 ***
+factor(mast_cat)dpHealthy_lCont -1.3663952  0.0318685 -42.876  &lt; 2e-16 ***
+factor(mast_cat)dpHealthy_lEnv  -1.2766952  0.0276537 -46.167  &lt; 2e-16 ***
+factor(mast_cat)dpHigh_lCont    -1.7116260  0.0263378 -64.988  &lt; 2e-16 ***
+factor(mast_cat)dpHigh_lEnv     -1.4961726  0.0270751 -55.260  &lt; 2e-16 ***
+factor(mast_cat)dpHigh_lHealthy -1.1073783  0.0209625 -52.827  &lt; 2e-16 ***
+factor(mast_cat)multi_healthy   -0.9769954  0.0199781 -48.903  &lt; 2e-16 ***
+factor(mast_cat)primi_cont      -0.2234253  0.0316113  -7.068 1.57e-12 ***
+factor(mast_cat)primi_env       -0.1810978  0.0233106  -7.769 7.92e-15 ***
+factor(parKat)2                  0.6177248  0.0160513  38.484  &lt; 2e-16 ***
+factor(parKat)3                  0.3252679  0.0166032  19.591  &lt; 2e-16 ***
+milk_early_max                   0.0609723  0.0009377  65.023  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+                   (Intr) fctr(mst_ct)dpHl_C fctr(mst_ct)dpHl_E
+fctr(mst_ct)dpHl_C  0.027                                      
+fctr(mst_ct)dpHl_E  0.031  0.315                               
+fctr(mst_ct)dpHg_C  0.032  0.298              0.347            
+fctr(mst_ct)dpHg_E  0.030  0.293              0.343            
+fctr(m_)H_H         0.046  0.392              0.462            
+fctr(mst_ct)m_      0.047  0.447              0.532            
+fctr(mst_ct)prm_c  -0.043  0.124              0.141            
+fctr(mst_ct)prm_n  -0.060  0.164              0.188            
+fctr(prKt)2        -0.047 -0.279             -0.356            
+fctr(prKt)3        -0.008 -0.227             -0.281            
+milk_rly_mx        -0.257 -0.269             -0.309            
+                   fctr(mst_ct)dpHg_C fctr(mst_ct)dpHg_E f(_)H_H fctr(mst_ct)m_
+fctr(mst_ct)dpHl_C                                                             
+fctr(mst_ct)dpHl_E                                                             
+fctr(mst_ct)dpHg_C                                                             
+fctr(mst_ct)dpHg_E  0.336                                                      
+fctr(m_)H_H         0.444              0.438                                   
+fctr(mst_ct)m_      0.486              0.483              0.658                
+fctr(mst_ct)prm_c   0.153              0.147              0.187   0.191        
+fctr(mst_ct)prm_n   0.201              0.195              0.249   0.256        
+fctr(prKt)2        -0.235             -0.251             -0.367  -0.537        
+fctr(prKt)3        -0.209             -0.214             -0.303  -0.411        
+milk_rly_mx        -0.321             -0.312             -0.430  -0.446        
+                   fctr(mst_ct)prm_c fctr(mst_ct)prm_n fc(K)2 fc(K)3
+fctr(mst_ct)dpHl_C                                                  
+fctr(mst_ct)dpHl_E                                                  
+fctr(mst_ct)dpHg_C                                                  
+fctr(mst_ct)dpHg_E                                                  
+fctr(m_)H_H                                                         
+fctr(mst_ct)m_                                                      
+fctr(mst_ct)prm_c                                                   
+fctr(mst_ct)prm_n   0.172                                           
+fctr(prKt)2         0.004             0.005                         
+fctr(prKt)3         0.002             0.003             0.457       
+milk_rly_mx         0.002             0.010             0.188  0.035
+fit warnings:
+fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+optimizer (Nelder_Mead) convergence code: 0 (OK)
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="probabilité-de-revêlage-pour-les-vaches-mises-à-la-reproduction" class="level2">
+<h2 class="anchored" data-anchor-id="probabilité-de-revêlage-pour-les-vaches-mises-à-la-reproduction">Probabilité de revêlage pour les vaches mises à la reproduction</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>lac <span class="ot">&lt;-</span> lac <span class="sc">|&gt;</span> </span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">repro_revel =</span> <span class="fu">case_when</span>(</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>      repro <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(calv_date_nxt) <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>      repro <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(calv_date_nxt) <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>      repro <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="cn">NA</span></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>repro_revel_null <span class="ot">&lt;-</span> <span class="fu">glmer</span>(repro_revel <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span>herd_id),</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>                          <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">"logit"</span>),</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>                          <span class="at">data =</span> lac,</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">subset =</span> n_ctrl_early <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(repro_revel_null)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: repro_revel ~ 1 + (1 | herd_id)
+   Data: lac
+ Subset: n_ctrl_early &gt; 0
+
+     AIC      BIC   logLik deviance df.resid 
+161126.0 161145.6 -80561.0 161122.0   129114 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.9889 -1.2087  0.6141  0.7186  4.3179 
+
+Random effects:
+ Groups  Name        Variance Std.Dev.
+ herd_id (Intercept) 1.63     1.277   
+Number of obs: 129116, groups:  herd_id, 271
+
+Fixed effects:
+            Estimate Std. Error z value Pr(&gt;|z|)
+(Intercept)  0.06754    0.08065   0.837    0.402</code></pre>
+</div>
+</div>
+<p>Le modèle suivant montre que même lorsqu’elles ont été inséminées au moins une fois, les vaches qui ont une des formes de mammites prises en compte ont une probabilité de revêlage. Une possibilté est que les éleveurs inséminent moins ces vaches. L’étape suivante va donc consister à regarder les taux de réussite à la première IA pour voir si les probabilités de succès sont différentes selon le statut mammite.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>repro_mast_cat1 <span class="ot">&lt;-</span> <span class="fu">glmer</span>(repro_revel <span class="sc">~</span> <span class="fu">factor</span>(mast_cat) <span class="sc">+</span> <span class="fu">factor</span>(parKat) <span class="sc">+</span> milk_early_max <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span>herd_id),</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>                          <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">"logit"</span>),</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>                          <span class="at">data =</span> lac,</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">subset =</span> <span class="sc">!</span><span class="fu">is.na</span>(repro_revel) <span class="sc">&amp;</span> n_ctrl_early <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>fixed-effect model matrix is rank deficient so dropping 1 column / coefficient</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
+Model failed to converge with max|grad| = 0.0126425 (tol = 0.002, component 1)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(repro_mast_cat1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: repro_revel ~ factor(mast_cat) + factor(parKat) + milk_early_max +  
+    (1 | herd_id)
+   Data: lac
+ Subset: !is.na(repro_revel) &amp; n_ctrl_early &gt; 0
+
+     AIC      BIC   logLik deviance df.resid 
+155529.7 155656.3 -77751.8 155503.7   126093 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.6207 -1.1462  0.5851  0.7133  4.8704 
+
+Random effects:
+ Groups  Name        Variance Std.Dev.
+ herd_id (Intercept) 1.839    1.356   
+Number of obs: 126106, groups:  herd_id, 271
+
+Fixed effects:
+                                 Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)                     -0.088047   0.090886  -0.969   0.3327    
+factor(mast_cat)dpHealthy_lCont -0.968309   0.038798 -24.958   &lt;2e-16 ***
+factor(mast_cat)dpHealthy_lEnv  -0.799438   0.033283 -24.019   &lt;2e-16 ***
+factor(mast_cat)dpHigh_lCont    -1.060369   0.034495 -30.740   &lt;2e-16 ***
+factor(mast_cat)dpHigh_lEnv     -0.842517   0.034644 -24.319   &lt;2e-16 ***
+factor(mast_cat)dpHigh_lHealthy -0.709129   0.024873 -28.509   &lt;2e-16 ***
+factor(mast_cat)multi_healthy   -0.652152   0.023412 -27.856   &lt;2e-16 ***
+factor(mast_cat)primi_cont      -0.102716   0.037602  -2.732   0.0063 ** 
+factor(mast_cat)primi_env        0.017526   0.027649   0.634   0.5262    
+factor(parKat)2                  0.419560   0.018781  22.339   &lt;2e-16 ***
+factor(parKat)3                  0.254632   0.019617  12.980   &lt;2e-16 ***
+milk_early_max                   0.013980   0.001124  12.439   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+                   (Intr) fctr(mst_ct)dpHl_C fctr(mst_ct)dpHl_E
+fctr(mst_ct)dpHl_C  0.046                                      
+fctr(mst_ct)dpHl_E  0.056  0.309                               
+fctr(mst_ct)dpHg_C  0.047  0.265              0.313            
+fctr(mst_ct)dpHg_E  0.052  0.270              0.322            
+fctr(m_)H_H         0.081  0.389              0.465            
+fctr(mst_ct)m_      0.086  0.448              0.539            
+fctr(mst_ct)prm_c  -0.044  0.108              0.124            
+fctr(mst_ct)prm_n  -0.063  0.142              0.165            
+fctr(prKt)2        -0.064 -0.297             -0.374            
+fctr(prKt)3        -0.013 -0.238             -0.292            
+milk_rly_mx        -0.319 -0.273             -0.329            
+                   fctr(mst_ct)dpHg_C fctr(mst_ct)dpHg_E f(_)H_H fctr(mst_ct)m_
+fctr(mst_ct)dpHl_C                                                             
+fctr(mst_ct)dpHl_E                                                             
+fctr(mst_ct)dpHg_C                                                             
+fctr(mst_ct)dpHg_E  0.286                                                      
+fctr(m_)H_H         0.404              0.415                                   
+fctr(mst_ct)m_      0.449              0.463              0.678                
+fctr(mst_ct)prm_c   0.124              0.123              0.167   0.171        
+fctr(mst_ct)prm_n   0.162              0.161              0.221   0.230        
+fctr(prKt)2        -0.242             -0.260             -0.403  -0.571        
+fctr(prKt)3        -0.209             -0.216             -0.325  -0.437        
+milk_rly_mx        -0.294             -0.310             -0.458  -0.483        
+                   fctr(mst_ct)prm_c fctr(mst_ct)prm_n fc(K)2 fc(K)3
+fctr(mst_ct)dpHl_C                                                  
+fctr(mst_ct)dpHl_E                                                  
+fctr(mst_ct)dpHg_C                                                  
+fctr(mst_ct)dpHg_E                                                  
+fctr(m_)H_H                                                         
+fctr(mst_ct)m_                                                      
+fctr(mst_ct)prm_c                                                   
+fctr(mst_ct)prm_n   0.153                                           
+fctr(prKt)2         0.003             0.006                         
+fctr(prKt)3         0.002             0.003             0.493       
+milk_rly_mx         0.003             0.007             0.200  0.038
+fit warnings:
+fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+optimizer (Nelder_Mead) convergence code: 0 (OK)
+Model failed to converge with max|grad| = 0.0126425 (tol = 0.002, component 1)
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?</code></pre>
+</div>
+</div>
+<section id="taux-de-réussite-à-la-première-ia" class="level3">
+<h3 class="anchored" data-anchor-id="taux-de-réussite-à-la-première-ia">Taux de réussite à la première IA</h3>
+<p>Une variable succès à la première IA est construite.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>lac <span class="ot">&lt;-</span> lac <span class="sc">|&gt;</span> </span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ai1_success =</span> <span class="fu">case_when</span>(</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(n_ai) <span class="sc">~</span> <span class="cn">NA</span>,</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>    ai_first <span class="sc">==</span> ai_last <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(calv_date_nxt) <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>    ai_first <span class="sc">!=</span> ai_last <span class="sc">~</span> <span class="dv">0</span></span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>ai1_success_null <span class="ot">&lt;-</span> <span class="fu">glmer</span>(ai1_success <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> herd_id),</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>                          <span class="at">data =</span> lac,</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>                          <span class="at">subset =</span> n_ctrl_early <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>                          <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">"logit"</span>))</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(ai1_success_null)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: ai1_success ~ 1 + (1 | herd_id)
+   Data: lac
+ Subset: n_ctrl_early &gt; 0
+
+     AIC      BIC   logLik deviance df.resid 
+147669.1 147688.4 -73832.5 147665.1   113719 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.8572 -0.8025 -0.6498  1.0945  3.9870 
+
+Random effects:
+ Groups  Name        Variance Std.Dev.
+ herd_id (Intercept) 0.6879   0.8294  
+Number of obs: 113721, groups:  herd_id, 269
+
+Fixed effects:
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept) -0.80329    0.05403  -14.87   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>ai1_success_mast_cat1 <span class="ot">&lt;-</span> <span class="fu">glmer</span>(ai1_success <span class="sc">~</span> <span class="fu">factor</span>(mast_cat) <span class="sc">+</span> <span class="fu">factor</span>(parKat) <span class="sc">+</span> milk_early_max <span class="sc">+</span> (<span class="dv">1</span> <span class="sc">|</span> herd_id),</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>                          <span class="at">data =</span> lac,</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>                          <span class="at">subset =</span> n_ctrl_early <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>                          <span class="at">family =</span> <span class="fu">binomial</span>(<span class="at">link =</span> <span class="st">"logit"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>fixed-effect model matrix is rank deficient so dropping 1 column / coefficient</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
+Model failed to converge with max|grad| = 0.0111329 (tol = 0.002, component 1)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, : Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(ai1_success_mast_cat1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: ai1_success ~ factor(mast_cat) + factor(parKat) + milk_early_max +  
+    (1 | herd_id)
+   Data: lac
+ Subset: n_ctrl_early &gt; 0
+
+     AIC      BIC   logLik deviance df.resid 
+143979.2 144104.3 -71976.6 143953.2   111066 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-2.2329 -0.8107 -0.6287  1.0968  4.5027 
+
+Random effects:
+ Groups  Name        Variance Std.Dev.
+ herd_id (Intercept) 0.8037   0.8965  
+Number of obs: 111079, groups:  herd_id, 269
+
+Fixed effects:
+                                 Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)                     -0.372384   0.067040  -5.555 2.78e-08 ***
+factor(mast_cat)dpHealthy_lCont -0.183047   0.042519  -4.305 1.67e-05 ***
+factor(mast_cat)dpHealthy_lEnv  -0.189432   0.035469  -5.341 9.26e-08 ***
+factor(mast_cat)dpHigh_lCont    -0.262115   0.038623  -6.787 1.15e-11 ***
+factor(mast_cat)dpHigh_lEnv     -0.207686   0.037611  -5.522 3.35e-08 ***
+factor(mast_cat)dpHigh_lHealthy -0.183720   0.026018  -7.061 1.65e-12 ***
+factor(mast_cat)multi_healthy   -0.146462   0.024448  -5.991 2.09e-09 ***
+factor(mast_cat)primi_cont      -0.035257   0.037344  -0.944    0.345    
+factor(mast_cat)primi_env       -0.005851   0.026857  -0.218    0.828    
+factor(parKat)2                  0.154882   0.019978   7.753 9.01e-15 ***
+factor(parKat)3                  0.135858   0.021164   6.419 1.37e-10 ***
+milk_early_max                  -0.013271   0.001185 -11.204  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+                   (Intr) fctr(mst_ct)dpHl_C fctr(mst_ct)dpHl_E
+fctr(mst_ct)dpHl_C  0.069                                      
+fctr(mst_ct)dpHl_E  0.087  0.286                               
+fctr(mst_ct)dpHg_C  0.068  0.230              0.280            
+fctr(mst_ct)dpHg_E  0.079  0.243              0.299            
+fctr(m_)H_H         0.125  0.365              0.451            
+fctr(mst_ct)m_      0.135  0.426              0.529            
+fctr(mst_ct)prm_c  -0.058  0.095              0.112            
+fctr(mst_ct)prm_n  -0.084  0.128              0.154            
+fctr(prKt)2        -0.088 -0.300             -0.389            
+fctr(prKt)3        -0.017 -0.244             -0.308            
+milk_rly_mx        -0.457 -0.260             -0.320            
+                   fctr(mst_ct)dpHg_C fctr(mst_ct)dpHg_E f(_)H_H fctr(mst_ct)m_
+fctr(mst_ct)dpHl_C                                                             
+fctr(mst_ct)dpHl_E                                                             
+fctr(mst_ct)dpHg_C                                                             
+fctr(mst_ct)dpHg_E  0.248                                                      
+fctr(m_)H_H         0.366              0.391                                   
+fctr(mst_ct)m_      0.411              0.441              0.674                
+fctr(mst_ct)prm_c   0.107              0.109              0.154   0.157        
+fctr(mst_ct)prm_n   0.143              0.147              0.209   0.218        
+fctr(prKt)2        -0.241             -0.270             -0.434  -0.606        
+fctr(prKt)3        -0.212             -0.225             -0.353  -0.468        
+milk_rly_mx        -0.268             -0.296             -0.452  -0.482        
+                   fctr(mst_ct)prm_c fctr(mst_ct)prm_n fc(K)2 fc(K)3
+fctr(mst_ct)dpHl_C                                                  
+fctr(mst_ct)dpHl_E                                                  
+fctr(mst_ct)dpHg_C                                                  
+fctr(mst_ct)dpHg_E                                                  
+fctr(m_)H_H                                                         
+fctr(mst_ct)m_                                                      
+fctr(mst_ct)prm_c                                                   
+fctr(mst_ct)prm_n   0.152                                           
+fctr(prKt)2         0.003             0.005                         
+fctr(prKt)3         0.002             0.003             0.523       
+milk_rly_mx         0.003             0.005             0.191  0.035
+fit warnings:
+fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
+optimizer (Nelder_Mead) convergence code: 0 (OK)
+Model failed to converge with max|grad| = 0.0111329 (tol = 0.002, component 1)
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?</code></pre>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
