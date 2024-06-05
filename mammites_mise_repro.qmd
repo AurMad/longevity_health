@@ -1,13 +1,19 @@
 ---
-title: "Impact des mammites sur la reproduction"
-format: html
+title: "Impact des mammites sur la reproduction et la dynamique des infections intra-mammaires lors de la lactation suivante"
+format: 
+  pdf:
+    toc: true
+    number-sections: true
 ---
 
 ```{r setup}
+#| message: false
 library(tidyverse)
 library(lme4)
+library(marginaleffects)
 
-
+## fonction pour passer des coefficients d'une 
+# régression logistique à une probabilité
 invlogit <- function(x) exp(x) / (1 + exp(x))
 ```
 
@@ -16,9 +22,12 @@ Ce fichier reprend le code qui était auparavant dans le fichier "longevity_mast
 
 Les objectifs sont de modéliser l'impact de différents statuts vis-à-vis des mammites sur la probabilité de réforme. La probabilité de réforme est représentée en différentes composantes :
 
+- Mort de la vache
 - Mise à la reproduction : présence d'une première insémination artificielle
 - Succès de la mise à la reproduction : re-vêlage
-- Mort de la vache
+- Succès de la première insémination artificielle
+- Nombre d'inséminations artificielles réalisées
+- Mammites : nouvelles infections et guérisons pendant la période tarie
 
 L'unité statistique est la lactation.
 
@@ -28,11 +37,12 @@ Les étapes du fichier :
 - construction d'un jeu de données lactations à partir des données contrôle laitier
 - chargement des données mammites cliniques
 - chargement des données d'insémination artificielle
+- les différents types d'analyses listés sont réalisés tour à tour
 
 
- Le chunk suivant défini les paramètres de la modélisation. 
+ Le bloc suivant définit les paramètres de la modélisation. 
  
-```{r}
+```{r global-var}
 ## nombre de jours en dessous duquel on considère qu'on est en début de lactation
 ## en moyenne avant première IA
 early_dim_cutoff <- 90
@@ -47,9 +57,10 @@ scc_high_cutoff <- 200
 
 ## Chargement des données contrôle laitier Idele
 
-Un jeu de données construit à partir des données fournies par l'Idele est chargé.
+Un jeu de données construit à partir des données fournies par l'Idele est chargé. Les lignes pour lesquelle soit la production laitière soit les cellules sont manquantes sont supprimées.
 
 ```{r donnees-controle-laitier-idele}
+#| message: false
 rec <- read_csv2("generated_datasets/idele_rec_final.csv") |> 
   mutate(
     herd_id = as.character(herd_id),
@@ -68,7 +79,7 @@ rec <- read_csv2("generated_datasets/idele_rec_final.csv") |>
 
 ## Construction d'un jeu de données lactations
 
-Le jeu de données lactation est contruit à partir des données contrôle laitier.
+Le jeu de données lactation est construit à partir des données contrôle laitier. On y rassemble des données qui concernent également la lactation précédente et la la lactation suivante.
 
 ```{r make-lactations}
 lac <- rec |> 
@@ -82,6 +93,8 @@ lac <- rec |>
     n_ctrl_early = length(unique(ctrl_date[dim <= early_dim_cutoff])),
     n_scc_high_early = length(scc[scc > scc_high_cutoff & dim <= early_dim_cutoff]),
     milk_early_max = max(milk[dim <= early_dim_cutoff]),
+    dim_first = min(dim),
+    scc_first = scc[dim == dim_first],
     dim_last = max(dim),
     milk_last = milk[dim == dim_last],
     scc_last = scc[dim == dim_last]
@@ -93,9 +106,51 @@ lac <- rec |>
     milk_last_prev_lac = lag(milk_last),
     dim_last_prev_lac = lag(dim_last),
     scc_last_prev_lac = lag(scc_last),
-    calv_date_nxt = lead(calv_date) ) |> 
+    calv_date_nxt = lead(calv_date),
+    scc_first_nxt_lac = lead(scc_first),
+    infct_end_lac = case_when(
+     is.na(scc_last) | is.na(scc_first_nxt_lac) ~ NA,
+     !is.na(scc_last) & !is.na(scc_first_nxt_lac) & scc_last < scc_high_cutoff ~ "0",
+     !is.na(scc_last) & !is.na(scc_first_nxt_lac) & scc_last >= scc_high_cutoff ~ "1"
+      ),
+    infct_ctrl1_nxt_lac = case_when(
+     is.na(scc_last) | is.na(scc_first_nxt_lac) ~ NA,
+     !is.na(scc_last) & !is.na(scc_first_nxt_lac) & scc_first_nxt_lac < scc_high_cutoff ~ "0",
+     !is.na(scc_last) & !is.na(scc_first_nxt_lac) & scc_first_nxt_lac >= scc_high_cutoff ~ "1"
+      ),
+    nxt_cure = case_when(
+      infct_end_lac == 0 ~ NA,
+      infct_end_lac == 1 & infct_ctrl1_nxt_lac == 1 ~ 0,
+      infct_end_lac == 1 & infct_ctrl1_nxt_lac == 0 ~ 1
+      ),
+    nxt_ninf = case_when(
+      infct_end_lac == 1 ~ NA,
+      infct_end_lac == 0 & infct_ctrl1_nxt_lac == 0 ~ 0,
+      infct_end_lac == 0 & infct_ctrl1_nxt_lac == 1 ~ 1
+      )
+    ) |> 
   ungroup()
 ```
+
+```{r test-scc-status-lac}
+#| echo: false
+#| eval: false
+
+## utilisé pour vérifier la construction du jeu de données
+## pas inclus dans la sortie
+cow <- "FR0102001361"
+
+rec |> 
+  filter(anim_id == cow) |> 
+  select(calv_date, ctrl_date, dim, scc) |> 
+  View()
+
+lac |> 
+  filter(anim_id == cow) |> 
+  select(calv_date, scc_last_prev_lac, scc_first, scc_last, scc_first_nxt_lac) |> 
+  View()
+```
+
 
 Les causes de sorties possibles sont les suivantes :
 
@@ -117,13 +172,14 @@ Le fichier de données est chargé. On ne garde que les dates de mammites cliniq
 
 
 ```{r clinical-mastitis-data}
+#| message: false
 path_to_file <- "data/mammites.txt"
 mamt <- read_csv2(path_to_file) |> 
   rename(anim_id = ANIM,
          cm_date = DAMACL) |> 
   select(anim_id, cm_date)
 ```
-Les données mammites cliniques sont fusionnées avec les données lactation. Pour chaque lactation, on extrait les première et dernière dates de mammite clinique. On considère qu'une lactation commence 30 jours avant vêlage. Cette hypothèse pourra être discutée. 
+Les données mammites cliniques sont fusionnées avec les données lactation. Pour chaque lactation, on extrait les première et dernière dates de mammite clinique. On considère qu'une lactation commence 30 jours avant vêlage. Cette hypothèse pourra être revue. 
 
 ```{r clinical-mastitis-join-lac}
 lac_cm <- left_join(
@@ -149,6 +205,7 @@ lac_cm$cm_last[is.infinite(lac_cm$cm_last)] <- NA
 Fusion avec le jeu de données `lac` initial.
 
 ```{r lac-cm-join}
+#| echo: false
 lac <- left_join(lac, lac_cm) |> 
   mutate(
     n_cm_early = ifelse(is.na(n_cm_early), 0, n_cm_early),
@@ -163,6 +220,7 @@ rm(lac_cm)
 Les données d'insémination sont chargées. On ne garde que les identifiants animaux et les dates d'insémination.
 
 ```{r ia-chargment}
+#| message: false
 path_to_file <- "data/extra_femia_20240415.csv"
 ai <- read_csv(path_to_file) |> 
   select(anim, DAINAR) |> 
@@ -174,7 +232,7 @@ ai <- read_csv(path_to_file) |>
 
 Les données lactations et inséminations artificielles sont fusionnées. On s'assure que chaque date d'IA survient entre un vêlage et le suivant ou entre un vêlage et une absence de vêlage suivant.
 
-```{r}
+```{r lac-ai-join}
 nlac <- left_join(lac |> 
                     select(anim_id, calv_date, calv_date_nxt), 
                   ai) |> 
@@ -191,7 +249,7 @@ lac <- left_join(lac, nlac) |>
 ```
 ## Agrégation des données contrôle laitier par date de contrôle
 
-Les données contrôle laitier sont agrégées par date de contrôle-élevage. Il y a déjà eu une sélection en amont sur le nombre de vaches par contrôle et le nombre de contrôles par élevage par an.
+Les données contrôle laitier sont agrégées par date de contrôle-élevage. Il y a déjà eu une sélection en amont sur le nombre de vaches par contrôle et le nombre de contrôles par élevage par an. Ce jeu de données n'est pas vraiment utilisé pour le moment.
 
 ```{r test-days}
 td <- rec |> 
@@ -207,7 +265,7 @@ td <- rec |>
 
 ## Agrégation des données à l'échelle élevage-année
 
-Les données contrôle laitier et inséminations artificielles sont agrégées à l'échelle élevage-année. L'objectif est de sélectionner les élevages dans lesquels toutes les vaches sont inséminées.
+Les données contrôle laitier et inséminations artificielles sont agrégées à l'échelle élevage-année. L'objectif est de sélectionner les élevages dans lesquels une proportion suffisante des vaches sont inséminées.
 
 ```{r rec-herd-year}
 rec_hdyr <- rec |> 
@@ -239,7 +297,7 @@ hdyr <- inner_join(rec_hdyr, ai_hdyr) |>
 
 On regarde également, sur les vaches vêlées, celles qui ont une date d'IA ultérieure. Les différents jeux de données sont fusionnés. On examine les proportions de vaches inséminées parmi les vaches présentes et parmi les vaches qui vêlent. Ces 2 variables sont fortement corrélées. Pour sélectionner les élevages à garder par la suite, je choisis de combiner la proportion de vaches inséminées parmi les vaches contrôlées parce que cette variables est plus facile à calculer et à comprendre. Une sélection est également appliquée sur la proportion de primipares contrôlées.
 
-```{r}
+```{r lac-herd-summary}
 lac <- lac |> 
   mutate(year = as.integer(format(calv_date, "%Y")))
 
@@ -257,47 +315,44 @@ hdyr <- left_join(hdyr, lac_hrd_yr)
 
 pairs(hdyr[, c("p_primi_rec", "p_calvings_p1", "p_ai", "p_ai_clv")])
 ```
+La figure suivante est utilisée pour identifier les valeurs de paramètres à utiliser pour la sélection. En abscisse, on a la proportion de vêlages de génisses et en ordonnées le nombre de premières inséminations ramené au nombre de vêlages. Les lignes rouges matérialisent les valeurs utilisées pour sélectionner les élevages-années retenus.
 
-
-```{r}
+```{r plot-replacement-rate-proportion-ai-per-calving}
 plot(p_ai_clv ~ p_calvings_p1, data = hdyr)
 abline(v = c(.15, .5), col = "red")
 abline(h = .7, col = "red")
 ```
 
-```{r}
+```{r lac-selection-from-herd-year}
 hdyr_sel <- hdyr |> 
   filter(p_ai_clv > .7 & p_calvings_p1 > .15 & p_calvings_p1 < .5) |> 
   select(herd_id, year)
 
 lac <- left_join(hdyr_sel, lac)
 ```
-# Description des données
-
-## Obsrvations conservées pour l'analyse
+## Observations conservées pour l'analyse
 
 On ne conserve que les lactations avec au moins 1 contrôle laitier avant 90 jours de lactation.
 
-```{r lac-filter}
+```{r lac-filter-on-number-tests-early-lac}
 lac <- lac |> 
   filter(n_ctrl_early > 0)
 ```
 
 
-## Covariables
+# Covariables
 
+## Parité
 
-### Parité
+Une nouvelle variable parité appelée `parKat` est créée. Les parités supérieures à 3 sont mises dans une catégorie 4. La parité 2 est mise en catégorie de référence pour faciliter la lecture des résultats.
 
-Une nouvelle variable parité appelée `parKat` est créée. Les patités supérieures à 3 sont mises dans une catégorie 4. La paritté 2 est mise en catégorie de référence pour faciliter la lecture des résultats.
-
-```{r}
+```{r lac-new-parity-variable}
 lac <- lac |> 
   mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "2"))
 ```
 
 
-### Production laitière en début de lactation
+## Production laitière en début de lactation
 
 Le maximum de production laitière sur les contrôles laitiers de 90 premiers jours de lactation sont standardisés : pour chaque valeur, on retranche la moyenne et on divise par l'écart-type de manière à avoir une moyenne de 0 et un écart-type de 1 sur la nouvelle variable centrée-réduite.
 
@@ -322,13 +377,14 @@ lac <- lac |>
   milk_early_max_scaled_p1plus = ifelse(parity > 1, milk_early_max_scaled, 0)
   )
 
-hist(lac$milk_early_max_scaled)
+hist(lac$milk_early_max_scaled,
+     main = "Distribution du maximum de production laitière\npendant les 90 premiers jours de lactation",
+     xlab = "Production laitière (distribution centrée réduite)")
 ```
 
 Les moyennes et écart-types de la variable originale sont `r round(milk_early_max_mean, 1)` et `r round(milk_early_max_sd, 1)` respectivement.
 
-
-### Définition des statuts vis-à-vis des mammites
+## Définition des statuts vis-à-vis des mammites
 
 Ici on considère :
 
@@ -359,25 +415,162 @@ lac <- lac |>
     n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0) ~ "env",
     n_scc_high_early > 1 ~ "cont"),
     mast_cat = relevel(factor( mast_cat), ref = "healthy"),
-    mast_cat1 = relevel(factor(paste(dp_status, mast_cat, sep = "_")), ref = "primi_healthy")
+    mast_cat1 = relevel(factor(paste(dp_status, mast_cat, sep = "_")), ref = "primi_healthy"),
+    mast_cat2 = relevel(factor(paste(ifelse(dp_status == "primi", "primi", "multi"), mast_cat, sep = "_")), ref = "primi_healthy")
   )
 ```
 
 
 Certaines vaches multipares n'ont pas de CCS pour leur dernière lactation. Elles sont identifiées et exclues de l'analyse.
 
-```{r}
+```{r dry-period-missing-scc}
 lac <- lac |> 
   mutate(dp_mis = ifelse(parity > 1 & is.na(scc_last_prev_lac), 1, 0))
 ```
 
 
 
+# Jeux de données utilisés pour les prédictions
+
+L'interprétation des résultats des modèles se fait en prédisant les probabilités des différents évènements à partir des sorties de modèles. A chaque fois, on fixe les valeurs de toutes les variables à un niveau fixe, à l'exception de celle qui nous intéresse qu'on fait varier.
+
+Les raisons de ces choix s'expliquent plus bas, dans les étapes de construction des modèles. Le code est placé ici parce qu'il est mobilisé de nombreuses fois par la suite.
+
+Les prédictions seront réalisées avec la fonction `prediction` du package `marginaleffects`.
+
+
+## Catégories mammites
+
+Les différents catégories de mammites selon la parité sont incluses. On fixe la production laitière à la moyenne de la population (`r round(milk_early_max_mean, 1)`). La parité est fixée à 2 pour les multipares.
+
+```{r mastitis-prediction-dataset}
+## catégories de statuts mammites pour les primipares
+mast_lev_p1 <- lac |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat == 1) |> 
+  distinct(mast_cat1) |>
+  mutate(mast_cat1 = as.character(mast_cat1)) |>
+  pull(mast_cat1)
+## catégories de statuts mammites pour les multipares
+mast_lev_p2 <- lac |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat != 1) |> 
+  distinct(mast_cat1) |>
+  mutate(mast_cat1 = as.character(mast_cat1)) |>
+  pull(mast_cat1)
+
+## jeu de données
+mast_pred <- tibble(
+  parKat = factor(c(rep(1, length(mast_lev_p1)),
+             rep(2, length(mast_lev_p2)))),
+  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0
+)
+
+level_order <- c("primi_healthy",  "primi_env", "primi_cont",
+                 "dpLow_healthy",  "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont") 
+```
+
+
+## Parité
+
+Pour les parités, on utilise les catégories incluses dans les modèles : 1, 2, 3 ou supérieure à 3.
+
+```{r parity-prediction-dataset}
+parit_pred <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = 0
+ ) |> 
+  mutate(
+    milk_early_max_scaled_p1 = 0,
+    milk_early_max_scaled_p2 = 0,
+    milk_early_max_scaled_p3 = 0,
+    milk_early_max_scaled_p4 = 0,
+    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+  )
+```
+
+
+## Maximum de production laitière avant 90 jours et parité
+
+On utilise les mêmes catégories de parités que ci-dessus. Les productions laitières sont variées de 10 à 50kg et standardisées pour les faire correspondre aux variables production laitière du modèle. Les catégories de référence pour les mammites sont primipare saine et multipare saine.
+
+
+```{r}
+milk_pred <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = seq(10, 50, by = .1)
+ ) |> 
+  mutate(
+    milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
+           milk_early_max_sd,
+    milk_early_max_scaled_p1 = ifelse(parKat == 1, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p2 = ifelse(parKat == 2, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p3 = ifelse(parKat == 3, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p4 = ifelse(parKat == 4, milk_early_max_scaled, 0),
+    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+  )
+```
+
+
+# Modèle mort de la vache
+
+L'évènement mort est défini d'après la dernière cause de sortie enregistrée, s'il n'y a pas de date de vêlage suivant. Le premier modèle  contient uniquement un intercept. La probabilité de mort dans une lactation est d'environ 4%.
+
+```{r cow-death-model-null}
+lac <- lac |> 
+  mutate(death = ifelse(out_cause_last == "M" & is.na(calv_date_nxt), 1, 0))
+
+
+death_null <- glmer(death ~ 1 + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(death_null)
+```
+
+On teste un modèle complet avec toutes les variables incluses dans les modèles suivants.
+
+```{r cow-death-model-full}
+death_full <- glmer(death ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 +
+                      (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(death_full)
+```
+
+Les résultats de ce modèle peuvent sembler surprenant. Les vaches avec une mammite chronique semblent moins susceptibles de mourir, comme si ce type d'infection prévenait la mortalité. La raison de cette association est probablement à rechercher dans la définition des mammites contagieuses (chroniques). Pour avoir eu plus d'une CCS supérieure à 200 000 pendant les 90 premiers jours de lactation, il faut avoir eu au moins 2 contrôles. Il est probable que beaucoup de mortalités surviennent avant qu'un 2ème contrôle ait été effectué.
+
+```{r cow-death-model-full-mastitis}
+prd <- marginaleffects::predictions(model = death_full, 
+                             newdata = mast_pred, 
+                             re.form = NA, 
+                             type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilté de mort") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
 # Modèles mises à la reproduction
 
-### Variable d'intérêt
+## Variable d'intérêt
 
-On utilise des modèles logistiques mixtes, avec la fonction `glmer` du package `lme4`. Dans tous les modèles on met un effet aléatoire élevage qui représente la probabilité pour une vache d'être mise à la reproduction.
+On utilise des modèles logistiques mixtes, avec la fonction `glmer` du package `lme4`. Dans tous les modèles on met un effet aléatoire élevage qui représente la probabilité pour une vache d'être mise à la reproduction dans son élevage.
 
 ```{r repro-outcome}
 lac <- lac |> 
@@ -404,7 +597,7 @@ On obtient une probabilité de mise à la reproduction de `r as.double(round(inv
 
 ## Production laitière et parité
 
-```{r}
+```{r reprod-parity-model}
 repro_parity <- glmer(repro ~ parKat + (1 | herd_id),
                     data = lac,
                     subset = n_ctrl_early > 0 & dp_mis == 0,
@@ -415,7 +608,7 @@ summary(repro_parity)
 
 Ce modèle plus complet inclut les catégories de parité et les productions laitières de début de lactation standardisées pour les parités 1, 2, 3 et supérieure à 3. L'hypothèse est qu'il y a un effet additionnel de la parité qui va au-delà de la production laitière.
 
-```{r}
+```{r repro-parity-milk-model}
 repro_parity_milk <- glmer(repro ~ parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
@@ -429,9 +622,9 @@ repro_parity_milk <- glmer(repro ~ parKat +
 summary(repro_parity_milk)
 ```
 
-## Statuts mamites
+## Statuts mammites
 
-Modèle complet 
+Modèle incluant les variables précédentes.
 
 
 ```{r repro-full}
@@ -469,90 +662,37 @@ summary(repro_full1)
 La figure ci-dessous représente les probabilités prédites qu'une vache soit mise à la reproduction en fonction de son statut vis-à-vis des mammites. Une production laitière moyenne a été prise en compte. Cela avantage les primipares dont la production laitière moyenne est inférieure à la la production laitière moyenne du reste des vaches. On a considéré que les multipares étaient de parité 2.
 
 ```{r plot-pred-repro-mast}
-mast_lev_p1 <- lac |> 
-  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat == 1) |> 
-  distinct(mast_cat1) |>
-  mutate(mast_cat1 = as.character(mast_cat1)) |>
-  pull(mast_cat1)
-
-mast_lev_p2 <- lac |> 
-  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat != 1) |> 
-  distinct(mast_cat1) |>
-  mutate(mast_cat1 = as.character(mast_cat1)) |>
-  pull(mast_cat1)
-
-
-repro_pred <- tibble(
-  parKat = factor(c(rep(1, length(mast_lev_p1)),
-             rep(2, length(mast_lev_p2)))),
-  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
-  milk_early_max_scaled_p1 = 0,
-  milk_early_max_scaled_p2 = 0,
-  milk_early_max_scaled_p3 = 0,
-  milk_early_max_scaled_p4 = 0
-)
-
 prd <- marginaleffects::predictions(model = repro_full1, 
-                             newdata = repro_pred, 
+                             newdata = mast_pred, 
                            re.form = NA, type = "response")
-
-level_order <- c("primi_healthy",  "primi_env", "primi_cont",
-                 "dpLow_healthy",  "dpLow_env", "dpLow_cont",
-                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont") 
 
 ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
   xlab("") + 
-  ylab("Probabilté de mise à la reproduction") +
+  ylab("Probabilité de mise à la reproduction") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
 Effet de la parité sur la probabilité d'être mise à la reproduction.
 
 ```{r plot-pred-repro-parit}
-repro_pred <- expand_grid(
-  parKat = factor(1:4),
-  milk_early_max = 0
- ) |> 
-  mutate(
-    milk_early_max_scaled_p1 = 0,
-    milk_early_max_scaled_p2 = 0,
-    milk_early_max_scaled_p3 = 0,
-    milk_early_max_scaled_p4 = 0,
-    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
-  )
-
 prd <- marginaleffects::predictions(model = repro_full1,
-                             newdata = repro_pred,
+                             newdata = parit_pred,
                            re.form = NA, type = "response")
 
 ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
   xlab("Parité") + 
-  ylab("Probabilté de mise à la reproduction") 
+  ylab("Probabilité de mise à la reproduction") 
 ```
 
 Effets combinés de la parité et de la production laitière.
 
 ```{r plot-pred-repro-milk}
-repro_pred <- expand_grid(
-  parKat = factor(1:4),
-  milk_early_max = seq(10, 50, by = .1)
- ) |> 
-  mutate(
-    milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
-           milk_early_max_sd,
-    milk_early_max_scaled_p1 = ifelse(parKat == 1, milk_early_max_scaled, 0),
-    milk_early_max_scaled_p2 = ifelse(parKat == 2, milk_early_max_scaled, 0),
-    milk_early_max_scaled_p3 = ifelse(parKat == 3, milk_early_max_scaled, 0),
-    milk_early_max_scaled_p4 = ifelse(parKat == 4, milk_early_max_scaled, 0),
-    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
-  )
-
 prd <- marginaleffects::predictions(model = repro_full1,
-                             newdata = repro_pred,
+                             newdata = milk_pred,
                            re.form = NA, type = "response")
 
 ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
@@ -561,9 +701,12 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
 
 
 
-## Probabilité de revêlage pour les vaches mises à la reproduction
+# Probabilité de revêlage pour les vaches mises à la reproduction
 
-```{r}
+Une variable binaire prenant la valeur 1 si la vache revêle et 0 autrement est construite.
+
+
+```{r recalving-var-definition}
 lac <- lac |> 
   mutate(
     repro_revel = case_when(
@@ -574,33 +717,189 @@ lac <- lac |>
     )
 ```
 
+Le modèle suivant estime la probabilité qu'une vache mise à la reproduction revêle.
 
-```{r}
+```{r recalving-var-null-model}
 repro_revel_null <- glmer(repro_revel ~ 1 + (1 |herd_id),
                           family = binomial(link = "logit"),
                           data = lac,
-                    subset = n_ctrl_early > 0)
+                    subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
 
 summary(repro_revel_null)
 ```
 
-Le modèle suivant montre que même lorsqu'elles ont été inséminées au moins une fois, les vaches qui ont une des formes de mammites prises en compte ont une probabilité de revêlage différente. Une possibilté est que les éleveurs inséminent moins ces vaches. L'étape suivante va donc consister à regarder les taux de réussite à la première IA pour voir si les probabilités de succès sont différentes selon le statut mammite.
+Le modèle suivant inclut toutes les variables retenues dans le modèle de mise à la reproduction. Le statut au tarissement ne semble pas avoir une influence importante. Ci-après le même modèle est réestimé en faisant abstraction du statut au tarissement. Les vaches qui ont une des formes de mammites prises en compte ont une probabilité de revêlage différente.
 
-```{r}
-repro_mast_cat1 <- glmer(repro_revel ~ factor(mast_cat) + factor(parKat) + milk_early_max + (1 |herd_id),
+```{r recalving-var-full-model1}
+repro_mast_cat1 <- glmer(repro_revel ~  parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 + 
+                           (1 |herd_id),
                           family = binomial(link = "logit"),
                           data = lac,
-                         subset = !is.na(repro_revel) & n_ctrl_early > 0)
+                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
 
 summary(repro_mast_cat1)
 ```
+```{r plot-pred-revel-mast}
+prd <- marginaleffects::predictions(model = repro_mast_cat1, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité de revêlage") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
 
 
-### Taux de réussite à la première IA
+```{r plot-pred-revel-parit}
+prd <- marginaleffects::predictions(model = repro_mast_cat1,
+                             newdata = parit_pred,
+                           re.form = NA, type = "response")
 
-Une variable succès à la première IA est construite.
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("Parité") + 
+  ylab("Probabilité de revêlage") 
+```
 
-```{r}
+Les effets de la production laitière sont plus difficiles à comprendre.
+
+
+```{r plot-pred-revel-milk}
+prd <- marginaleffects::predictions(model = repro_mast_cat1,
+                             newdata = milk_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line()
+```
+
+Même modèle que plus haut avec cette fois les différentes catégories de statuts liées au tarissement regroupées en multipares.
+
+
+```{r recalving-var-full-model2}
+repro_mast_cat2 <- glmer(repro_revel ~  parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat2 + 
+                           (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(repro_mast_cat2)
+```
+
+
+```{r plot-pred-revel-mast2}
+## catégories de statuts mammites pour les primipares
+mast_lev_p1 <- lac |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat == 1) |> 
+  distinct(mast_cat2) |>
+  mutate(mast_cat2 = as.character(mast_cat2)) |>
+  pull(mast_cat2)
+## catégories de statuts mammites pour les multipares
+mast_lev_p2 <- lac |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat != 1) |> 
+  distinct(mast_cat2) |>
+  mutate(mast_cat2 = as.character(mast_cat2)) |>
+  pull(mast_cat2)
+
+## jeu de données
+mast_pred1 <- tibble(
+  parKat = factor(c(rep(1, length(mast_lev_p1)),
+             rep(2, length(mast_lev_p2)))),
+  mast_cat2 = factor(c(mast_lev_p1, mast_lev_p2)),
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0
+)
+
+level_order1 <- c("primi_healthy",  "primi_env", "primi_cont",
+                 "multi_healthy",  "multi_env", "multi_cont") 
+
+
+prd <- marginaleffects::predictions(model = repro_mast_cat2, 
+                             newdata = mast_pred1, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat2, level = level_order1), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat2, y = conf.low, xend = mast_cat2, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité de revêlage") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
+```{r plot-pred-revel-parit2}
+parit_pred1 <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = 0
+) |> 
+  mutate(
+    milk_early_max_scaled_p1 = 0,
+    milk_early_max_scaled_p2 = 0,
+    milk_early_max_scaled_p3 = 0,
+    milk_early_max_scaled_p4 = 0,
+    mast_cat2 = factor(ifelse(parKat == 1, "primi_healthy", "multi_healthy"))
+  )
+
+prd <- marginaleffects::predictions(model = repro_mast_cat2,
+                             newdata = parit_pred1,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("Parité") + 
+  ylab("Probabilté de revêlage") 
+```
+
+```{r plot-pred-revel-milk2}
+milk_pred1 <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = seq(10, 50, by = .1)
+) |> 
+  mutate(
+    milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
+      milk_early_max_sd,
+    milk_early_max_scaled_p1 = ifelse(parKat == 1, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p2 = ifelse(parKat == 2, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p3 = ifelse(parKat == 3, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p4 = ifelse(parKat == 4, milk_early_max_scaled, 0),
+    mast_cat2 = factor(ifelse(parKat == 1, "primi_healthy", "multi_healthy"))
+  )
+
+prd <- marginaleffects::predictions(model = repro_mast_cat2,
+                             newdata = milk_pred1,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line()
+```
+
+
+# Probabilité de réussite de la première IA
+
+Une variable succès à la première IA est construite. Un succès à la première insémination est défini de la manière suivante :
+
+- la date de première insémination étant également la date de la dernière insémination
+- la vache inséminée revêle
+
+
+```{r ai1-success-var}
 lac <- lac |> 
   mutate(ai1_success = case_when(
     is.na(n_ai) ~ NA,
@@ -610,10 +909,12 @@ lac <- lac |>
 ```
 
 
-```{r}
+Premier modèle contenant uniquement un intercept.
+
+```{r ai1-success-model-null}
 ai1_success_null <- glmer(ai1_success ~ 1 + (1 | herd_id),
                           data = lac,
-                          subset = n_ctrl_early > 0,
+                          subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0,
                           family = binomial(link = "logit"))
 
 summary(ai1_success_null)
@@ -621,13 +922,256 @@ summary(ai1_success_null)
 
 
 
-```{r}
-ai1_success_mast_cat1 <- glmer(ai1_success ~ factor(mast_cat) + factor(parKat) + I((milk_early_max - 25) / 10) + (1 | herd_id),
+```{r ai1-success-model-full}
+ai1_success_mast_cat1 <- glmer(ai1_success ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 + (1 | herd_id),
                           data = lac,
-                          subset = n_ctrl_early > 0,
+                          subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0,
                           family = binomial(link = "logit"))
 
 summary(ai1_success_mast_cat1)
+```
+
+
+```{r plot-pred-ai1-success-model-full}
+prd <- marginaleffects::predictions(model = ai1_success_mast_cat1, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité de succès à l'IA1") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
+
+```{r plot-pred-ai1-success-model-full-parit}
+prd <- marginaleffects::predictions(model = ai1_success_mast_cat1,
+                             newdata = parit_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("Parité") + 
+  ylab("Probabilité de succès à l'IA1") 
+```
+
+
+
+```{r plot-pred-ai1-success-milk}
+prd <- marginaleffects::predictions(model = ai1_success_mast_cat1,
+                             newdata = milk_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line()
+```
+# Nombre d'inséminations artificielles dans une lactation
+
+On ne considère ici que les lactations pour les quelles il y a eu au moins une insémination artificielle et pour lesquelles la vache n'est pas morte pendant la lactation. Une méthode qui semble adaptée pour modéliser ce type de données est la régression de Poisson.
+
+
+```{r nb-ai-null-model}
+nb_ai_null <- glmer(n_ai ~ 1 +
+                      (1 |herd_id),
+                    data = lac,
+                    subset = !is.na(n_ai) & n_ai > 0 & death == 0,
+                   family = poisson)
+
+summary(nb_ai_null)
+```
+
+```{r nb-ai-full-model}
+nb_ai_full <- glmer(n_ai ~ parKat + 
+                        milk_early_max_scaled_p1 + 
+                        milk_early_max_scaled_p2 + 
+                        milk_early_max_scaled_p3 + 
+                        milk_early_max_scaled_p4 + 
+                        mast_cat1 +
+                      (1 |herd_id),
+                    data = lac,
+                    subset = !is.na(n_ai) & n_ai > 0 & death == 0,
+                   family = poisson)
+
+summary(nb_ai_null)
+```
+
+```{r plot-pred-nb-ai-model-full}
+prd <- marginaleffects::predictions(model = nb_ai_full, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Nombre d'inséminations artificielles effectuées") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
+
+```{r plot-pred-nb-ai-milk}
+prd <- marginaleffects::predictions(model = nb_ai_full,
+                             newdata = milk_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line()
+```
+
+
+# Dynamique des infections intra-mammaire lors de la période tarie suivant la mise à la reproduction
+
+## Probabilité d'une CCS élevée au dernier contrôle avant tarissement
+
+```{r inf-end-lac-full-model}
+inf_end_lac_full <- glmer(factor(infct_end_lac) ~ parKat + 
+                        milk_early_max_scaled_p1 + 
+                        milk_early_max_scaled_p2 + 
+                        milk_early_max_scaled_p3 + 
+                        milk_early_max_scaled_p4 + 
+                        mast_cat1 +
+               (1 | herd_id),
+             family = binomial(link = "logit"),
+             data = lac,
+             subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(infct_end_lac))
+
+summary(inf_end_lac_full)
+```
+
+
+```{r plot-inf-end-lac-full-model-mastitis}
+prd <- marginaleffects::predictions(model = inf_end_lac_full, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité d'une CCS élevée\nau dernier contrôle de la lactation") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r plot-inf-end-lac-model-full-parit}
+prd <- marginaleffects::predictions(model = inf_end_lac_full,
+                             newdata = parit_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("Parité") + 
+  ylab("Probabilité d'une CCS élevée\nau dernier contrôle de la lactation") 
+```
+
+
+
+```{r plot-inf-end-lac-full-model-milk}
+prd <- marginaleffects::predictions(model = inf_end_lac_full,
+                             newdata = milk_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() +
+  ylab("Probabilité d'une CCS élevée\nau dernier contrôle de la lactation") +
+  xlab("Production laitière maximale avant 90 jours")
+```
+
+
+## Probabilité de guérison
+
+On utilise la variable statut mammite comme prédicteur de ce qui va se passer en fin de lactation en lors de la lactation suivante.
+
+```{r cure-next-dry-period-full-model}
+nxt_cure_full <- glmer(nxt_cure ~ parKat + 
+                        milk_early_max_scaled_p1 + 
+                        milk_early_max_scaled_p2 + 
+                        milk_early_max_scaled_p3 + 
+                        milk_early_max_scaled_p4 + 
+                        mast_cat1 +
+               (1 | herd_id),
+             family = binomial(link = "logit"),
+             data = lac,
+             subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(nxt_cure_full)
+```
+
+
+```{r plot-cure-next-dry-period-full-model-mastitis}
+prd <- marginaleffects::predictions(model = nxt_cure_full, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité de guérison pendant le tarissement") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
+```{r plot-cure-next-dry-period-full-model-milk}
+prd <- marginaleffects::predictions(model = nxt_cure_full,
+                             newdata = milk_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() +
+  ylab("Probabilité de guérison pendant le tarissement") +
+  xlab("Production laitière maximale avant 90 jours")
+```
+
+## Probabilité de nouvelle infection
+
+Modélisation de la probabilité de nouvelle infection pendant la période tarie.
+
+```{r nwinf-next-dry-period-full-model}
+nxt_ninf_full <- glmer(nxt_ninf ~ parKat + 
+                        milk_early_max_scaled_p1 + 
+                        milk_early_max_scaled_p2 + 
+                        milk_early_max_scaled_p3 + 
+                        milk_early_max_scaled_p4 + 
+                        mast_cat1 +
+               (1 | herd_id),
+             family = binomial(link = "logit"),
+             data = lac,
+             subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(nxt_ninf_full)
+```
+
+```{r plot-nwinf-next-dry-period-full-model-mastitis}
+prd <- marginaleffects::predictions(model = nxt_ninf_full, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité de nouvelle infection pendant le tarissement") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r plot-nwinf-next-dry-period-full-model-milk}
+prd <- marginaleffects::predictions(model = nxt_ninf_full,
+                             newdata = milk_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line()
 ```
 
 
