@@ -1,0 +1,253 @@
+---
+title: "Impact des mammites sur la décision de mise à la reproduction"
+author: "Joanna"
+format: html
+editor: visual
+---
+
+```{r setup}
+#| message: false
+library(tidyverse)
+library(lme4)
+library(marginaleffects)
+library(readxl)
+library(ggplot2)
+```
+
+```{r seuil utilisés}
+## nombre de jours en dessous duquel on considère qu'on est en début de lactation
+## en moyenne avant première IA
+early_dim_cutoff <- 90
+## SCC cut-off
+## seuil de cellules au-delà duquel on considère
+## qu'il y a mammite clinique
+scc_high_cutoff <- 200
+```
+
+# Données
+
+Chargement des données de contrôle laitier fournies par IDELE
+
+```{r chargement donnees}
+#| message: false
+rec <- read_csv2("generated_datasets/idele_rec_final.csv") |> 
+  mutate(
+    herd_id = as.character(herd_id),
+    ctrl_date = as.Date(ctrl_date),
+    anim_id = as.character(anim_id),
+    parity = as.integer(parity),
+    fat = as.integer(fat),
+    prot = as.integer(prot),
+    scc = as.integer(scc),
+    out_cause = as.character(out_cause),
+    calv_date = as.Date(calv_date),
+    dim = as.integer(dim)
+  ) |> 
+  filter(!is.na(milk) & !is.na(scc))
+```
+
+# Création d'un jeu de données lactations
+
+Dans ce jeu de données on a le contrôle laitier par lactation, qui est l'unité statistique qui nous intéresse. A cela on ajoute les données de la lactation précédente et celles de la lactation suivante. A patir de ces données on définit si la vache est infectée ou non avant tarissement, infectée ou non en début de la lactation suivante et à partir de ça on peut définir si elle s'est infecté au cours du tarissement, si elle a guérit au tarissement ou si elle est restée infectée malgré le tarissement.
+
+```{r}
+lac <- rec |> 
+  group_by(anim_id, parity) |> 
+  summarise(
+    herd_id = herd_id[1],
+    calv_date = unique(calv_date),
+    out_date_last = max(out_date),
+    out_cause_last = unique(out_cause[out_date == out_date_last]),
+    n_ctrl = length(unique(ctrl_date)),
+    n_ctrl_early = length(unique(ctrl_date[dim <= early_dim_cutoff])),
+    n_scc_high_early = length(scc[scc > scc_high_cutoff & dim <= early_dim_cutoff]),
+    milk_early_max = max(milk[dim <= early_dim_cutoff]),
+    dim_first = min(dim),
+    scc_first = scc[dim == dim_first],
+    dim_last = max(dim),
+    milk_last = milk[dim == dim_last],
+    scc_last = scc[dim == dim_last]
+            ) |> 
+  ungroup() |> 
+  group_by(anim_id) |> 
+  mutate(
+    calv_date_prev = lag(calv_date),
+    milk_last_prev_lac = lag(milk_last),
+    dim_last_prev_lac = lag(dim_last),
+    scc_last_prev_lac = lag(scc_last),
+    calv_date_nxt = lead(calv_date),
+    scc_first_nxt_lac = lead(scc_first),
+    infct_end_lac = case_when(
+     is.na(scc_last) | is.na(scc_first_nxt_lac) ~ NA,
+     !is.na(scc_last) & !is.na(scc_first_nxt_lac) & scc_last < scc_high_cutoff ~ "0",
+     !is.na(scc_last) & !is.na(scc_first_nxt_lac) & scc_last >= scc_high_cutoff ~ "1"
+      ),
+    infct_ctrl1_nxt_lac = case_when(
+     is.na(scc_last) | is.na(scc_first_nxt_lac) ~ NA,
+     !is.na(scc_last) & !is.na(scc_first_nxt_lac) & scc_first_nxt_lac < scc_high_cutoff ~ "0",
+     !is.na(scc_last) & !is.na(scc_first_nxt_lac) & scc_first_nxt_lac >= scc_high_cutoff ~ "1"
+      ),
+    nxt_cure = case_when(
+      infct_end_lac == 0 ~ NA,
+      infct_end_lac == 1 & infct_ctrl1_nxt_lac == 1 ~ 0,
+      infct_end_lac == 1 & infct_ctrl1_nxt_lac == 0 ~ 1
+      ),
+    nxt_ninf = case_when(
+      infct_end_lac == 1 ~ NA,
+      infct_end_lac == 0 & infct_ctrl1_nxt_lac == 0 ~ 0,
+      infct_end_lac == 0 & infct_ctrl1_nxt_lac == 1 ~ 1
+      )
+    ) |> 
+  ungroup()
+```
+
+# Reformatage des parités
+
+Pour simplifier l'analyse, je décide de séparer les primipares et les mutlipares. J'utilise la parité 3 comme référence car c'est la parité pour laquelle on considère la vache comme rentable.
+
+```{r definition parite}
+lac <- lac |> 
+  mutate(parCat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"))
+```
+
+
+# Statut au tarissement
+
+```{r}
+lac <- lac |> 
+  mutate(dp_status = case_when(
+    parity == 1 ~ "primi",
+    scc_last_prev_lac < scc_high_cutoff ~ "dpLow", 
+    scc_last_prev_lac >= scc_high_cutoff ~ "dpHigh"),
+    dp_status = relevel(factor(dp_status), ref = "primi"))
+```
+
+# Données mammites cliniques
+
+On va extraire les dates de mammites cliniques afin de les ajouter aux lactations correspondantes sur le tableau de données "lac"
+```{r chargement des donnees}
+path_to_file <- "data/mammites.txt"
+mamt <- read_csv2(path_to_file) |>
+rename(anim_id = ANIM,
+cm_date = DAMACL) |>
+select(anim_id, cm_date)
+```
+
+
+POur chaque lactation on ajoute les dates de mammites cliniques et on considère que les lactations débutent 30 jours avant vêlage (on prend en considération une phase de préparation au vêlage pouvant modifier la sensibilité individuelle et la réponse des animaux)
+
+```{r}
+lac_cm <- left_join(
+lac |>
+select(anim_id, calv_date, calv_date_nxt) |>
+mutate(
+dim_minus30 = calv_date - 30,
+dim_early = calv_date + early_dim_cutoff),
+mamt) |>
+filter(!is.na(cm_date)) |>
+group_by(anim_id, calv_date) |>
+summarise(
+cm_first = min(cm_date[cm_date >= calv_date & (cm_date < calv_date_nxt | is.na(calv_date_nxt))]),
+cm_last = max(cm_date[cm_date >= calv_date & (cm_date < calv_date_nxt | is.na(calv_date_nxt))]),
+n_cm_early = length(unique(cm_date[cm_date >= dim_minus30 & cm_date < dim_early])),
+n_cm_late = length(unique(cm_date[cm_date >= dim_early & (cm_date < calv_date_nxt | is.na(calv_date_nxt))]))
+) |>
+ungroup()
+```
+
+cm_fisrt et cm_last prennent des valeurs égales à -inf et inf --> je ne sais pas encore pourquoi 
+
+le code suivant devrait résoudre ce problème
+
+```{r}
+lac_cm$cm_first[is.infinite(lac_cm$cm_first)] <- NA
+lac_cm$cm_last[is.infinite(lac_cm$cm_last)] <- NA
+```
+
+fusion avec le jeu de données initial 
+
+```{r fusion}
+lac <- left_join(lac, lac_cm) |> 
+  mutate(
+    n_cm_early = ifelse(is.na(n_cm_early), 0, n_cm_early),
+    n_cm_late = ifelse(is.na(n_cm_late), 0, n_cm_late)
+    )
+
+rm(lac_cm) ## supprime lac_cm de l'espace de travail
+```
+
+# Données d"insémination artificielle 
+
+```{r donnees ai}
+#| message: false
+path_to_file <- "data/extra_femia_20240415.csv"
+ai <- read_csv(path_to_file) |> 
+  select(anim, DAINAR) |> 
+  rename(anim_id = anim,
+         ai_date = DAINAR) |> 
+  mutate(ai_date = as.Date(ai_date, "%d/%m/%Y"))
+```
+## Fusion des données d'insémination artificielle avec données lactation
+
+Les données lactations et inséminations artificielles sont fusionnées. On s'assure que chaque date d'IA survient entre un vêlage et le suivant ou entre un vêlage et une absence de vêlage suivant.
+
+```{r lac-ai-join}
+nlac <- left_join(lac |> 
+                    select(anim_id, calv_date, calv_date_nxt), 
+                  ai) |> 
+  filter(ai_date > calv_date & (ai_date < calv_date_nxt | is.na(calv_date_nxt))) |>
+  group_by(anim_id, calv_date) |> 
+  summarise(n_ai = length(unique(ai_date)),
+            ai_first = min(ai_date),
+            ai_last = max(ai_date)) |> 
+  ungroup()
+
+lac <- left_join(lac, nlac) |> 
+  mutate(ai1_dim = as.integer(ai_first - calv_date),
+         ai_last_dim = as.integer(ai_last - calv_date))
+```
+# Agrégation des données par élevage et par an 
+
+Les données contrôle laitier et inséminations artificielles sont agrégées à l'échelle élevage-année. L'objectif est de sélectionner les élevages dans lesquels une proportion suffisante des vaches sont inséminées.
+
+```{r agregation elevage-annee}
+rec_hdyr <- rec |> 
+  mutate(year = as.integer(format(ctrl_date, "%Y"))) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_ctrl = length(unique(ctrl_date)),
+            n_cows_rec = length(unique(anim_id)),
+            p_primi_rec = round(length(parity[parity == 1]) / length(parity), 3)) |> 
+  ungroup()
+```
+
+
+Les premières IA de chaque élevage sont comptées
+
+```{r}
+ai_hdyr <- lac |> 
+  filter(!is.na(n_ai)) |> 
+  mutate(year = as.integer(format(ai_first, "%Y"))) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_cows_ai = length(n_ai[!is.na(n_ai)])) |> 
+  ungroup()
+```
+
+Fusion des 2 jeux de données. Seuls les élevages qui ont à la fois des données contrôles laitier et des données d'IA sont conservés.
+
+```{r rec-ai-herdyear-merge}
+hdyr <- inner_join(rec_hdyr, ai_hdyr) |> 
+  mutate(p_ai = round(n_cows_ai / n_cows_rec, 3))
+```
+Remarque Joanna : Pourquoi parfois n_cow_ai > n_cow_rec ? ce qui donne p_ai > 1...
+
+# Définition des mammites
+
+Afin de modéliser l'impact des mammites sur la décision de reproduction, il est important de définir les différents types de mammites. On en définit ici : - mammite à réservoir environnementale : typiquement c'est un épisode de mammite isolé qui guérit rapidement et qui ne suit pas un modèle contagieux mais plutôt un modèle sporadique - mammite à réservoir mammaire : mammite qui tend à passer à la chronicité et entraîner une forte contagions au sein de l'élevage.
+
+```{r definition des categories de mammites}
+## primipares
+mast_primi <- lac |> 
+  
+```
+
+
