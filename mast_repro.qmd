@@ -12,6 +12,8 @@ library(lme4)
 library(marginaleffects)
 library(readxl)
 library(ggplot2)
+library(corrplot)
+
 ```
 
 ```{r seuil utilisés}
@@ -24,7 +26,9 @@ early_dim_cutoff <- 90
 scc_high_cutoff <- 200
 ```
 
-# Données
+# Matériel
+
+## Données
 
 Chargement des données de contrôle laitier fournies par IDELE
 
@@ -46,7 +50,7 @@ rec <- read_csv2("generated_datasets/idele_rec_final.csv") |>
   filter(!is.na(milk) & !is.na(scc))
 ```
 
-# Création d'un jeu de données lactations
+## Création d'un jeu de données lactations
 
 Dans ce jeu de données on a le contrôle laitier par lactation, qui est l'unité statistique qui nous intéresse. A cela on ajoute les données de la lactation précédente et celles de la lactation suivante. A patir de ces données on définit si la vache est infectée ou non avant tarissement, infectée ou non en début de la lactation suivante et à partir de ça on peut définir si elle s'est infecté au cours du tarissement, si elle a guérit au tarissement ou si elle est restée infectée malgré le tarissement.
 
@@ -101,28 +105,17 @@ lac <- rec |>
   ungroup()
 ```
 
-# Reformatage des parités
+## Reformatage des parités
 
 Pour simplifier l'analyse, je décide de séparer les primipares et les mutlipares. J'utilise la parité 3 comme référence car c'est la parité pour laquelle on considère la vache comme rentable.
 
 ```{r definition parite}
 lac <- lac |> 
-  mutate(parCat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"))
+  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"))
 ```
 
 
-# Statut au tarissement
-
-```{r}
-lac <- lac |> 
-  mutate(dp_status = case_when(
-    parity == 1 ~ "primi",
-    scc_last_prev_lac < scc_high_cutoff ~ "dpLow", 
-    scc_last_prev_lac >= scc_high_cutoff ~ "dpHigh"),
-    dp_status = relevel(factor(dp_status), ref = "primi"))
-```
-
-# Données mammites cliniques
+## Données mammites cliniques
 
 On va extraire les dates de mammites cliniques afin de les ajouter aux lactations correspondantes sur le tableau de données "lac"
 ```{r chargement des donnees}
@@ -176,7 +169,7 @@ lac <- left_join(lac, lac_cm) |>
 rm(lac_cm) ## supprime lac_cm de l'espace de travail
 ```
 
-# Données d"insémination artificielle 
+## Données d"insémination artificielle 
 
 ```{r donnees ai}
 #| message: false
@@ -187,7 +180,7 @@ ai <- read_csv(path_to_file) |>
          ai_date = DAINAR) |> 
   mutate(ai_date = as.Date(ai_date, "%d/%m/%Y"))
 ```
-## Fusion des données d'insémination artificielle avec données lactation
+### Fusion des données d'insémination artificielle avec données lactation
 
 Les données lactations et inséminations artificielles sont fusionnées. On s'assure que chaque date d'IA survient entre un vêlage et le suivant ou entre un vêlage et une absence de vêlage suivant.
 
@@ -206,7 +199,7 @@ lac <- left_join(lac, nlac) |>
   mutate(ai1_dim = as.integer(ai_first - calv_date),
          ai_last_dim = as.integer(ai_last - calv_date))
 ```
-# Agrégation des données par élevage et par an 
+## Agrégation des données par élevage et par an 
 
 Les données contrôle laitier et inséminations artificielles sont agrégées à l'échelle élevage-année. L'objectif est de sélectionner les élevages dans lesquels une proportion suffisante des vaches sont inséminées.
 
@@ -232,7 +225,7 @@ ai_hdyr <- lac |>
   ungroup()
 ```
 
-Fusion des 2 jeux de données. Seuls les élevages qui ont à la fois des données contrôles laitier et des données d'IA sont conservés.
+Fusion des 2 jeux de données. Seuls les élevages qui ont à la fois des données contrôle laitier et des données d'IA sont conservés.
 
 ```{r rec-ai-herdyear-merge}
 hdyr <- inner_join(rec_hdyr, ai_hdyr) |> 
@@ -240,14 +233,419 @@ hdyr <- inner_join(rec_hdyr, ai_hdyr) |>
 ```
 Remarque Joanna : Pourquoi parfois n_cow_ai > n_cow_rec ? ce qui donne p_ai > 1...
 
-# Définition des mammites
+
+## Ajout des données de production laitière en début de lactation 
+
+On va commencer par ajouter la production laitière en début de lactation et la standardiser pour en faire une variable comparable. 
+De plus il faut différencier la PL des primipares avec la PL des multipares car elles ne sont pas vraiment comparables, en réalité une multipare produit généralement plus qu'une primipare. 
+
+```{r normalisation du max de production laitière}
+milk_early_max_mean <- with(lac[lac$n_ctrl_early > 0,], 
+                            mean(milk_early_max))
+
+milk_early_max_sd   <- with(lac[lac$n_ctrl_early > 0,], 
+                            sd(milk_early_max))
+
+lac <- lac |> 
+  filter(n_ctrl_early > 0) |> 
+  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"),
+         milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
+           milk_early_max_sd,
+  milk_early_max_scaled_p1 = ifelse(parity == 1, milk_early_max_scaled, 0),
+  milk_early_max_scaled_p2 = ifelse(parity == 2, milk_early_max_scaled, 0),
+  milk_early_max_scaled_p3 = ifelse(parity == 3, milk_early_max_scaled, 0),
+  milk_early_max_scaled_p4 = ifelse(parity > 3, milk_early_max_scaled, 0),
+  milk_early_max_scaled_p1plus = ifelse(parity > 1, milk_early_max_scaled, 0))
+
+```
+
+```{r}
+hist(lac$milk_early_max_scaled,
+     main = "Distribution du maximum de production laitière\npendant les 90 premiers jours de lactation",
+     xlab = "Production laitière (distribution centrée réduite)")
+```
+
+
+## Définition des mammites
 
 Afin de modéliser l'impact des mammites sur la décision de reproduction, il est important de définir les différents types de mammites. On en définit ici : - mammite à réservoir environnementale : typiquement c'est un épisode de mammite isolé qui guérit rapidement et qui ne suit pas un modèle contagieux mais plutôt un modèle sporadique - mammite à réservoir mammaire : mammite qui tend à passer à la chronicité et entraîner une forte contagions au sein de l'élevage.
 
-```{r definition des categories de mammites}
-## primipares
-mast_primi <- lac |> 
+On va également différencier les différentes périodes de survenue des mammites en se concentrant tout d'abord sur la période de début de lactation : 
+- Les primipares débutent leur toute première lactation, elle n'ont pas encore connu de période sèche et n'ont pas encore eu l'occasion de se contaminer
+- Les multipares ont déjà pu se contaminer lors de la lactation précédente, on va donc prendre en compte son statut lors de la période sèche. 
+
+Le statut "primi" sera donc considéré comme référence. 
+
+### Statut au tarissement
+
+```{r}
+lac <- lac |> 
+  mutate(dp_status = case_when(
+    parity == 1 ~ "primi",
+    scc_last_prev_lac < scc_high_cutoff ~ "dpLow", 
+    scc_last_prev_lac >= scc_high_cutoff ~ "dpHigh"),
+    dp_status = relevel(factor(dp_status), ref = "primi"))
+```
+
+### Type de mammite
+
+```{r}
+lac <- lac |> 
+  mutate( mast_cat = case_when(
+    n_scc_high_early == 0 & n_cm_early == 0 ~ "healthy",
+    n_scc_high_early == 1 | (n_scc_high_early == 0 & n_cm_early > 0) ~ "env",
+    n_scc_high_early > 1 ~ "cont"),
+    mast_cat = relevel(factor( mast_cat), ref = "healthy"),
+    mast_cat1 = relevel(factor(paste(dp_status, mast_cat, sep = "_")), ref = "primi_healthy"),
+    mast_cat2 = relevel(factor(paste(ifelse(dp_status == "primi", "primi", "multi"), mast_cat, sep = "_")), ref = "primi_healthy")
+  )
+```
+
+Certaines multipares n'ont pas de données pour la lactation précédente. Elles sont identifiées et exclues de l'analyse.
+
+```{r}
+lac <- lac |> 
+  mutate(dp_mis = ifelse(parity > 1 & is.na(scc_last_prev_lac), 1, 0))
+```
+
+
+
+```{r formatage des categories de mammites pour les predictions}
+## catégories de statuts mammites pour les primipares
+mast_lev_p1 <- lac |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat == 1) |> 
+  distinct(mast_cat1) |>
+  mutate(mast_cat1 = as.character(mast_cat1)) |>
+  pull(mast_cat1)
+## catégories de statuts mammites pour les multipares
+mast_lev_p2 <- lac |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0 & parKat != 1) |> 
+  distinct(mast_cat1) |>
+  mutate(mast_cat1 = as.character(mast_cat1)) |>
+  pull(mast_cat1)
+
+## jeu de données
+mast_pred <- tibble(
+  parKat = factor(c(rep(1, length(mast_lev_p1)),
+             rep(2, length(mast_lev_p2)))),
+  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0
+)
+
+level_order <- c("primi_healthy",  "primi_env", "primi_cont",
+                 "dpLow_healthy",  "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont") 
   
 ```
 
+## Décision de mise à la reproduction
+
+```{r}
+lac <- lac |> 
+  mutate(
+    repro = ifelse(!is.na(n_ai) | !is.na(calv_date_nxt), 1, 0))
+```
+
+```{r saving lac data}
+saveRDS(lac,"~/stage_these/longevity_health/generated_datasets/lac.RData")
+```
+
+
+# Méthode
+
+## Modélisation de l'impact des mammites sur la probabilité de mise à la reproduction 
+
+### Modèle de référence 
+
+Ce modèle ne prend que des données parmis des animaux dont on a des informations sur le début de lactation et la période sèche de la précédente lactation. 
+
+```{r modèle de référence}
+repro_null <- glmer(repro ~ 1 + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_null)
+```
+On peut grâce à ce modèle obtenir la probabilité de mise à la reproduction mais pour cela il faut d'abords calculer 
+
+```{r methode de prediction des probabilites}
+# Obtenir les prédictions sur l'échelle de probabilité
+predicted_probabilities <- predict(repro_null, type = "response")
+
+# Afficher les premières prédictions pour vérification
+head(predicted_probabilities)
+```
+
+```{r methode aurelien}
+# Définir la fonction invlogit 
+invlogit <- function(x) {
+  exp(x) / (1 + exp(x))
+}
+
+# Extraire les coefficients fixes et calculer la probabilité
+prob_repro <- as.double(round(invlogit(fixef(repro_null)), 3))
+
+# Afficher la probabilité
+prob_repro
+```
+### Modèle avec parité et production laitière 
+
+```{r}
+repro_parity <- glmer(repro ~ parKat + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_parity)
+```
+
+```{r}
+repro_parity_milk <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                      (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_parity_milk)
+```
+
+Ce modèle semble correct, les résidus varient de -19.7623 à 2.4783, avec une médiane de 0.3450, ce qui suggère quelques observations extrêmes (potentiellement influentes).
+
+On va maintenant ajouter la variable d'intêret qui est la présence ou non de mammite 
+
+### Modèle complet 
+
+```{r}
+repro_full <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                             dp_status + mast_cat +
+                      (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_full)
+```
+
+```{r}
+repro_full1 <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 +
+                      (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_full1)
+```
+
+Pour compléter la vérification de la pertinence de mon modèle il reste quelques étapes à effectuer. 
+Tout d'abords il faut vérifier la colinéarité de mes variables 
+
+```{r verification des noms de colonnes de lac}
+colnames(lac)
+```
+```{r}
+str(lac[, variables_of_interest])
+```
+```{r}
+lac$parKat <- as.numeric(lac$parKat)
+lac$mast_cat1 <- as.numeric(lac$mast_cat1)
+```
+
+
+```{r}
+# Calcul des corrélations entre les variables explicatives
+variables_of_interest <- c("parKat", "milk_early_max_scaled_p1", "milk_early_max_scaled_p2",
+                           "milk_early_max_scaled_p3", "milk_early_max_scaled_p4",
+                           "mast_cat1")
+
+cor_matrix <- cor(lac[, variables_of_interest])
+
+# Afficher la matrice de corrélation
+print(cor_matrix)
+```
+```{r}
+# Tracer un heatmap des corrélations
+corrplot(cor_matrix, method = "color")
+```
+
+Maintenant on va analyser les résidus 
+
+```{r}
+# Extraction des résidus du modèle ajusté
+residuals <- resid(repro_full1, type = "pearson")
+```
+
+On réalise un histogramme pour vérifier si les résidus suivent une loi normale 
+
+```{r}
+hist(residuals, main = "Histogramme des Résidus")
+```
+
+La distribution ne semble pas tout à fait normale mais la moyenne reste proche de zero c'est donc relativement correct.
+
+```{r}
+qqnorm(residuals)
+qqline(residuals)
+```
+la distribution des résidus ne semble pas tout à fait normal mais c'est correct pour la régression logistique 
+
+On va maintenant comparer les résidus aux variables prédictives
+```{r}
+plot(predict(repro_full1, type = "response"), residuals, 
+     xlab = "Prédictions", ylab = "Résidus")
+```
+Ici les résidus montrent une tendance ce qui n'est pas normal...
+
+POur améliorer ce modèle nous allons essayer quelques modifications : La première va être de mettres certaines variables au carré.
+
+```{r ajout de terme quadratiques}
+lac$milk_early_max_scaled_p1_sq <- lac$milk_early_max_scaled_p1^2
+lac$milk_early_max_scaled_p2_sq <- lac$milk_early_max_scaled_p2^2
+lac$milk_early_max_scaled_p3_sq <- lac$milk_early_max_scaled_p3^2
+lac$milk_early_max_scaled_p4_sq <- lac$milk_early_max_scaled_p4^2
+```
+
+On va refaire un modèle à partir de ces modifications et effectuer à nouveau l'analyse des résidus 
+
+```{r}
+repro_full2 <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1_sq + 
+                              milk_early_max_scaled_p2_sq + 
+                              milk_early_max_scaled_p3_sq + 
+                              milk_early_max_scaled_p4_sq + 
+                              mast_cat1 +
+                      (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_full2)
+```
+
+```{r}
+residuals_improved <- resid(repro_full2, type = "pearson")
+```
+
+```{r}
+plot(predict(repro_full2, type = "response"), residuals_improved, 
+     xlab = "Valeurs Prédites", ylab = "Résidus de Pearson",
+     main = "Résidus vs. Valeurs Prédites (Modèle Amélioré)")
+abline(h = 0, col = "red")
+```
+Ce modèle sembble mieux que le précédent montrant une amélioration, quelques améliorations semblemt cependant nécessaires car quelques points extrêmes semblent montrer des observations aberrantes pouvant influer sur le modèle. 
+
+Nous allons essayer d'identifier ces points abberrants 
+
+```{r}
+# Appliquer le même sous-ensemble de données utilisé pour le modèle
+lac_subset <- subset(lac, n_ctrl_early > 0 & dp_mis == 0)
+
+# Extraire les résidus de Pearson et les valeurs prédites
+residuals <- resid(repro_full2, type = "pearson")
+fitted_values <- predict(repro_full2, type = "response")
+
+# Créer un data frame pour les diagnostics avec l'index des lignes
+diagnostic_df <- data.frame(index = 1:nrow(lac), fitted_values, residuals)
+
+# Identifier les points avec des résidus très élevés (par exemple, résidus > 50)
+outliers <- diagnostic_df[diagnostic_df$residuals > 50, ]
+
+# Afficher les points aberrants
+print(outliers)
+
+# Pour voir les informations complètes des observations aberrantes dans le data frame d'origine
+outliers_full_info <- lac[outliers$index, ]
+
+# Afficher les informations complètes des points aberrants
+print(outliers_full_info)
+```
+
+```{r}
+# Vérifier le nombre de lignes
+cat("Nombre de lignes dans lac_subset: ", nrow(lac_subset), "\n")
+cat("Nombre de lignes dans residuals: ", length(residuals), "\n")
+cat("Nombre de lignes dans fitted_values: ", length(fitted_values), "\n")
+```
+
+```{r}
+# Extraire les résidus de Pearson et les valeurs prédites
+residuals <- resid(repro_full2, type = "pearson")
+fitted_values <- predict(repro_full2, type = "response")
+
+# Créer un data frame pour les diagnostics
+if (nrow(lac_subset) == length(residuals) && nrow(lac_subset) == length(fitted_values)) {
+  diagnostic_df <- data.frame(index = 1:nrow(lac_subset), fitted_values, residuals)
+} else {
+  stop("Les dimensions ne correspondent pas entre le sous-ensemble de données et les résidus/valeurs prédites.")
+}
+
+# Vérifier le data frame diagnostique
+print(head(diagnostic_df))
+```
+
+```{r}
+# Identifier les points avec des résidus très élevés (par exemple, résidus > 50)
+outliers <- diagnostic_df[diagnostic_df$residuals > 50, ]
+
+# Afficher les points aberrants
+print(outliers)
+
+# Pour voir les informations complètes des observations aberrantes dans le data frame d'origine
+outliers_full_info <- lac[outliers$index, ]
+
+# Afficher les informations complètes des points aberrants
+print(outliers_full_info)
+```
+Il semblerait que pour cet animal, il nous manque des données de repro, notamment on sait qu'elle va reveler mais on a aucune IA d'indiqué
+
+```{r}
+lac_fltr <- lac |> 
+  filter(is.na(n_ai) & !is.na(calv_date_nxt))
+
+lac_soustrait <- anti_join(lac, lac_fltr)
+```
+
+on effectue une nouvelle régression logistique 
+
+```{r}
+repro_full3 <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1_sq + 
+                              milk_early_max_scaled_p2_sq + 
+                              milk_early_max_scaled_p3_sq + 
+                              milk_early_max_scaled_p4_sq + 
+                              mast_cat1 +
+                      (1 | herd_id),
+                    data = lac_soustrait,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_full3)
+```
+
+```{r}
+residuals_improved <- resid(repro_full3, type = "pearson")
+```
+
+```{r}
+plot(predict(repro_full3, type = "response"), residuals_improved, 
+     xlab = "Valeurs Prédites", ylab = "Résidus de Pearson",
+     main = "Résidus vs. Valeurs Prédites (Modèle Amélioré)")
+abline(h = 0, col = "red")
+```
 

@@ -1,0 +1,80 @@
+---
+title: "Impact des mammites sur la décision de mise à la reproduction"
+author: "Joanna"
+format: html
+editor: visual
+---
+
+
+```{r setup}
+#| message: false
+library(tidyverse)
+library(lme4)
+library(marginaleffects)
+library(readxl)
+library(ggplot2)
+library(corrplot)
+
+```
+
+```{r seuil utilisés}
+## nombre de jours en dessous duquel on considère qu'on est en début de lactation
+## en moyenne avant première IA
+early_dim_cutoff <- 90
+## SCC cut-off
+## seuil de cellules au-delà duquel on considère
+## qu'il y a mammite clinique
+scc_high_cutoff <- 200
+```
+
+# Matériel
+
+## Données
+
+Chargement des données de contrôle laitier fournies par IDELE
+
+```{r chargement donnees}
+#| message: false
+rec <- read_csv2("generated_datasets/idele_rec_final.csv") |> 
+  mutate(
+    herd_id = as.character(herd_id),
+    ctrl_date = as.Date(ctrl_date),
+    anim_id = as.character(anim_id),
+    parity = as.integer(parity),
+    fat = as.integer(fat),
+    prot = as.integer(prot),
+    scc = as.integer(scc),
+    out_cause = as.character(out_cause),
+    calv_date = as.Date(calv_date),
+    dim = as.integer(dim)
+  ) |> 
+  filter(!is.na(milk) & !is.na(scc))
+```
+
+Chargement du tableau de données de lactations 
+
+
+
+Création d'une variable de survie 
+
+```{r}
+lac <- lac |> 
+  mutate(
+    survie = ifelse(out_cause_last == "M" & !is.na(out_date_last), 0, 1))
+```
+
+# Méthode
+
+## Modélisation de l'impact des mammites sur la probabilité de mort prématurée
+
+### Modèle de référence 
+
+```{r modele de reference}
+death_null <- glmer(survie ~ 1 + (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(death_null)
+```
+
