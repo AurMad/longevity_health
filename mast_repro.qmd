@@ -13,7 +13,7 @@ library(marginaleffects)
 library(readxl)
 library(ggplot2)
 library(corrplot)
-
+library(questionr)
 ```
 
 ```{r seuil utilisés}
@@ -287,6 +287,12 @@ lac <- lac |>
     dp_status = relevel(factor(dp_status), ref = "primi"))
 ```
 
+```{r}
+lac <- lac |> 
+filter(!is.na(dp_status)) 
+```
+
+
 ### Type de mammite
 
 ```{r}
@@ -350,11 +356,43 @@ lac <- lac |>
 ```
 
 ```{r saving lac data}
-saveRDS(lac,"~/stage_these/longevity_health/generated_datasets/lac.RData")
+save(lac, file = "~/stage_these/longevity_health/generated_datasets/lac.RData")
 ```
 
 
 # Méthode
+
+## Déscription de la mise à la reproduction selon la présence ou non d'une mammite 
+
+```{r}
+# Tableau d'effectif
+Tab<-table(lac$repro, lac$mast_cat1)
+Tab
+```
+```{r}
+p<-ggplot(lac) +
+aes(x = repro, fill = mast_cat1) +
+geom_bar(position="dodge") +
+xlab("mise à la reproduction") +
+ylab("Effectifs") +
+labs(fill = "catégories")
+p+theme_bw()
+## x = Nbre de groupe sur l'axe x
+## fill = Nbre de barres par groupe
+## position="dodge" = position des barres à côté
+```
+```{r}
+p<-ggplot(lac) +
+aes(x = repro, fill = mast_cat1) +
+geom_bar(position="fill") +
+xlab("mise à la reproduction") +
+ylab("Effectifs") +
+labs(fill = "catégories")
+p+theme_bw()
+## x = Nbre de groupe sur l'axe x
+## fill = Nbre de barres par groupe
+## position="fill" = rend le graphique proportionnel et empile les barres
+```
 
 ## Modélisation de l'impact des mammites sur la probabilité de mise à la reproduction 
 
@@ -453,72 +491,14 @@ repro_full1 <- glmer(repro ~ parKat +
 summary(repro_full1)
 ```
 
-Pour compléter la vérification de la pertinence de mon modèle il reste quelques étapes à effectuer. 
-Tout d'abords il faut vérifier la colinéarité de mes variables 
-
-```{r verification des noms de colonnes de lac}
-colnames(lac)
-```
-```{r}
-str(lac[, variables_of_interest])
-```
-```{r}
-lac$parKat <- as.numeric(lac$parKat)
-lac$mast_cat1 <- as.numeric(lac$mast_cat1)
-```
-
-
-```{r}
-# Calcul des corrélations entre les variables explicatives
-variables_of_interest <- c("parKat", "milk_early_max_scaled_p1", "milk_early_max_scaled_p2",
-                           "milk_early_max_scaled_p3", "milk_early_max_scaled_p4",
-                           "mast_cat1")
-
-cor_matrix <- cor(lac[, variables_of_interest])
-
-# Afficher la matrice de corrélation
-print(cor_matrix)
-```
-```{r}
-# Tracer un heatmap des corrélations
-corrplot(cor_matrix, method = "color")
-```
-
-Maintenant on va analyser les résidus 
-
-```{r}
-# Extraction des résidus du modèle ajusté
-residuals <- resid(repro_full1, type = "pearson")
-```
-
-On réalise un histogramme pour vérifier si les résidus suivent une loi normale 
-
-```{r}
-hist(residuals, main = "Histogramme des Résidus")
-```
-
-La distribution ne semble pas tout à fait normale mais la moyenne reste proche de zero c'est donc relativement correct.
-
-```{r}
-qqnorm(residuals)
-qqline(residuals)
-```
-la distribution des résidus ne semble pas tout à fait normal mais c'est correct pour la régression logistique 
-
-On va maintenant comparer les résidus aux variables prédictives
-```{r}
-plot(predict(repro_full1, type = "response"), residuals, 
-     xlab = "Prédictions", ylab = "Résidus")
-```
-Ici les résidus montrent une tendance ce qui n'est pas normal...
-
 POur améliorer ce modèle nous allons essayer quelques modifications : La première va être de mettres certaines variables au carré.
 
 ```{r ajout de terme quadratiques}
-lac$milk_early_max_scaled_p1_sq <- lac$milk_early_max_scaled_p1^2
-lac$milk_early_max_scaled_p2_sq <- lac$milk_early_max_scaled_p2^2
-lac$milk_early_max_scaled_p3_sq <- lac$milk_early_max_scaled_p3^2
-lac$milk_early_max_scaled_p4_sq <- lac$milk_early_max_scaled_p4^2
+lac <- lac |> 
+  mutate(milk_early_max_scaled_p1_sq = lac$milk_early_max_scaled_p1^2,
+         milk_early_max_scaled_p2_sq = lac$milk_early_max_scaled_p2^2,
+        milk_early_max_scaled_p3_sq = lac$milk_early_max_scaled_p3^2,
+        milk_early_max_scaled_p4_sq = lac$milk_early_max_scaled_p4^2)
 ```
 
 On va refaire un modèle à partir de ces modifications et effectuer à nouveau l'analyse des résidus 
@@ -538,80 +518,6 @@ repro_full2 <- glmer(repro ~ parKat +
 summary(repro_full2)
 ```
 
-```{r}
-residuals_improved <- resid(repro_full2, type = "pearson")
-```
-
-```{r}
-plot(predict(repro_full2, type = "response"), residuals_improved, 
-     xlab = "Valeurs Prédites", ylab = "Résidus de Pearson",
-     main = "Résidus vs. Valeurs Prédites (Modèle Amélioré)")
-abline(h = 0, col = "red")
-```
-Ce modèle sembble mieux que le précédent montrant une amélioration, quelques améliorations semblemt cependant nécessaires car quelques points extrêmes semblent montrer des observations aberrantes pouvant influer sur le modèle. 
-
-Nous allons essayer d'identifier ces points abberrants 
-
-```{r}
-# Appliquer le même sous-ensemble de données utilisé pour le modèle
-lac_subset <- subset(lac, n_ctrl_early > 0 & dp_mis == 0)
-
-# Extraire les résidus de Pearson et les valeurs prédites
-residuals <- resid(repro_full2, type = "pearson")
-fitted_values <- predict(repro_full2, type = "response")
-
-# Créer un data frame pour les diagnostics avec l'index des lignes
-diagnostic_df <- data.frame(index = 1:nrow(lac), fitted_values, residuals)
-
-# Identifier les points avec des résidus très élevés (par exemple, résidus > 50)
-outliers <- diagnostic_df[diagnostic_df$residuals > 50, ]
-
-# Afficher les points aberrants
-print(outliers)
-
-# Pour voir les informations complètes des observations aberrantes dans le data frame d'origine
-outliers_full_info <- lac[outliers$index, ]
-
-# Afficher les informations complètes des points aberrants
-print(outliers_full_info)
-```
-
-```{r}
-# Vérifier le nombre de lignes
-cat("Nombre de lignes dans lac_subset: ", nrow(lac_subset), "\n")
-cat("Nombre de lignes dans residuals: ", length(residuals), "\n")
-cat("Nombre de lignes dans fitted_values: ", length(fitted_values), "\n")
-```
-
-```{r}
-# Extraire les résidus de Pearson et les valeurs prédites
-residuals <- resid(repro_full2, type = "pearson")
-fitted_values <- predict(repro_full2, type = "response")
-
-# Créer un data frame pour les diagnostics
-if (nrow(lac_subset) == length(residuals) && nrow(lac_subset) == length(fitted_values)) {
-  diagnostic_df <- data.frame(index = 1:nrow(lac_subset), fitted_values, residuals)
-} else {
-  stop("Les dimensions ne correspondent pas entre le sous-ensemble de données et les résidus/valeurs prédites.")
-}
-
-# Vérifier le data frame diagnostique
-print(head(diagnostic_df))
-```
-
-```{r}
-# Identifier les points avec des résidus très élevés (par exemple, résidus > 50)
-outliers <- diagnostic_df[diagnostic_df$residuals > 50, ]
-
-# Afficher les points aberrants
-print(outliers)
-
-# Pour voir les informations complètes des observations aberrantes dans le data frame d'origine
-outliers_full_info <- lac[outliers$index, ]
-
-# Afficher les informations complètes des points aberrants
-print(outliers_full_info)
-```
 Il semblerait que pour cet animal, il nous manque des données de repro, notamment on sait qu'elle va reveler mais on a aucune IA d'indiqué
 
 ```{r}
@@ -638,14 +544,37 @@ repro_full3 <- glmer(repro ~ parKat +
 summary(repro_full3)
 ```
 
+Maintenant on ajoute quelques intéractions pour essayer d'améliorer le modèle. 
+
 ```{r}
-residuals_improved <- resid(repro_full3, type = "pearson")
+repro_full4 <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1_sq + 
+                              milk_early_max_scaled_p2_sq + 
+                              milk_early_max_scaled_p3_sq + 
+                              milk_early_max_scaled_p4_sq + 
+                              mast_cat1 +
+                       parKat*milk_early_max_scaled_p1_sq +
+                       parKat*milk_early_max_scaled_p2_sq +
+                       parKat*milk_early_max_scaled_p3_sq +
+                       parKat*milk_early_max_scaled_p4_sq +
+                      (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_full4)
 ```
 
 ```{r}
-plot(predict(repro_full3, type = "response"), residuals_improved, 
-     xlab = "Valeurs Prédites", ylab = "Résidus de Pearson",
-     main = "Résidus vs. Valeurs Prédites (Modèle Amélioré)")
-abline(h = 0, col = "red")
+prd <- marginaleffects::predictions(model = repro_full1, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité de mise à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 

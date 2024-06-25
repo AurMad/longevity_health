@@ -5,6 +5,8 @@ format: html
 editor: visual
 ---
 
+Pour cette partie, nous allons réaliser une étude de survie grâce à une régression de cox. Pour cela il faut commencer par préparer ses données. 
+
 
 ```{r setup}
 #| message: false
@@ -14,7 +16,9 @@ library(marginaleffects)
 library(readxl)
 library(ggplot2)
 library(corrplot)
-
+library(survival)
+library(survminer)
+library(coxme)
 ```
 
 ```{r seuil utilisés}
@@ -29,11 +33,11 @@ scc_high_cutoff <- 200
 
 # Matériel
 
-## Données
+## Préparation des données
 
 Chargement des données de contrôle laitier fournies par IDELE
 
-```{r chargement donnees}
+```{r chargement rec}
 #| message: false
 rec <- read_csv2("generated_datasets/idele_rec_final.csv") |> 
   mutate(
@@ -51,30 +55,223 @@ rec <- read_csv2("generated_datasets/idele_rec_final.csv") |>
   filter(!is.na(milk) & !is.na(scc))
 ```
 
-Chargement du tableau de données de lactations 
+Chargement du tableau de données de lactations
+
+```{r, eval = FALSE}
+lac <- load("~/stage_these/longevity_health/generated_datasets/lac.RData")
+```
+
+La première donnée nécessaire pour réaliser une régression de cox est une donnée de temps. 
+
+Pour voir si ça marche on va sélectionner une partie des élevages sur une plus courte période de temps. 
+
+### Sélection d'un échantillon
+
+Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les données de lactation
+
+Génération d'une liste d'élevages uniques.
+
+```{r}
+herd_list <- unique(lac$herd_id)
+```
+
+On sélectionne un échantillon de 10 élevages au hasard.
+
+```{r Selection echantillon de 10 elevages}
+set.seed(21) #On garde la même graine si on veut conserver le même échantillon
+herd_random_sample <- sample(herd_list, 100, replace = FALSE)
+lac <- lac |> 
+  filter(herd_id %in% herd_random_sample)
+```
+
+### Création d'une variable de temps 
+
+```{r}
+str(lac)
+```
+
+
+On va considérer le temps de survie comme la capacité de réaliser une lactation entière. Donc c'est l'intervalle vêlage-vêlage. 
 
 
 
-Création d'une variable de survie 
+```{r creation de la variable de temps}
+
+# Calculer la différence en jours entre calv_date_nxt et calv_date
+diff <- difftime(lac$calv_date_nxt, lac$calv_date, units = "days")
+
+# Calculer la différence en jours entre out_date_last et calv_date
+diff2 <- difftime(lac$out_date_last, lac$calv_date, units = "days")
+
+lac <- lac |> 
+  mutate(
+    diff = as.numeric(difftime(calv_date_nxt, calv_date, units = "days")),
+    diff2 = as.numeric(difftime(out_date_last, calv_date, units = "days"))
+  )
+
+# Utiliser mutate avec case_when pour créer la variable time
+lac <- lac %>%
+  mutate(time = case_when(
+    !is.na(calv_date_nxt) & calv_date_nxt < out_date_last ~ as.numeric(diff),
+    is.na(calv_date_nxt) ~ as.numeric(diff2),
+    TRUE ~ NA_real_  # Gérer d'autres cas si nécessaire
+  ))
+
+lac <- lac |> 
+  mutate(time = as.numeric(time))
+```
+
+
+
+### Création d'une variable d'évènement
+
+On va appeler cette variable "death", elle donne la valeur de 1 si la mort est survenue au cours de la lactation et 0 sinon. 
 
 ```{r}
 lac <- lac |> 
-  mutate(
-    survie = ifelse(out_cause_last == "M" & !is.na(out_date_last), 0, 1))
+  mutate(death = ifelse(out_cause_last == "M" & !is.na(out_date_last) & is.na(calv_date_nxt), 1, 0))
 ```
+
+### Variables prédictives 
+
+On utilise plusieurs paramètres 
+
+-la parité 
+-la production laitière  
+_la survenue et le type de mammite 
 
 # Méthode
 
-## Modélisation de l'impact des mammites sur la probabilité de mort prématurée
+## description des données
 
-### Modèle de référence 
 
-```{r modele de reference}
-death_null <- glmer(survie ~ 1 + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0,
-                    family = binomial(link = "logit"))
+on va essayer de décrire la tendance
 
-summary(death_null)
+```{r}
+table(lac$death, lac$mast_cat1)
 ```
+
+```{r}
+mast_death <- survfit(Surv(time, death) ~ mast_cat1, type = "kaplan-meier", data = lac)
+```
+
+```{r}
+# Kaplan-Meier survival curves 
+g <- ggsurvplot(
+  fit = mast_death,
+  data = lac,
+  fun = "event",
+  conf.int = TRUE,
+  ggtheme = theme_bw(),
+  main = "Courbes de Kaplan-Meier stratifiées par exposition des lactations aux mammites",
+  xlab = "Temps depuis le vêlage (jours)",
+  ylab = "Survenue de la mort",
+  xlim = c(0, 400),  # Utiliser la colonne de temps correcte
+  ylim = c(0, 1.05),
+  break.time.by = 40,
+  axes.offset = FALSE,
+  legend.title = "Survenue de mammite",
+  legend = c(0.25, 0.75)
+)
+
+g$plot <- g$plot + theme(
+  legend.title = element_text(size = 10),
+  legend.text = element_text(size = 10),
+  axis.title = element_text(size = 10),
+  axis.text = element_text(size = 10),
+  plot.title = element_text(size = 10)
+)
+
+# Afficher le graphique
+print(g)
+
+
+```
+```{r}
+# Créer le graphique de survie avec ggsurvplot
+g <- ggsurvplot(
+  fit = mast_death,
+  data = lac,
+  fun = "event",            # Utiliser "event" pour montrer l'incidence des événements
+  conf.int = TRUE,          # Ajouter l'intervalle de confiance
+  ggtheme = theme_bw(),     # Utiliser un thème ggplot2
+  main = "Courbes de Kaplan-Meier stratifiées par type de mammite (mast_cat1)",
+  xlab = "Temps depuis le vêlage (jours)",
+  ylab = "Probabilité de la survenue de la mort",
+  xlim = c(0, 400),         # Ajustez la limite en fonction de vos données
+  ylim = c(0, 0.05),
+  break.time.by = 40,
+  axes.offset = FALSE,
+  legend.title = "Type de mammite",
+  legend = c(0.25, 0.75)
+)
+
+# Personnaliser les éléments du graphique
+g$plot <- g$plot + theme(
+  legend.title = element_text(size = 15),
+  legend.text = element_text(size = 15),
+  axis.title = element_text(size = 15),
+  axis.text = element_text(size = 15),
+  plot.title = element_text(size = 15)
+)
+
+# Afficher le graphique
+print(g)
+```
+La courbe n'est pas très parlante car la probabilité de mort suite à la survenue d'une mammite est suremement très proche de 0 quel que soit le type de mammite. 
+
+on va essayer de vérifier cela en simplifiant le type de mammite avec juste mammite ou pas mammite 
+
+
+
+lac <- lac |> 
+  mutate(mam_simp = if_else(mast_cat1 == "dpHigh_cont" | mast_cat1 == "primi_cont" | mast_cat1 == "dpLow_cont", "mam", "sain"))
+
+```{r modele simple}
+# Ajuster un modèle de Cox simple
+cox_model_simple <- coxme(Surv(time, death) ~ parKat + (1 | herd_id), data = lac)
+
+# Vérifier les résultats du modèle
+summary(cox_model_simple)
+```
+On va essayer de compliquer un peu ce modèle en y ajoutant plus de variables explicatives. 
+Certaines vaches ne donnent pas d'informations sur leur statut au tarissement mais ne sont pas des primipares, on va donc s'en séparer pour l'instant 
+
+```{r}
+cox_model_essai <- coxph(Surv(time, death) ~ parKat + mast_cat1, data = lac)
+
+summary(cox_model_essai)
+```
+
+```{r}
+# Ajuster un modèle simple d'abord
+model_simple <- coxme(Surv(time, death) ~ parKat + (1 | herd_id), data = lac)
+summary(model_simple)
+```
+```{r}
+# Ajuster le modèle avec mast_cat1 uniquement
+model_mast_cat1 <- coxme(Surv(time, death) ~ mast_cat1 + (1 | herd_id), data = lac)
+summary(model_mast_cat1)
+```
+
+```{r}
+# Convertir herd_id en facteur
+lac$herd_id <- as.factor(lac$herd_id)
+
+model_step1 <- coxme(Surv(time, death) ~ parKat + mast_cat1 + (1 | herd_id), data = lac)
+summary(model_step1)
+```
+
+
+
+
+```{r modele plus complique}
+init_vals <- coef(cox_model_essai)
+
+cox_model_death <- coxme(Surv(time, death) ~ parKat + mast_cat1 +(1 | herd_id), data = lac , init =init_vals)
+# Vérifier les résultats du modèle
+summary(cox_model_death)
+```
+
+
 
