@@ -14,6 +14,7 @@ library(readxl)
 library(ggplot2)
 library(corrplot)
 library(questionr)
+library(car)
 ```
 
 ```{r seuil utilisés}
@@ -338,7 +339,8 @@ mast_pred <- tibble(
   milk_early_max_scaled_p1 = 0,
   milk_early_max_scaled_p2 = 0,
   milk_early_max_scaled_p3 = 0,
-  milk_early_max_scaled_p4 = 0
+  milk_early_max_scaled_p4 = 0,
+  n_ai = 0
 )
 
 level_order <- c("primi_healthy",  "primi_env", "primi_cont",
@@ -369,18 +371,7 @@ save(lac, file = "~/stage_these/longevity_health/generated_datasets/lac.RData")
 Tab<-table(lac$repro, lac$mast_cat1)
 Tab
 ```
-```{r}
-p<-ggplot(lac) +
-aes(x = repro, fill = mast_cat1) +
-geom_bar(position="dodge") +
-xlab("mise à la reproduction") +
-ylab("Effectifs") +
-labs(fill = "catégories")
-p+theme_bw()
-## x = Nbre de groupe sur l'axe x
-## fill = Nbre de barres par groupe
-## position="dodge" = position des barres à côté
-```
+
 ```{r}
 p<-ggplot(lac) +
 aes(x = repro, fill = mast_cat1) +
@@ -392,6 +383,25 @@ p+theme_bw()
 ## x = Nbre de groupe sur l'axe x
 ## fill = Nbre de barres par groupe
 ## position="fill" = rend le graphique proportionnel et empile les barres
+```
+
+On va essayer de visualiser les différentes relations entre variables explicatives grâce à une matrice de corrélation. 
+
+```{r matrice de correlation}
+lac$parKat <- as.numeric(as.factor(lac$parKat))
+lac$mast_cat1 <- as.numeric(as.factor(lac$mast_cat1))
+
+
+# Sélectionner les colonnes d'intérêt
+variables_of_interest <- lac[, c("parKat", "milk_early_max_scaled_p1", "milk_early_max_scaled_p2", "milk_early_max_scaled_p3", "milk_early_max_scaled_p4", "mast_cat1")]
+
+# Calculer la matrice de corrélation
+cor_matrix <- cor(variables_of_interest, use = "complete.obs")
+print(cor_matrix)
+```
+
+```{r sous forme de graphique}
+corrplot(cor_matrix, method = "circle")
 ```
 
 ## Modélisation de l'impact des mammites sur la probabilité de mise à la reproduction 
@@ -489,7 +499,7 @@ repro_full1 <- glmer(repro ~ parKat +
                     family = binomial(link = "logit"))
 
 summary(repro_full1)
-```
+``` 
 
 POur améliorer ce modèle nous allons essayer quelques modifications : La première va être de mettres certaines variables au carré.
 
@@ -501,14 +511,18 @@ lac <- lac |>
         milk_early_max_scaled_p4_sq = lac$milk_early_max_scaled_p4^2)
 ```
 
-On va refaire un modèle à partir de ces modifications et effectuer à nouveau l'analyse des résidus 
+On va refaire un modèle avec des termes quadratiles pour voir si cela améliore la qualité du modèle. 
 
 ```{r}
 repro_full2 <- glmer(repro ~ parKat + 
                               milk_early_max_scaled_p1_sq + 
-                              milk_early_max_scaled_p2_sq + 
+                              milk_early_max_scaled_p1 +
+                              milk_early_max_scaled_p2_sq +
+                              milk_early_max_scaled_p2 +
                               milk_early_max_scaled_p3_sq + 
-                              milk_early_max_scaled_p4_sq + 
+                              milk_early_max_scaled_p3 +
+                              milk_early_max_scaled_p4_sq +
+                              milk_early_max_scaled_p4 +
                               mast_cat1 +
                       (1 | herd_id),
                     data = lac,
@@ -518,9 +532,11 @@ repro_full2 <- glmer(repro ~ parKat +
 summary(repro_full2)
 ```
 
-Il semblerait que pour cet animal, il nous manque des données de repro, notamment on sait qu'elle va reveler mais on a aucune IA d'indiqué
+Il semblerait que repro_full1 convienne mieux que repro_full2 car son AIC est plus petit. 
 
-```{r}
+Nous allons essayer d'ajouter des interactions pour voir si cela améliore le modèle. 
+
+```{r, eval = FALSE}
 lac_fltr <- lac |> 
   filter(is.na(n_ai) & !is.na(calv_date_nxt))
 
@@ -529,7 +545,7 @@ lac_soustrait <- anti_join(lac, lac_fltr)
 
 on effectue une nouvelle régression logistique 
 
-```{r}
+```{r, evaL = FALSE}
 repro_full3 <- glmer(repro ~ parKat + 
                               milk_early_max_scaled_p1_sq + 
                               milk_early_max_scaled_p2_sq + 
@@ -548,22 +564,54 @@ Maintenant on ajoute quelques intéractions pour essayer d'améliorer le modèle
 
 ```{r}
 repro_full4 <- glmer(repro ~ parKat + 
-                              milk_early_max_scaled_p1_sq + 
-                              milk_early_max_scaled_p2_sq + 
-                              milk_early_max_scaled_p3_sq + 
-                              milk_early_max_scaled_p4_sq + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
                               mast_cat1 +
-                       parKat*milk_early_max_scaled_p1_sq +
-                       parKat*milk_early_max_scaled_p2_sq +
-                       parKat*milk_early_max_scaled_p3_sq +
-                       parKat*milk_early_max_scaled_p4_sq +
-                      (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0,
-                    family = binomial(link = "logit"))
+                              milk_early_max_scaled_p1*mast_cat1 +
+                              milk_early_max_scaled_p2*mast_cat1 +
+                              milk_early_max_scaled_p3*mast_cat1 +
+                              milk_early_max_scaled_p4*mast_cat1 +
+                              (1 | herd_id),
+                              data = lac,
+                              subset = n_ctrl_early > 0 & dp_mis == 0,
+                              family = binomial(link = "logit"))
 
 summary(repro_full4)
 ```
+
+Pour l'instant c'est repro_full1 qui donne la meilleure approximation car il possède le plus petit AIC. 
+
+On va donc maintenant vérifier sa pertinence. 
+
+### Vérification du modèle 
+
+#### vérification de l'absence de multicolinéarité des variables explicatives
+
+```{r}
+vif(repro_full1)
+```
+tous les VIF sont inférieurs à 5 donc les variables sont suffisemment indépendantes. 
+
+#### Vérification de l'homoscédasticité des résidus 
+
+Ce n'est pas forcément pertinent de tester l'homoscédasticité des résidus en régression logistique mais cela peut permettre d'ajuster le modèle si besoin. 
+
+```{r}
+# Calculer les résidus de Pearson
+residuals_pearson <- residuals(repro_full1, type = "pearson")
+
+# Tracer les résidus de Pearson
+plot(fitted(repro_full1), residuals_pearson, 
+     xlab = "Valeurs ajustées", 
+     ylab = "Résidus de Pearson",
+     main = "Résidus de Pearson vs Valeurs ajustées")
+abline(h = 0, col = "red")
+plot(repro_full1$fit$fitted.values, repro_full1$resid)
+```
+## Probabilité de mise à la reproduction selon le statut de l'animal 
+
 
 ```{r}
 prd <- marginaleffects::predictions(model = repro_full1, 
@@ -575,6 +623,140 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
   xlab("") + 
   ylab("Probabilité de mise à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+La figure ci-dessous représente les probabilités prédites qu'une vache soit mise à la reproduction en fonction de son statut vis-à-vis des mammites.
+Les multipares représentent la parité de référence qui est la parité 3. 
+
+## Probabilité de revêlage pour les vaches mises à la reproduction
+
+Une variable binaire prenant la valeur 1 si la vache revêle et 0 autrement est construite.
+
+
+```{r recalving-var-definition}
+lac <- lac |> 
+  mutate(
+    repro_revel = case_when(
+      repro == 1 & !is.na(calv_date_nxt) ~ 1,
+      repro == 1 & is.na(calv_date_nxt) ~ 0,
+      repro == 0 ~ NA
+    )
+    )
+```
+
+Le modèle suivant estime la probabilité qu'une vache mise à la reproduction revêle.
+
+```{r recalving-var-null-model}
+repro_revel_null <- glmer(repro_revel ~ 1 + (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                    subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(repro_revel_null)
+```
+```{r}
+# Définir la fonction invlogit 
+invlogit <- function(x) {
+  exp(x) / (1 + exp(x))
+}
+
+# Extraire les coefficients fixes et calculer la probabilité
+prob_revel <- as.double(round(invlogit(fixef(repro_revel_null)), 3))
+
+# Afficher la probabilité
+prob_revel
+```
+On va maintenant compliquer graduellement le modèle en essayant de trouver le modèle le plus juste possible. On va commencer par utiliser exactement les mêmes variables que pour le modèle de mise à la reproduction.
+
+```{r}
+repro_revel_mast <- glmer(repro_revel ~  parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 + 
+                           (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(repro_revel_mast)
+```
+```{r}
+repro_revel_mast1 <- glmer(repro_revel ~  parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 +
+                              n_ai +
+                           (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(repro_revel_mast1)
+```
+
+Ce modèle semble meilleur cependant il est évident que plus le nombre d'inséminations artificielles augmentent plus la probabilité de revêler augmente. 
+
+```{r}
+repro_revel_mast2 <- glmer(repro_revel ~  parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 +
+                              n_ai +
+                              n_ai*mast_cat1 +
+                           (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(repro_revel_mast2)
+```
+
+```{r}
+repro_revel_mast3 <- glmer(repro_revel ~  parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 +
+                              n_ai +
+                              n_ai*parKat +
+                           (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(repro_revel_mast3)
+```
+Ce modèle semble un peu mieux, pour l'instant c'est celui qui nous convient le mieux. 
+
+### Vérification du modèle 
+
+#### vérification de l'absence de multicolinéarité des variables explicatives
+
+```{r}
+vif(repro_revel_mast3)
+```
+n_ai et parKat*n_ai semblent indiquer une colinéarité modérée
+
+## Probabilité de revêlage suite à la mise à la reproduction 
+
+```{r}
+prd <- marginaleffects::predictions(model = repro_revel_mast3, 
+                             newdata = mast_pred, 
+                            re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité de revêlage") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
