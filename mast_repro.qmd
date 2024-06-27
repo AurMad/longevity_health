@@ -313,8 +313,11 @@ Certaines multipares n'ont pas de données pour la lactation précédente. Elles
 ```{r}
 lac <- lac |> 
   mutate(dp_mis = ifelse(parity > 1 & is.na(scc_last_prev_lac), 1, 0))
+
 ```
 
+
+## Probabilité de mise à la reproduction selon le statut de l'animal 
 
 
 ```{r formatage des categories de mammites pour les predictions}
@@ -325,29 +328,34 @@ mast_lev_p1 <- lac |>
   mutate(mast_cat1 = as.character(mast_cat1)) |>
   pull(mast_cat1)
 ## catégories de statuts mammites pour les multipares
-mast_lev_p2 <- lac |> 
+mast_lev_p3 <- lac |> 
   filter(n_ctrl_early > 0 & dp_mis == 0 & parKat != 1) |> 
   distinct(mast_cat1) |>
   mutate(mast_cat1 = as.character(mast_cat1)) |>
   pull(mast_cat1)
 
+
 ## jeu de données
 mast_pred <- tibble(
   parKat = factor(c(rep(1, length(mast_lev_p1)),
-             rep(2, length(mast_lev_p2)))),
-  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
+             rep(2, length(mast_lev_p3)))),
+  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p3)),
   milk_early_max_scaled_p1 = 0,
   milk_early_max_scaled_p2 = 0,
   milk_early_max_scaled_p3 = 0,
   milk_early_max_scaled_p4 = 0,
-  n_ai = 0
 )
 
 level_order <- c("primi_healthy",  "primi_env", "primi_cont",
                  "dpLow_healthy",  "dpLow_env", "dpLow_cont",
                  "dpHigh_healthy", "dpHigh_env", "dpHigh_cont") 
-  
+
 ```
+
+```{r}
+class(mast_pred)
+```
+
 
 ## Décision de mise à la reproduction
 
@@ -501,6 +509,11 @@ repro_full1 <- glmer(repro ~ parKat +
 summary(repro_full1)
 ``` 
 
+```{r}
+class(repro_full1)
+```
+
+
 POur améliorer ce modèle nous allons essayer quelques modifications : La première va être de mettres certaines variables au carré.
 
 ```{r ajout de terme quadratiques}
@@ -614,7 +627,7 @@ plot(repro_full1$fit$fitted.values, repro_full1$resid)
 
 
 ```{r}
-prd <- marginaleffects::predictions(model = repro_full1, 
+prd <- predictions(model = repro_full1, 
                              newdata = mast_pred, 
                            re.form = NA, type = "response")
 
@@ -734,6 +747,23 @@ repro_revel_mast3 <- glmer(repro_revel ~  parKat +
 
 summary(repro_revel_mast3)
 ```
+```{r}
+repro_revel_mast4 <- glmer(repro_revel ~  parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat2 +
+                              n_ai +
+                           (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(repro_revel_mast4)
+```
+
+
 Ce modèle semble un peu mieux, pour l'instant c'est celui qui nous convient le mieux. 
 
 ### Vérification du modèle 
@@ -741,22 +771,35 @@ Ce modèle semble un peu mieux, pour l'instant c'est celui qui nous convient le 
 #### vérification de l'absence de multicolinéarité des variables explicatives
 
 ```{r}
-vif(repro_revel_mast3)
+vif(repro_revel_mast4)
 ```
-n_ai et parKat*n_ai semblent indiquer une colinéarité modérée
 
 ## Probabilité de revêlage suite à la mise à la reproduction 
 
 ```{r}
-prd <- marginaleffects::predictions(model = repro_revel_mast3, 
-                             newdata = mast_pred, 
-                            re.form = NA, type = "response")
+parit_pred1 <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = 0
+) |> 
+  mutate(
+    milk_early_max_scaled_p1 = 0,
+    milk_early_max_scaled_p2 = 0,
+    milk_early_max_scaled_p3 = 0,
+    milk_early_max_scaled_p4 = 0,
+    n_ai = 0,
+    mast_cat2 = factor(ifelse(parKat == 1, "primi_healthy", "multi_healthy"))
+  )
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+prd <- marginaleffects::predictions(model = repro_revel_mast4,
+                             newdata = parit_pred1,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
-  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
-  xlab("") + 
-  ylab("Probabilité de revêlage") +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("Parité") + 
+  ylab("Probabilté de revêlage") 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
 
