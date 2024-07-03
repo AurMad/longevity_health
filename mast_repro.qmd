@@ -373,6 +373,16 @@ lac <- lac |>
 
 ```
 
+### enregistrement 
+
+```{r}
+
+setwd("C:/Users/joestevesara/Documents/stage_these/longevity_health")
+
+write_csv2(lac, "generated_datasets/lac.csv")
+```
+
+
 ## Probabilité de mise à la reproduction selon le statut de l'animal
 
 ```{r formatage des categories de mammites pour les predictions}
