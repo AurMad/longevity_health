@@ -93,6 +93,14 @@ La première donnée nécessaire pour réaliser une régression de cox est une d
 str(lac)
 ```
 
+On va attribuer un identifiant unique à chaque lactation 
+
+```{r}
+lac <- lac |> 
+  mutate(lac_id = 1:nrow(lac))
+```
+
+
 On va considérer le temps de survie comme la capacité de réaliser une lactation entière. Donc c'est l'intervalle vêlage-vêlage.
 
 ```{r creation de la variable de temps}
@@ -110,16 +118,19 @@ lac <- lac |>
   )
 
 # Utiliser mutate avec case_when pour créer la variable time
-lac <- lac %>%
+lac <- lac |> 
   mutate(time = case_when(
-    !is.na(calv_date_nxt) & calv_date_nxt < out_date_last ~ as.numeric(diff),
-    is.na(calv_date_nxt) ~ as.numeric(diff2),
+    !is.na(calv_date_nxt) & calv_date_nxt < out_date_last | !is.na(calv_date_nxt) & is.na(out_date_last) ~ as.numeric(diff),
+    is.na(calv_date_nxt) & !is.na(out_date_last) ~ as.numeric(diff2),
+    is.na(calv_date_nxt) & is.na(out_date_last) ~ as.numeric(dim_last),
     TRUE ~ NA_real_  # Gérer d'autres cas si nécessaire
   ))
 
 lac <- lac |> 
   mutate(time = as.numeric(time))
 ```
+
+TRUE ~ NA_real_  # Gérer d'autres cas si nécessaire
 
 ## Création d'une variable d'évènement
 
@@ -311,6 +322,12 @@ g$plot <- g$plot + theme(
 print(g)
 ```
 
+```{r}
+lac <- lac |> 
+  mutate(parKat = as.factor(parKat)
+```
+
+
 ```{r modele simple}
 # Ajuster un modèle de Cox simple
 cox_model_simple <- coxme(Surv(time, death) ~ parKat + (1 | herd_id), data = lac)
@@ -319,38 +336,75 @@ cox_model_simple <- coxme(Surv(time, death) ~ parKat + (1 | herd_id), data = lac
 summary(cox_model_simple)
 ```
 
-On va essayer de compliquer un peu ce modèle en y ajoutant plus de variables explicatives. Certaines vaches ne donnent pas d'informations sur leur statut au tarissement mais ne sont pas des primipares, on va donc s'en séparer pour l'instant
+On va essayer de compliquer un peu ce modèle en y ajoutant plus de variables explicatives. 
 
 ```{r}
-cox_model_essai <- coxph(Surv(time, death) ~ parKat + mast_cat1, data = lac)
+cox_model_essai <- coxph(Surv(time, death) ~ parKat + mast_cat1, data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
 
 summary(cox_model_essai)
+
+start_values <- coef(cox_model_essai)
 ```
 
-```{r}
-# Ajuster un modèle simple d'abord
-model_simple <- coxme(Surv(time, death) ~ parKat + (1 | herd_id), data = lac)
-summary(model_simple)
-```
 
 ```{r}
 # Ajuster le modèle avec mast_cat1 uniquement
-model_mast_cat1 <- coxme(Surv(time, death) ~ mast_cat1 + (1 | herd_id), data = lac)
+model_mast_cat1 <- coxme(Surv(time, death) ~ mast_cat1 + (1 | herd_id), data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
 summary(model_mast_cat1)
 ```
 
-```{r}
-# Convertir herd_id en facteur
-lac$herd_id <- as.factor(lac$herd_id)
 
-model_step1 <- coxme(Surv(time, death) ~ parKat + mast_cat1 + (1 | herd_id), data = lac)
-summary(model_step1)
+```{r}
+# Vérifiez les données pour les valeurs manquantes
+sum(is.na(lac$time))
+sum(is.na(lac$death))
+sum(is.na(lac$parKat))
+sum(is.na(lac$mast_cat1))
+sum(is.na(lac$herd_id))
 ```
 
-```{r modele plus complique}
-init_vals <- coef(cox_model_essai)
+```{r}
+sum(is.infinite(lac$time))
+sum(is.infinite(lac$death))
+sum(is.infinite(lac$parKat))
+sum(is.infinite(lac$mast_cat1))
+sum(is.infinite(lac$herd_id))
+```
+```{r}
+lac <- lac |> 
+  mutate(death = as.factor(death))
+```
 
-cox_model_death <- coxme(Surv(time, death) ~ parKat + mast_cat1 +(1 | herd_id), data = lac , init =init_vals)
-# Vérifier les résultats du modèle
-summary(cox_model_death)
+
+```{r}
+# Assurez-vous que les variables sont correctement formatées
+lac <- lac %>%
+  mutate(time = as.numeric(time),
+         death = as.numeric(death),
+         mast_cat1 = as.factor(mast_cat1),
+         herd_id = as.factor(herd_id),
+         parKat = as.factor(parKat))
+
+# Ajuster le modèle de Cox sans effets aléatoires
+fit1 <- coxph(Surv(time, death) ~ parKat + mast_cat1, data = lac,
+              subset = (n_ctrl_early > 0 & dp_mis == 0))
+
+# Ajuster le modèle de Cox mixte avec des effets aléatoires pour herd_id
+fit2 <- coxme(Surv(time, death) ~ parKat + mast_cat1 + (1 | herd_id), data = lac,
+              subset = (n_ctrl_early > 0 & dp_mis == 0))
+
+# Comparer les deux modèles
+anova(fit1, fit2)
+```
+
+```{r}
+
+```
+
+
+```{r modele plus complique}
+
+
+cox_model_full <- coxme(Surv(time, death) ~ parKat + mast_cat1 + (1 | herd_id), data = lac, subset = (n_ctrl_early > 0 & dp_mis == 0), init = start_values)
+summary(cox_model_full)
 ```

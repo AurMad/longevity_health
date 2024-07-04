@@ -1,0 +1,147 @@
+---
+title: "mast_milk"
+format: html
+author: "Joanna"
+editor: visual
+---
+
+
+```{r setup}
+#| message: false
+library(tidyverse)
+library(lme4)
+library(marginaleffects)
+library(readxl)
+library(ggplot2)
+library(corrplot)
+library(questionr)
+library(car)
+library(ggeffects)
+library(GGally)
+library(effects)
+library(ggpubr)
+```
+
+```{r seuil utilisés}
+## nombre de jours en dessous duquel on considère qu'on est en début de lactation
+## en moyenne avant première IA
+early_dim_cutoff <- 90
+## SCC cut-off
+## seuil de cellules au-delà duquel on considère
+## qu'il y a mammite clinique
+scc_high_cutoff <- 200
+```
+
+# Matériel 
+
+## Préparation des données
+
+Chargement des données de contrôle laitier fournies par IDELE
+
+```{r chargement rec}
+#| message: false
+rec <- read_csv2("generated_datasets/idele_rec_final.csv") |> 
+  mutate(
+    herd_id = as.character(herd_id),
+    ctrl_date = as.Date(ctrl_date),
+    anim_id = as.character(anim_id),
+    parity = as.integer(parity),
+    fat = as.integer(fat),
+    prot = as.integer(prot),
+    scc = as.integer(scc),
+    out_cause = as.character(out_cause),
+    calv_date = as.Date(calv_date),
+    dim = as.integer(dim)
+  ) |> 
+  filter(!is.na(milk) & !is.na(scc))
+```
+
+## Sélection d'un échantillon
+
+Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les données du contrôle laitier arfin de simplifier la construction des modèles 
+
+Génération d'une liste d'élevages uniques.
+
+```{r}
+herd_list <- unique(rec$herd_id)
+```
+
+On sélectionne un échantillon de 10 élevages au hasard.
+
+```{r Selection echantillon de 10 elevages}
+set.seed(42) #On garde la même graine si on veut conserver le même échantillon
+herd_random_sample <- sample(herd_list, 10, replace = FALSE)
+rec <- rec |> 
+  filter(herd_id %in% herd_random_sample)
+```
+
+## Chargement du tableau de lactation 
+
+```{r}
+
+setwd("C:/Users/joestevesara/Documents/stage_these/longevity_health")
+
+# Charger le fichier CSV
+lac <- read_csv2("generated_datasets/lac.csv")
+```
+## Modélisation des courbes de lactation
+
+```{r}
+rec_wilmink <- rec |> 
+  select(herd_id, anim_id, parity, ctrl_date, milk, dim)
+```
+
+```{r}
+rec_wilmink <- rec_wilmink |> 
+  mutate(exp_dim = exp(-0.05*dim))
+```
+
+```{r}
+ggplot(rec, aes(x = dim, y = milk)) +
+  geom_point()
+```
+
+```{r}
+rec |> 
+  group_by(dim) |> 
+  summarise(milk_mean = mean(milk)) |> 
+  ungroup() |> 
+  ggplot(aes(x = dim, y = milk_mean)) +
+  geom_point()
+```
+
+```{r régression lineaire}
+PL <- lm(milk ~ exp_dim + dim, 
+         data = rec_wilmink)
+
+# PL <- lm(milk ~ exp_dim + dim, 
+#          data = rec_wilmink,
+#          subset = anim_id == "FR0700520036")
+
+
+summary(PL)
+```
+
+```{r}
+plot(PL)
+```
+
+```{r chargement-lme4}
+# ne charger qu'une seule fois
+library(lme4)
+```
+
+```{r régression lineaire mixte}
+k <- -0.065
+
+PL1 <- lmer(milk ~ dim + exp(k * dim) + (1 | herd_id) + (1 | anim_id), 
+         data = rec_final,
+         subset = dim < 350)
+summary(PL1)
+```
+
+```{r}
+curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
+      from = 0, to = 305)
+
+```
