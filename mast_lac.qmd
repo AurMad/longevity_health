@@ -1,0 +1,152 @@
+---
+title: "impact des mammites sur le niveau de production laitière"
+author: "Joanna"
+format: pdf
+editor: visual
+---
+
+
+```{r setup}
+library(tidyverse)
+library(lme4)
+library(marginaleffects)
+library(readxl)
+library(ggplot2)
+library(corrplot)
+```
+
+# Matériel
+
+## Données
+
+Chargement des données de contrôle laitier fournies par IDELE
+
+```{r chargement donnees}
+#| message: false
+rec <- read_csv2("generated_datasets/idele_rec_final.csv") |> 
+  mutate(
+    herd_id = as.character(herd_id),
+    ctrl_date = as.Date(ctrl_date),
+    anim_id = as.character(anim_id),
+    parity = as.integer(parity),
+    fat = as.integer(fat),
+    prot = as.integer(prot),
+    scc = as.integer(scc),
+    out_cause = as.character(out_cause),
+    calv_date = as.Date(calv_date),
+    dim = as.integer(dim)
+  ) |> 
+  filter(!is.na(milk) & !is.na(scc))
+```
+
+
+```{r}
+setwd("C:/Users/joestevesara/Documents/stage_these/longevity_health")
+
+lac <- read.csv2("generated_datasets/lac.csv")
+```
+
+
+## Sélection d'un échantillon
+
+Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les données du contrôle laitier arfin de simplifier la construction des modèles
+
+Génération d'une liste d'élevages uniques.
+
+```{r}
+herd_list <- unique(rec$herd_id)
+```
+
+On sélectionne un échantillon de 10 élevages au hasard.
+
+```{r Selection echantillon de 10 elevages}
+set.seed(42) #On garde la même graine si on veut conserver le même échantillon
+herd_random_sample <- sample(herd_list, 10, replace = FALSE)
+rec <- rec |> 
+  filter(herd_id %in% herd_random_sample)
+```
+
+
+## Création des courbes de lactation
+
+```{r}
+rec_wilmink <- rec|> 
+  select(herd_id, anim_id, parity, ctrl_date, milk, dim)
+```
+
+```{r}
+rec_wilmink <- rec_wilmink |> 
+  mutate(exp_dim = exp(-0.05*dim))
+```
+
+```{r}
+ggplot(rec, aes(x = dim, y = milk)) +
+  geom_point()
+```
+
+```{r}
+rec |> 
+  group_by(dim) |> 
+  summarise(milk_mean = mean(milk)) |> 
+  ungroup() |> 
+  ggplot(aes(x = dim, y = milk_mean)) +
+  geom_point()
+```
+
+```{r régression lineaire}
+PL <- lm(milk ~ exp_dim + dim, 
+         data = rec_wilmink)
+
+# PL <- lm(milk ~ exp_dim + dim, 
+#          data = rec_wilmink,
+#          subset = anim_id == "FR0700520036")
+
+
+summary(PL)
+```
+
+
+
+```{r}
+plot(PL)
+```
+
+
+```{r régression lineaire mixte}
+k <- -0.065
+
+PL1 <- lmer(milk ~ dim + exp(k * dim) + (1 | herd_id) + (1 | anim_id), 
+         data = rec,
+         subset = dim < 350)
+summary(PL1)
+```
+
+```{r}
+curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
+      from = 0, to = 305)
+
+```
+Nous allons nous concentrer sur le début de la courbe, c'est-à-dire les 90 premiers jours. 
+
+```{r}
+curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
+      from = 0, to = 91)
+```
+Le pic de lactation semble se produire entre 20 et 40 jours. Ce qui correspond a ce qu'on peut trouver dans la littérature. 
+On va essayer mainteant de décrire la tendace par parité. 
+
+```{r}
+rec |> 
+  group_by(anim_id, parity) |> 
+  summarise(milk_mean = mean(milk)) |> 
+  ggplot(aes(x = as.factor(parity), y = milk_mean)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE, color = "blue")
+```
+Le maximum de production semble se trouver pour les rangs 3 et 4. 
+
+
+
+
+
+

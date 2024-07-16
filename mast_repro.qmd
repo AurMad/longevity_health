@@ -1,7 +1,7 @@
 ---
-title: "Impact des mammites sur la décision de mise à la reproduction"
+title: "Impact des mammites sur la reproduction"
 author: "Joanna"
-format: html
+format: pdf
 editor: visual
 ---
 
@@ -19,6 +19,7 @@ library(ggeffects)
 library(GGally)
 library(effects)
 library(ggpubr)
+library(RColorBrewer)
 ```
 
 ```{r seuil utilisés}
@@ -128,7 +129,32 @@ lac <- rec |>
     ) |> 
   ungroup()
 ```
+## Ajout des codes de races 
 
+```{r}
+path_to_file <- "data/genea.txt"
+genea <- read_csv2(path_to_file) |>
+rename(anim_id = ANIM,
+code_race = CORABO) |>
+select(anim_id, code_race)
+```
+```{r}
+lac_race <- left_join(
+  lac |>
+    select(anim_id, parity),
+  genea) |>
+  group_by(anim_id)|> 
+  ungroup()
+```
+```{r regroupement des races}
+lac_race <- lac_race |> 
+  mutate(race = case_when(code_race == "66" | code_race == "60" ~ "PH"))
+```
+
+
+```{r}
+lac <- left_join(lac, lac_race) 
+```
 ## Données mammites cliniques
 
 On va extraire les dates de mammites cliniques afin de les ajouter aux lactations correspondantes sur le tableau de données "lac"
@@ -373,7 +399,8 @@ lac <- lac |>
 
 ```
 
-### enregistrement 
+
+### enregistrement
 
 ```{r}
 
@@ -381,7 +408,6 @@ setwd("C:/Users/joestevesara/Documents/stage_these/longevity_health")
 
 write_csv2(lac, "generated_datasets/lac.csv")
 ```
-
 
 ## Probabilité de mise à la reproduction selon le statut de l'animal
 
@@ -409,6 +435,17 @@ mast_pred <- tibble(
   milk_early_max_scaled_p3 = 0,
   milk_early_max_scaled_p4 = 0
 )
+
+
+mast_pred1 <- tibble(
+  parKat = factor(c(rep(1, length(mast_lev_p1)),
+                    rep(2, length(mast_lev_p2)))),
+  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0,
+  n_ai = 0)
 
 level_order <- c("primi_healthy", "primi_env", "primi_cont",
                  "dpLow_healthy", "dpLow_env", "dpLow_cont",
@@ -459,7 +496,7 @@ lac <- lac |>
 str(lac)
 ```
 
-```{r saving lac data}
+```{r saving lac data, eval = FALSE}
 save(lac, file = "~/stage_these/longevity_health/generated_datasets/lac.RData")
 ```
 
@@ -474,13 +511,15 @@ Tab
 ```
 
 ```{r}
+
 p<-ggplot(lac |> 
             filter(n_ctrl_early > 0 & dp_mis == 0)) +
 aes(x = repro, fill = mast_cat1) +
 geom_bar(position="fill") +
 xlab("mise à la reproduction") +
 ylab("Effectifs") +
-labs(fill = "catégories")
+labs(fill = "catégories") +
+scale_fill_brewer(palette = "PRGn") 
 p+theme_bw()
 ## x = Nbre de groupe sur l'axe x
 ## fill = Nbre de barres par groupe
@@ -495,7 +534,7 @@ lac$mast_cat1 <- as.numeric(as.factor(lac$mast_cat1))
 
 
 # Sélectionner les colonnes d'intérêt
-variables_of_interest <- lac[, c("parKat", "milk_early_max_scaled_p1", "milk_early_max_scaled_p2", "milk_early_max_scaled_p3", "milk_early_max_scaled_p4", "mast_cat1")]
+variables_of_interest <- lac[, c("parKat", "milk_early_max_scaled_p1", "milk_early_max_scaled_p2", "milk_early_max_scaled_p3", "milk_early_max_scaled_p4", "mast_cat1", "code_race")]
 
 # Calculer la matrice de corrélation
 cor_matrix <- cor(variables_of_interest, use = "complete.obs")
@@ -507,6 +546,14 @@ corrplot(cor_matrix, method = "circle")
 ```
 
 ## Modélisation de l'impact des mammites sur la probabilité de mise à la reproduction
+
+```{r}
+lac <- lac |> 
+  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"),
+         mast_cat1 = relevel(factor(paste(dp_status, mast_cat, sep = "_")), ref = "primi_healthy"),
+         code_race = relevel(as.factor(code_race), ref = "66"))
+```
+
 
 ### Modèle de référence
 
@@ -571,6 +618,22 @@ summary(repro_parity_milk)
 
 Ce modèle semble correct, les résidus varient de -19.7623 à 2.4783, avec une médiane de 0.3450, ce qui suggère quelques observations extrêmes (potentiellement influentes).
 
+```{r}
+repro_parity_milk_race <- glmer(repro ~ parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              code_race + 
+                      (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(repro_parity_milk_race)
+```
+
+
 On va maintenant ajouter la variable d'intêret qui est la présence ou non de mammite
 
 ### Modèle complet
@@ -605,63 +668,6 @@ repro_full1 <- glmer(repro ~ parKat +
 summary(repro_full1)
 ```
 
-```{r}
-class(repro_full1)
-```
-
-POur améliorer ce modèle nous allons essayer quelques modifications : La première va être de mettres certaines variables au carré.
-
-```{r ajout de terme quadratiques, eval = FALSE}
-lac <- lac |> 
-  mutate(milk_early_max_scaled_p1_sq = lac$milk_early_max_scaled_p1^2,
-         milk_early_max_scaled_p2_sq = lac$milk_early_max_scaled_p2^2,
-        milk_early_max_scaled_p3_sq = lac$milk_early_max_scaled_p3^2,
-        milk_early_max_scaled_p4_sq = lac$milk_early_max_scaled_p4^2)
-```
-
-On va refaire un modèle avec des termes quadratiles pour voir si cela améliore la qualité du modèle.
-
-```{r, eval = FALSE}
-repro_full2 <- glmer(repro ~ parKat + 
-                              milk_early_max_scaled_p1_sq + 
-                              milk_early_max_scaled_p1 +
-                              milk_early_max_scaled_p2_sq +
-                              milk_early_max_scaled_p2 +
-                              milk_early_max_scaled_p3_sq + 
-                              milk_early_max_scaled_p3 +
-                              milk_early_max_scaled_p4_sq +
-                              milk_early_max_scaled_p4 +
-                              mast_cat1 +
-                      (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0,
-                    family = binomial(link = "logit"))
-
-summary(repro_full2)
-```
-
-Il semblerait que repro_full1 convienne mieux que repro_full2 car son AIC est plus petit.
-
-Maintenant on ajoute quelques intéractions pour essayer d'améliorer le modèle.
-
-```{r, eval = FALSE}
-repro_full4 <- glmer(repro ~ parKat + 
-                              milk_early_max_scaled_p1 + 
-                              milk_early_max_scaled_p2 + 
-                              milk_early_max_scaled_p3 + 
-                              milk_early_max_scaled_p4 + 
-                              mast_cat1 +
-                              milk_early_max_scaled_p1*mast_cat1 +
-                              milk_early_max_scaled_p2*mast_cat1 +
-                              milk_early_max_scaled_p3*mast_cat1 +
-                              milk_early_max_scaled_p4*mast_cat1 +
-                              (1 | herd_id),
-                              data = lac,
-                              subset = n_ctrl_early > 0 & dp_mis == 0,
-                              family = binomial(link = "logit"))
-
-summary(repro_full4)
-```
 
 Pour l'instant c'est repro_full1 qui donne la meilleure approximation car il possède le plus petit AIC.
 
@@ -704,32 +710,6 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
 
 La figure ci-dessous représente les probabilités prédites qu'une vache soit mise à la reproduction en fonction de son statut vis-à-vis des mammites. Les multipares représentent la parité de référence qui est la parité 2.(J'aimerais le faire avec la parité 3 comme référence mais je ne sais pour quelle raison mon modèle ne converge plus...)
 
-Bien évidemment on peut montrer l'impact de la parité seule sur la probabilité de mise à la reproduction
-
-```{r}
-prd <- predictions(model = repro_parity,
-                   newdata = parit_pred, 
-                   re.form = NA, type = "response")
-
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
-  geom_point() +
-  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
-  xlab("") + 
-  ylab("Probabilité de mise à la reproduction") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-```
-
-Probabilité combinée pour la parité et la production laitière
-
-```{r}
-prd <- predictions(model = repro_full1,
-                   newdata = milk_pred, 
-                   re.form = NA, type = "response")
-
-ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
-  geom_line()
-```
-
 ## Probabilité de revêlage pour les vaches mises à la reproduction
 
 Une variable binaire prenant la valeur 1 si la vache revêle et 0 autrement est construite.
@@ -744,6 +724,22 @@ lac <- lac |>
     )
     )
 ```
+
+```{r}
+p<-ggplot(lac |> 
+            filter(n_ctrl_early > 0 & repro == 1 & dp_mis == 0)) +
+aes(x = repro_revel, fill = mast_cat1) +
+geom_bar(position="fill") +
+xlab("revêle") +
+ylab("Effectifs") +
+labs(fill = "catégories") +
+scale_fill_brewer(palette = "PRGn") 
+p+theme_bw()
+## x = Nbre de groupe sur l'axe x
+## fill = Nbre de barres par groupe
+## position="fill" = rend le graphique proportionnel et empile les barres
+```
+
 
 Le modèle suivant estime la probabilité qu'une vache mise à la reproduction revêle.
 
@@ -802,80 +798,29 @@ repro_revel_mast1 <- glmer(repro_revel ~  parKat +
 summary(repro_revel_mast1)
 ```
 
-Ce modèle semble meilleur cependant il est évident que plus le nombre d'inséminations artificielles augmentent plus la probabilité de revêler augmente.
 
-```{r}
-repro_revel_mast2 <- glmer(repro_revel ~  parKat + 
-                              milk_early_max_scaled_p1 + 
-                              milk_early_max_scaled_p2 + 
-                              milk_early_max_scaled_p3 + 
-                              milk_early_max_scaled_p4 + 
-                              mast_cat1 +
-                              n_ai +
-                              n_ai*mast_cat1 +
-                           (1 |herd_id),
-                          family = binomial(link = "logit"),
-                          data = lac,
-                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
-
-summary(repro_revel_mast2)
-```
-
-```{r}
-repro_revel_mast3 <- glmer(repro_revel ~  parKat + 
-                              milk_early_max_scaled_p1 + 
-                              milk_early_max_scaled_p2 + 
-                              milk_early_max_scaled_p3 + 
-                              milk_early_max_scaled_p4 + 
-                              mast_cat1 +
-                              n_ai +
-                              n_ai*parKat +
-                           (1 |herd_id),
-                          family = binomial(link = "logit"),
-                          data = lac,
-                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
-
-summary(repro_revel_mast3)
-```
-
-```{r}
-repro_revel_mast4 <- glmer(repro_revel ~  parKat + 
-                              milk_early_max_scaled_p1 + 
-                              milk_early_max_scaled_p2 + 
-                              milk_early_max_scaled_p3 + 
-                              milk_early_max_scaled_p4 + 
-                              mast_cat2 +
-                              n_ai +
-                           (1 |herd_id),
-                          family = binomial(link = "logit"),
-                          data = lac,
-                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
-
-summary(repro_revel_mast4)
-```
-
-Ce modèle semble un peu mieux, pour l'instant c'est celui qui nous convient le mieux.
+Le modèle que je retiens est "repro_revel_mast1", pour l'instant c'est celui qui nous convient le mieux.
 
 ### Vérification du modèle
 
 #### vérification de l'absence de multicolinéarité des variables explicatives
 
 ```{r}
-vif(repro_revel_mast4)
+vif(repro_revel_mast1)
 ```
 
 ## Probabilité de revêlage suite à la mise à la reproduction selon la parité
 
-```{r, eval = FALSE}
-prd <- marginaleffects::predictions(model = repro_revel_mast4,
-                             newdata = parit_pred,
+```{r}
+prd <- marginaleffects::predictions(model = repro_revel_mast1,
+                             newdata = mast_pred1,
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+ggplot(prd, aes(x = factor(mast_cat1), y = estimate)) +
   geom_point() +
-  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
-  xlab("Parité") + 
-  ylab("Probabilté de revêlage") 
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilté de revêlage") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
@@ -899,7 +844,8 @@ aes(x = success_ai1, fill = mast_cat1) +
 geom_bar(position="fill") +
 xlab("succès à la première IA") +
 ylab("Effectifs") +
-labs(fill = "catégories")
+labs(fill = "catégories")+
+scale_fill_brewer(palette = "PRGn") 
 p+theme_bw()
 ## x = Nbre de groupe sur l'axe x
 ## fill = Nbre de barres par groupe
@@ -940,7 +886,7 @@ success_ia_full <- glmer(success_ai1 ~ parKat +
                               milk_early_max_scaled_p2 + 
                               milk_early_max_scaled_p3 + 
                               milk_early_max_scaled_p4 + 
-                             dp_status + mast_cat1 +
+                             dp_status + mast_cat1 + #inutile car dp_status est compris dans mast_cat1
                       (1 | herd_id),
                     data = lac,
                     subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0,
@@ -979,26 +925,17 @@ success_ia_full2 <- glmer(success_ai1 ~ parKat +
 summary(success_ia_full2)
 ```
 
-```{r}
-success_ia_full3 <- glmer(success_ai1 ~ parKat + 
-                      (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0,
-                    family = binomial(link = "logit"))
-
-summary(success_ia_full3)
-```
 
 ### Prédictions de la réussite à la première insémination selon le type de mammite
 
 ```{r}
-prd <- marginaleffects::predictions(model = success_ia_full2, 
-                             newdata = parit_pred, 
+prd <- marginaleffects::predictions(model = success_ia_full1, 
+                             newdata = mast_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat2, level = level_order), y = estimate)) +
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
-  geom_segment(aes(x = mast_cat2, y = conf.low, xend = mast_cat2, yend = conf.high)) +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
   xlab("") + 
   ylab("Probabilité d'être pleine suite à la première insémination") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
@@ -1013,11 +950,12 @@ Ici on a une variable de comptage et non plus une variable binaire. La régressi
 ```{r}
 p<-ggplot(lac |> 
             filter(n_ctrl_early > 0 & repro == 1 & dp_mis == 0)) +
-aes(x = n_ai, fill = mast_cat2) +
+aes(x = n_ai, fill = mast_cat1) +
 geom_bar(position="fill") +
 xlab("nombre d'inséminations") +
 ylab("Effectifs") +
-labs(fill = "catégories")
+labs(fill = "catégories")+
+scale_fill_brewer(palette = "PRGn") 
 p+theme_bw()
 ## x = Nbre de groupe sur l'axe x
 ## fill = Nbre de barres par groupe
@@ -1045,7 +983,7 @@ summary(ai_number_null)
 ### Modèle complet
 
 ```{r}
-ai_number_full <- glmer(success_ai1 ~ parKat + 
+ai_number_full <- glmer(n_ai ~ parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
                               milk_early_max_scaled_p3 + 
@@ -1060,7 +998,7 @@ summary(ai_number_full)
 ```
 
 ```{r}
-ai_number_full1 <- glmer(success_ai1 ~ parKat + 
+ai_number_full1 <- glmer(n_ai ~ parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
                               milk_early_max_scaled_p3 + 
@@ -1078,185 +1016,21 @@ summary(ai_number_full1)
 vif(ai_number_full)
 ```
 
-```{r}
-ai_number_full2 <- glmer(success_ai1 ~ parKat + 
-                      (1 | herd_id),
-                    data = lac,
-                    subset = !is.na(n_ai) & n_ai > 0 & dp_mis == 0,
-                    family = poisson)
-
-summary(ai_number_full2)
-```
-
 Le nombre d'ia ne semble pas pouvoir être expliqué par la présence ou non de mammite. Il semblerait que la seule variable explicative intéressante pour le modèle soit la parité.
 
-## Modèle sur l'impact de la reproduction sur la probabilité de réforme.
 
-### Définition des variables
-
-On va tout d'abord créer une variable qui code pour la réforme.
-
-```{r creation cull}
-lac  <- lac |> 
-  mutate(cull = ifelse(out_cause_last == "B" & !is.na(out_date_last) & is.na(calv_date_nxt), 1, 0))
-```
-
-### Description des tendances
+### Prédictions de la réussite à la première insémination selon le type de mammite
 
 ```{r}
-lac <- lac |> 
-  mutate(repro = as.factor(repro))
+prd <- marginaleffects::predictions(model = ai_number_full1, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité d'être réinséminée") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-```{r mise à la repro - reforme}
-p<-ggplot(lac |> 
-            filter(n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M")) +
-aes(x = cull, fill = repro) +
-geom_bar(position="fill") +
-xlab("réforme") +
-ylab("Effectifs") +
-labs(fill = "décision de mise à la repro")
-p+theme_bw()
-## x = Nbre de groupe sur l'axe x
-## fill = Nbre de barres par groupe
-## position="fill" = rend le graphique proportionnel et empile les barres
-```
-
-```{r réussite à la première ia}
-lac <- lac |> 
-  mutate(success_ai1 = as.character(success_ai1))
-
-p<-ggplot(lac |> 
-            filter(n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M" & !is.na(n_ai))) +
-aes(x = cull, fill = success_ai1) +
-geom_bar(position="fill") +
-xlab("réforme") +
-ylab("Effectifs") +
-labs(fill = "succès à la première insémination")
-p+theme_bw()
-## x = Nbre de groupe sur l'axe x
-## fill = Nbre de barres par groupe
-## position="fill" = rend le graphique proportionnel et empile les barres
-```
-
-```{r}
-lac <- lac |> 
-  mutate(cull = as.factor(cull))
-
-
-ggsummarystats(
-lac |> 
-  filter(n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M" & !is.na(n_ai)),
-  x = "cull", y = "n_ai",
-ggfunc = ggboxplot, add = "jitter", color = "cull", palette = "npg", xlab="réforme",
-ylab="nombre d'ia")
-
-p<-ggplot(lac |> 
-  filter(n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M" & !is.na(n_ai)))+aes(x= cull, y= n_ai) +
-geom_boxplot(outlier.colour="black", outlier.shape=20,outlier.size=4,
-fill='#99CCFF', color="black")+
-stat_summary(fun.y=mean, geom="point", shape=16, size=4, col="red")+
-xlab("réforme")+
-ylab("nombre d'inséminations")
-p+theme_bw()
-```
-
-### Modèle de référence
-
-```{r}
-repro_cull_null <- glmer(cull ~ 1 + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M",
-                    family = binomial(link = "logit"))
-
-summary(repro_cull_null)
-```
-
-on va obtenir ainsi la probabilité de réforme
-
-```{r}
-# Définir la fonction invlogit 
-invlogit <- function(x) {
-  exp(x) / (1 + exp(x))
-}
-
-# Extraire les coefficients fixes et calculer la probabilité
-prob_cull <- as.double(round(invlogit(fixef(repro_cull_null)), 3))
-
-# Afficher la probabilité
-prob_cull
-```
-
-### modèle avec mise à la repro
-
-```{r}
-repro_cull_repro <- glmer(cull ~ repro + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M",
-                    family = binomial(link = "logit"))
-
-summary(repro_cull_repro)
-```
-
-Ce modèle montre que la décision de mise à la repro diminue la probabilité de réforme ce qui est logique
-
-### Modèle de réussite à la première insémination
-
-```{r}
-lac <- lac |> 
-  mutate(success_ai1 = as.factor(success_ai1))
-```
-
-```{r}
-repro_cull_ai1 <- glmer(cull ~ success_ai1 + repro + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M",
-                    family = binomial(link = "logit"))
-
-summary(repro_cull_ai1)
-```
-
-```{r}
-lac <- lac |> 
-  mutate(n_ai = as.factor(n_ai))
-```
-
-```{r}
-repro_cull_full <- glmer(cull ~ parKat + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M",
-                    family = binomial(link = "logit"))
-
-summary(repro_cull_full)
-```
-
-```{r}
-repro_cull_full1 <- glmer(cull ~ parKat + repro + (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M",
-                    family = binomial(link = "logit"))
-
-summary(repro_cull_full1)
-```
-
-```{r}
-repro_cull_full2 <- glmer(cull ~ parKat + repro + milk_early_max_scaled_p1 + 
-                              milk_early_max_scaled_p2 + 
-                              milk_early_max_scaled_p3 + 
-                              milk_early_max_scaled_p4 +
-                              (1 | herd_id),
-                    data = lac,
-                    subset = n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M",
-                    family = binomial(link = "logit"))
-
-summary(repro_cull_full2)
-```
-
-```{r,  eval = FALSE}
-repro_cull_full4 <- glmer(cull ~ factor(parKat) + factor(repro) + factor(success_ai1) + factor(n_ai)+ milk_early_max_scaled_p1 + milk_early_max_scaled_p2 + milk_early_max_scaled_p3 + milk_early_max_scaled_p4 +(1 | herd_id), data = lac,
-          subset = n_ctrl_early > 0 & dp_mis == 0 & out_cause_last != "M",
-          family = binomial(link = "logit"))
-
-                    
-summary(repro_cull_full4)
-```
