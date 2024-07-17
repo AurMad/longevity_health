@@ -10,13 +10,14 @@ bibliography: references.bib
 library(tidyverse)
 library(dagitty)
 library(ggdag)
+library(RefManageR)
 ```
 
 # Introduction
 
 La longévité se définit couramment comme la durée de vie, d'un individu ou d'un groupe d'individus. Elle s'obtient en général, en prenant la durée entre la naissance d'un individu et sa mort [@dallago2021] .
 
-La longevité des vaches laitières a une importance à la fois économique, écologique et sociale. En effet, il a été montré que le fait de garder un animal dans le troupeau plus longtemps permet de réduire le nombre de génisses à élever pour le renouvellement et donc de réduire le nombre d'animaux improductifs à élever. Cela permet également de réduire l'émission de gaz à effet de serre de l'élevage en ayant moins d'animaux sur l'exploitation [@grandl2019]. Cela a également une composante sociale et de bien-être animal car la capacité à garder un animal plus longtemps et donc à avoir un taux de renouvellement plus faible, peut être indirectement mis en lien avec de meilleures conditions d'élevage @ [@Compton2017]. Le consommateur peut voir cela comme un indicateur positif de bien-être.
+La longevité des vaches laitières a une importance à la fois économique, écologique et sociale. En effet, il a été montré que le fait de garder un animal dans le troupeau plus longtemps permet de réduire le nombre de génisses à élever pour le renouvellement et donc de réduire le nombre d'animaux improductifs à élever. Cela permet également de réduire l'émission de gaz à effet de serre de l'élevage en ayant moins d'animaux sur l'exploitation [@grandl2019]. Cela a également une composante sociale et de bien-être animal car la capacité à garder un animal plus longtemps et donc à avoir un taux de renouvellement plus faible, peut être indirectement mis en lien avec de meilleures conditions d'élevage \@ [@Compton2017]. Le consommateur peut voir cela comme un indicateur positif de bien-être.
 
 La réforme en élevage laitier se définit comme la sortie de l'animal du troupeau pour être envoyé à l'abattoir dans le but de produire de la viande. On distingue classiquement deux types de réformes : la réforme volontaire qui intervient généralement suite à la décision de l'éleveur de réformer pour production laitière insuffisante. Et la réforme involontaire, liée à un problème de santé ou de reproduction, qui sans cela n'aurait pas entraîné la réforme de l'animal. Les principales causes de réforme en élevage laitier sont les les troubles de reproduction, les problèmes locomoteurs ainsi que les infections intramammaires [@Ducrocq1994].
 
@@ -30,6 +31,8 @@ Cette étude s'intéresse particulièrement à ces infections intramammaires, et
 
 ### 2 Longevité
 
+Dans la littérature on peut trouver différentes définitions de la longévité en élevage laitier. On distingue habituellement la longévité fonctionnelle ou functional longevity (FL) de la longévité vraie ou True longevity (TF) [@Rostellato2021]. La première se donne en rang. Elle se définit classiquement comme l’aptitude d’un individu à repousser le moment de la réforme involontaire. Elle débute au moment du premier vêlage et se termine au moment de la réforme ou de la mort de l’animal. La longévité vraie, elle, se définit comme l’aptitude d’un individu à repousser la réforme, involontaire comme volontaire. Certaines publications utilisent la durée de vie productive ou Lenght of productive life (LPL), elle se donne en jours, et débute au moment du premier vêlage jusqu’à la mort ou la réforme \[Grandl2019\]. La période dites “improductive” de l’animal, donc de sa naissance jusqu’à son premier vêlage est peu utilisé dans les études de survie car le réel évènement d'intérêt qui est l’âge au premier vêlage est directement déductible des différentes définitions de la longévité données plus haut. Toutes ces définitions fournies plus haut sont données à l’échelle de l’individu, mais il est également possible de raisonner à l’échelle du troupeau. Certaines publications donnent une définition de longévité moyenne [@DeVries2017] qui se calcule de la façon suivante : $(Âge au premier vêlage moyen + 1)/(Taux de réforme annuel )$. On peut également donner le nombre de jours de lactation cumulés du troupeau moyenné, en prenant l’ensemble des lactations terminées dans l’année. On n’inclut pas les lactations en cours, donc cette définition n’intègre pas les primipares qui n’ont pas encore terminé leur première lactation. Cela donne un effectif d’animaux légèrement inférieur à l’effectif réel.
+
 #### 2.1 Définition de longévité dans la bibliographie
 
 #### 2.2 Evolution de la longevité des vaches laitière au cours des années
@@ -38,11 +41,17 @@ Cette étude s'intéresse particulièrement à ces infections intramammaires, et
 
 #### 3.4 Longevité et impact environnemental
 
+La production laitière, et plus généralement la production animale, est très souvent critiquée d’être une source majeure d’émission de gaz à effet de serre. L’émission de ces gaz passe essentiellement par la production en méthane par la fermentation gastrique des animaux eux-même, mais également par toutes les machines utilisées pour produire leur alimentation (tracteurs, intrants, conditionnement…) ainsi que toutes les méthodes de transport qui s’intègrent à la filière (transport des animaux, des intrants, de l’alimentation….) et les autres activités nécessaires au maintien d’une exploitation (Flysjö et al., 2011). Calculer l’empreinte carbone de l’élevage laitier est un processus complexe et souvent les études qui ont cherché à l’estimer ont utilisé des modèles simplifiés. Le résultat obtenu le plus souvent n’est donc pas tout à fait la réalité. Cependant il permet tout de même de comparer différents systèmes de production : par exemple, pour les pays dont le mode d’élevage majoritaire est celui qui maximise le temps de pâturage, l’émission de gaz à effet de serre est principalement liée à la fermentation des animaux (\>50%). Alors que pour les pays qui ont une majorité d’élevages hors-sol, l’émission de gaz à effet de serre provient principalement de la gestion du lisier, de l’alimentation et de l’utilisation d’intrants pour fertiliser les sols (Mazzetto et al., 2022).
+
+Le nombre d’études s'intéressant à l’impact environnemental de la longévité des vaches laitières est réduit. Cependant leurs résultats semblent plutôt se mettre d’accord sur l’impact favorable de l’augmentation de la vie productive des vaches laitières sur l’environnement. Par exemple, l’étude de Grandl et al., 2018, conduite sur trente vaches brunes des alpes, a montré que le fait d’augmenter la vie productive des animaux et réduire le nombre de génisses en phase d’élevage (qui contribuent pour une part non négligeable de l’émission de méthane), pourrait être une solution viable pour réduire l’empreinte carbone des élevages laitiers, particulièrement en évitant de réformer des animaux qui n’ont pas pu effectuer plus d’une lactation.
+
 #### 3.5 Longevité et impact sociétal
 
 ## II - Mammites
 
 ### 1 Définition dans la bibliographie
+
+Une étape importante de cette étude est de donner une définition claire de la mammite et comment nous pouvons l’intégrer dans l’étude. Une mammite, si on prend la définition littérale, c’est une inflammation de la mamelle. Cette définition, bien que claire, est insuffisante si on souhaite étudier son impact sur la longévité des vaches laitières, car elle donne trop peu d’informations susceptibles de nous indiquer par quels mécanismes une mammite pourrait avoir une influence sur la fin de vie d’un animal. Si on regarde les définitions de mammites utilisées dans la littérature, on remarque qu’il n’y pas de réelle homogénéité dans la définition de mammite. Prenons par exemple la publication de Neerhof et al., (2000), les auteurs ont choisi de définir la mammite comme un événement clinique ayant des conséquences visibles reportées par les vétérinaires lors de l’enregistrement des traitements effectués sur un animal (mammite au tarissement, mammite suite à une lésion du traitement, mammite aiguë, etc…). Dans les publications de Archer et al., (2013) et de Sewalem et al., (2006), la mammite a été définie comme une augmentation du comptage de cellules somatiques (SCC) au-dessus d’un certain seuil établi, sans faire de distinction entre mammite clinique et subclinique. Il est clair qu’il devient difficile de comparer les études entre elles sachant que les définitions sont différentes et donc se basent sur des données très différentes. Ici, c’est bien toute la difficulté, comment donner une définition de mammite assez pertinente pour répondre pleinement ou au moins en grande partie à notre problématique ? La première chose qui a été faite c’est de prendre le terme “mammite” et de le décomposer au maximum afin d’obtenir une définition la plus juste possible.
 
 ### 2 Epidémiologie
 
@@ -51,6 +60,12 @@ Cette étude s'intéresse particulièrement à ces infections intramammaires, et
 ### 4 Impact économique et sanitaire
 
 ## III Lien entre mammite et longevité
+
+```         
+Comme il est dit dans l’introduction, la décision par l’éleveur de réformer une vache peut être soit volontaire, car il considère que la vache ne produit plus suffisamment de lait et qu’il est temps de la remplacer par une génisse. Soit involontaire, le plus souvent lié à un problème de santé ou de reproduction forçant l’éleveur à se séparer de son animal de manière précoce par rapport à ses attentes pour chaque animal. 
+```
+
+Un certain nombre d’études se sont intéressées à l’implication des mammites dans la réduction de la longévité des vaches laitières, la mammite étant la maladie la plus représentée en élevage laitier. Neerhof et al., 2000, ont utilisé une étude de survie sur les élevages danois, afin de démontrer qu’une vache traitée pour mammite au cours de sa lactation avait une probabilité plus élevée d’être réformée au cours de cette même lactation. Dans son étude il montre également qu’être traité pour une mammite au cours d’une lactation n'a pas d’impact sur la probabilité d’être réformé à la lactation suivante. Aux États-Unis, sur des élevages de Holstein et de Jersiaises, Caraviello et al., 2005, ont démontré que les vaches avec un SCC moyen par lactation très élevée (SCC \> 700 000 cell/mL) avaient 2 à 4 fois plus de chances d’être réformées de manière générale et 10 à 25 fois plus de chances d’être réformées pour cause de mammites. Cette observation est d’autant plus vraie pour les élevages qui maintenant un SCC de troupeau faible, ce qui serait donc le reflet d’une politique de réforme plus sévère dans ces élevages. Ils ont également observé que les vaches avec un SCC très faible étaient également plus à risque d’être réformées, particulièrement dans les élevages avec une forte prévalence de germes responsables de mammites, mais aucune conclusion ne peut encore être émise sur la possible existence d’une résistance immunitaire persistante induite par une première inflammation de la mamelle. Au Canada, Sewalem et al., 2006, ont démontré qu'au-delà d’un certain seuil, le SCC augmente considérablement le risque de réforme, peu importe la race (ici ils ont pris Holstein, Jersiaise, Ayrshire). Selon eux, la recherche d’une amélioration de la santé mammaire des troupeaux serait positivement corrélée à l’amélioration de la longévité des animaux dans ces troupeaux. Sur des élevages biologiques aux Etats-Unis, Fernandes et al., 2020,ont démontré que les vaches qui présentaient un SCC élevés les trois derniers mois de la précédente lactation, avaient plus de chance de présenter un SCC élevé durant le premier mois de la lactation en cours(ainsi qu’un SCC linear score plus élevé tout au cours de la lactation) . Ces même vaches présentaient également une probabilité plus élevée d’être réformées. Il est tout de même important de rappeler qu’aux Etats-Unis, l’utilisation d’antibiotiques en élevage biologique est totalement interdite, les vaches nécessitant des traitements antimicrobiens doivent être retirées du troupeau, et leur produits devront passer en conventionnel.
 
 ### 1 Niveau de production laitière
 
@@ -66,7 +81,14 @@ L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L
 
 ### 1 Définition des mammites avec nos données
 
+Les données fournies pour cette étude sont éssentiellement des données de contrôle laitier. Les données de mammites enregristrées par les éleveurs étant considérées seules comme peu exhaustives. Il a été décidé de décomposer les mammites par modèle épidémiologique Selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules suppérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*.
+On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*.
+Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaisait pas le statut avant tarissement, ont été retirés de l'étude.
+
 ### 2 Processus de décision de mise à la réforme
+
+Pour ce que est de la décision de mise à la réforme, pour chaque animal sorti, une date de sortie et une cause de sortie a été fournie. Si ce n'est pas le cas alors l'animal n'a pas été pris en compte dans l'étude par manque d'information.
+Une vache était considérée comme réformée lorsque la cause de sortie indiquée pour elle est *"B"* pour *"boucherie"* (voir les causes de sorties fournies en annexe).
 
 ### 3 Notions statistiques utilisées dans l'étude
 
