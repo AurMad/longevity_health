@@ -1,7 +1,9 @@
 ---
 title: "Impact des mammites sur la longévité des vaches laitières"
 author: "Joanna"
-format: docx
+format: 
+  docx:
+    toc: true
 editor: visual
 bibliography: references.bib
 ---
@@ -14,31 +16,31 @@ library(ggdag)
 
 # Introduction
 
-La longévité se définit couramment comme la durée de vie, d'un individu ou d'un groupe d'individus. Elle s'obtient en général, en prenant la durée entre la naissance d'un individu et sa mort [@dallago2021] .
+La longévité se définit couramment comme la durée de vie, d'un individu ou d'un groupe d'individus. Elle s'obtient en général, en prenant la durée entre la naissance d'un individu et sa mort [@dallago2021].
 
-La longevité des vaches laitières a une importance à la fois économique, écologique et sociale. En effet, il a été montré que le fait de garder un animal dans le troupeau plus longtemps permet de réduire le nombre de génisses à élever pour le renouvellement et donc de réduire le nombre d'animaux improductifs à élever. Cela permet également de réduire l'émission de gaz à effet de serre de l'élevage en ayant moins d'animaux sur l'exploitation [@grandl2019]. Cela a également une composante sociale et de bien-être animal car la capacité à garder un animal plus longtemps et donc à avoir un taux de renouvellement plus faible, peut être indirectement mis en lien avec de meilleures conditions d'élevage @ [@Compton2017]. Le consommateur peut voir cela comme un indicateur positif de bien-être.
+La longevité des vaches laitières a une importance à la fois économique, écologique et sociale. En effet, il a été montré que le fait de garder un animal dans le troupeau plus longtemps permet de réduire le nombre de génisses à élever pour le renouvellement et donc de réduire le nombre d'animaux improductifs à élever. Cela permet également de réduire l'émission de gaz à effet de serre de l'élevage en ayant moins d'animaux sur l'exploitation [@grandl2019]. Cela a également une composante sociale et de bien-être animal car la capacité à garder un animal plus longtemps et donc à avoir un taux de renouvellement plus faible, peut être indirectement mise en lien avec de meilleures conditions d'élevage [@Compton2017]. Le consommateur peut voir cela comme un indicateur positif de bien-être.
 
-La réforme en élevage laitier se définit comme la sortie de l'animal du troupeau pour être envoyé à l'abattoir dans le but de produire de la viande. On distingue classiquement deux types de réformes : la réforme volontaire qui intervient généralement suite à la décision de l'éleveur de réformer pour production laitière insuffisante. Et la réforme involontaire, liée à un problème de santé ou de reproduction, qui sans cela n'aurait pas entraîné la réforme de l'animal. Les principales causes de réforme en élevage laitier sont les les troubles de reproduction, les problèmes locomoteurs ainsi que les infections intramammaires [@Ducrocq1994].
+La réforme en élevage laitier se définit comme la sortie de l'animal du troupeau pour être envoyé à l'abattoir dans le but de produire de la viande. On distingue classiquement deux types de réformes : la réforme volontaire qui intervient généralement suite à la décision de l'éleveur de réformer pour production laitière insuffisante. Et la réforme involontaire, liée à un problème de santé ou de reproduction, qui sans cela n'aurait pas entraîné la réforme de l'animal. Les principales causes de réforme en élevage laitier sont les troubles de reproduction, les problèmes locomoteurs ainsi que les infections intramammaires [@Ducrocq1994].
 
-Cette étude s'intéresse particulièrement à ces infections intramammaires, et notamment celles qui ont une origine bactérienne que l'on nomme par convention "mammite". Elle a pour objectif d'étudier les liens de causalités entre la survenue d'une mammite et son modèle épidémiologique sur la décision de réforme d'un vache laitière.Elle a également pour objectif de démontrer les effets de la réforme sur la modification des dynamiques d'infection et de guérison au tarissement à l'echelle du troupeau.
+Cette étude s'intéresse particulièrement à ces infections intramammaires, et notamment celles qui ont une origine bactérienne que l'on nomme par convention "mammite". Elle a pour objectif d'étudier les liens de causalités entre la survenue d'une mammite et son modèle épidémiologique sur la décision de réforme d'un vache laitière.Elle a également pour objectif de démontrer les effets de la réforme sur la modification des dynamiques d'infection et de guérison au tarissement à l'échelle du troupeau.
 
 # Partie A : Etude bibliographique
 
-## I - Réforme et longevité
+## I - Réforme et longévité
 
 ### 1 Principales causes de réforme
 
-### 2 Longevité
+### 2 Longévité
 
 #### 2.1 Définition de longévité dans la bibliographie
 
-#### 2.2 Evolution de la longevité des vaches laitière au cours des années
+#### 2.2 Evolution de la longévité des vaches laitière au cours des années
 
-#### 3.3 LOngévité et impact économique
+#### 3.3 Longévité et impact économique
 
-#### 3.4 Longevité et impact environnemental
+#### 3.4 Longévité et impact environnemental
 
-#### 3.5 Longevité et impact sociétal
+#### 3.5 Longévité et impact sociétal
 
 ## II - Mammites
 
@@ -50,7 +52,7 @@ Cette étude s'intéresse particulièrement à ces infections intramammaires, et
 
 ### 4 Impact économique et sanitaire
 
-## III Lien entre mammite et longevité
+## III Lien entre mammite et longévité
 
 ### 1 Niveau de production laitière
 
@@ -58,9 +60,15 @@ Cette étude s'intéresse particulièrement à ces infections intramammaires, et
 
 # Partie B : Etude personnelle
 
-Cette étude s'intègre au sein du projet *Alonge*, menée par l'**IDELE** et l'unité BIOEPAR de l'**INRAE** , elle a pour Objectif de décrire l'impact des mammites sur la longévité des vaches en élevage laitier. Notamment en décrivant et en modélisant les dynamiques de réforme et d'infections grâce à l'étude des données du contrôle laitier. L'enjeu est également d'essayer de prédire les dynamiques d'infection et de guérison des mammites par les modifications des politiques de réforme au sein du troupeau.
+Cette étude s'intègre dans le projet *Alonge*, piloté par l'**Idele**. Le travail s'est déroulé dans l'unité mixte de recherche BIOEPAR, sous les tutelles d'Oniris VetAgroBio Nantes et d'**INRAE**.
 
-## I - Matériel et méthode
+Les objectifs de l'étude sont :
+
+-   évaluer l'impact des mammites sur la longévité des vaches en élevage laitier, notamment en décrivant et en modélisant les dynamiques de réforme en fonction du statut vis-à-vis des mammites, - évaluer l'impact des réformes de vaches sur la dynamique des infections intramammaires autour du tarissement.
+
+Pour répondre ces questions, des données de contrôle laitier et de mammites cliniques collectées dans de troupeaux laitiers français entre 1989 et 2024 ont été utilisées. L'impact des mammites sur les réformes, puis sur les dynamiques d'infection
+
+## I - Matériels et méthodes
 
 L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L'étude prend en compte des données de contrôle laitier collectées entre janvier 1989 et mars 2024, pour un total de 3 818 887 enregistrements. Les différentes données fournies sont disponibles en annexe 1.
 
@@ -74,29 +82,39 @@ L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L
 
 Avant même de commencer toute modélisation ou d'essayer de répondre à un problème par l'analyse de données, il est important de comprendre correctement les relations de cause à effet. Pour cela il faut connaître les bases de l'inférence causale et nous en profiterons pour introduire la notion d'"estimand".
 
-L'inférence causale est le processus par lequel on établit une relation de causalité entre un élément et ses effets. Elle s'attaque à une question fondamentale : Comment déterminer si un événement est la cause d'un autre ? Nous observons quotidiennement qu'un évènement peut en causer un autre, par exemple on observe qu'un médicament soulage la douleur. Mais en réalité établir une relation de cause à effet est bien plus complexe qu'il n'y parait. En médecine, elle est essentielle pour identifier les traitements efficaces et comprendre les facteurs de risque des maladies. Elle s'appuie sur des méthodes statistiques et des outils rigoureux en tenant compte de divers facteurs tels que : - La causalité : une cause est un évènement qui entraîne le changement d'une variable, un effet. - Les variables : ce sont les éléments que l'on mesure ou que l'on observe et qui peuvent être modifiés par la causalité. En principe, la méthode la plus rigoureuse pour établir une relation de cause à effet repose sur l'expérience aléatoire. Le principe est de scinder un groupe d'individus ou de sujets d'étude de manière aléatoire entre deux groupes, le groupe des sujets « traités » et le groupe des sujets « non traités » [@Lundberg2021]. En comparant les résultats de ces deux groupes, il devient alors possible d'estimer l'effet causal d'un évènement.
+L'inférence causale est le processus par lequel on établit une relation de causalité entre un élément et ses effets. Elle s'attaque à une question fondamentale : Comment déterminer si un évènement est la cause d'un autre ? Nous observons quotidiennement qu'un évènement peut en causer un autre, par exemple on observe qu'un médicament soulage la douleur. Mais en réalité établir une relation de cause à effet est bien plus complexe qu'il n'y parait. En médecine, elle est essentielle pour identifier les traitements efficaces et comprendre les facteurs de risque des maladies. Elle s'appuie sur des méthodes statistiques et des outils rigoureux en tenant compte de divers facteurs tels que :
+
+-   La causalité : une cause est un évènement qui entraîne le changement d'une variable, un effet.
+-   Les variables : ce sont les éléments que l'on mesure ou que l'on observe et qui peuvent être modifiés par la causalité.
+
+En principe, la méthode la plus rigoureuse pour établir une relation de cause à effet repose sur l'expérience aléatoire. Le principe est de scinder un groupe d'individus ou de sujets d'étude de manière aléatoire entre deux groupes, le groupe des sujets « traités » et le groupe des sujets « non traités » [@lundberg2021]. En comparant les résultats de ces deux groupes, il devient alors possible d'estimer l'effet causal d'un évènement.
 
 #### 3.2 Estimands
 
-L"estimand", c'est le sujet de l'enquête, c'est la quantité que l'on cherche à évaluer qui représente l'effet causal que l'on souhaite mesurer. Il joue un rôle central car il permet de clarifier la question de recherche, choisir la méthodologie adéquate et donner une signification claire et rigoureuse aux résultats obtenus. Il existe plusieurs types d'estimand. Selon le papier de Lundberg et al, 2021, il en existe en réalité deux. Le premier est l'estimand théorique. C'est l'objectif que l'on cherche réellement à atteindre dans l'étude, en dehors du modèle statistique. Il comporte deux éléments : - La quantité spécifique à chaque unité (individu, groupe) qui peut être un résultat observé, un résultat potentiel, la différence entre deux résultats potentiels voire même la combinaison de plusieurs interventions. - La population cible sur qui on applique la quantité spécifique. L'estimand théorique représente donc ce que l'on voudrait vraiment savoir si on avait accès à toutes les données possibles, pour tous les individus et dans tous les scénarios envisageables. Le second est l'estimand empirique, qui se base uniquement sur des quantités observables dans les données.
+L"estimand", c'est le sujet de l'enquête, c'est la quantité que l'on cherche à évaluer qui représente l'effet causal que l'on souhaite mesurer. Il joue un rôle central car il permet de clarifier la question de recherche, choisir la méthodologie adéquate et donner une signification claire et rigoureuse aux résultats obtenus. Il existe plusieurs types d'estimand. Selon le papier de [@lundberg2021], il en existe en réalité deux. Le premier est l'estimand théorique. C'est l'objectif que l'on cherche réellement à atteindre dans l'étude, en dehors du modèle statistique. Il comporte deux éléments :
 
-La première étape est donc de chercher les "estimands" et de réussir à établir des relations de causalité ou d'association. Les Directed Acyclic Graphs (DAG) sont un bon moyen d'illustrer le lien entre l'estimand théorique et l'estimand empirique.
+-   La quantité spécifique à chaque unité (individu, groupe) qui peut être un résultat observé, un résultat potentiel, la différence entre deux résultats potentiels voire même la combinaison de plusieurs interventions.
+-   La population cible sur pour laquelle on veut estimer cette quantité spécifique. L'estimand théorique représente donc ce que l'on voudrait vraiment savoir si on avait accès à toutes les données possibles, pour tous les individus et dans tous les scénarios envisageables. Le second est l'estimand empirique, qui se base uniquement sur des quantités observables dans les données.
+
+La première étape est donc de chercher les "estimands" et de réussir à établir des relations de causalité ou d'association. Les graphes orientés acycliques (appelés, DAG pour Directed Acyclic Graphs) sont un bon moyen d'illustrer le lien entre l'estimand théorique et l'estimand empirique. La section suivante décrit ce que sont les DAG.
 
 Si l'on doit retranscrire cette notion dans le cadre de l'étude, l'estimand théorique serait « Effet de la survenue d'une mammite sur la probabilité de réforme chez les vaches laitières françaises ». Il est très compliqué avec nos données de quantifier formellement cet effet. On peut cependant le diviser en plusieurs petits effets empiriques qui sont plus accessibles avec nos données. Comme l'effet de la survenue d'une mammite sur la probabilité de mise à la reproduction, l'effet de la survenue d'une mammite sur la probabilité de mort ou encore l'effet de la survenue d'une mammite sur la production laitière.
 
-Si nous étions dans un monde idéal, avec un accès à toutes les données possibles, il serait possible d'explorer les "Et si... ?" d'un évènement, autrement appelés les contrefactuels. L'approche contrefactuelle est une méthode consistant à imaginer des réalités alternatives, c'est-à-dire des scénarios qui auraient pu se produire si un évènement ou une condition auraient été différents. Le but est de comprendre l'effet causal d'un facteur en analysant ce qui aurait pu se passer si l'évènement n'avait pas été présent. Cette approche a bien entendu des limites, elle repose sur des suppositions qui peuvent être subjectives ou difficiles à prouver. On ne connait jamais réellement ce qui se serait réellement passé.
+Si nous étions dans un monde idéal, avec un accès à toutes les données possibles, il serait possible d'explorer les "Et si... ?" d'un évènement, autrement appelés les contrefactuels. L'approche contrefactuelle est une méthode consistant à imaginer des réalités alternatives, c'est-à-dire des scénarios qui auraient pu se produire si un évènement ou une condition avaient été différents. Le but est de comprendre l'effet causal d'un facteur en analysant ce qui aurait pu se passer si l'évènement n'avait pas été présent. Cette approche a bien entendu des limites, elle repose sur des suppositions qui peuvent être subjectives ou difficiles à prouver. On ne connait jamais réellement ce qui se serait réellement passé.
 
-Selon le livre d'Hernan et Robins, « Causal Inference : What If », 2024, soit Y une issue et A une modalité de traitement. Toute unité statistique possède une paire d'issues potentielles. Ces deux issues sont toutes les deux plausibles, mais une seule se verra réalisée et l'autre restera contrefactuelle. Ces issues potentielles mènent à l'obtention "d'estimands" causales. L'un d'eux pouvant s'avérer intéressant en épidémiologie, l'Average Treatment Effect (ATE) qui se définit comme l'effet moyen d'un traitement. Cet ATE peut se découper en deux "estimands" : l'Average Treatment Effect on the Treated (ATT) qui se définit comme l'effet moyen d'un traitement parmi les traités, et l'Average Treatment Effect on the Untreated (ATU) qui se définit comme l'effet moyen d'un traitement parmi les non traités. ATE est techniquement la moyenne pondérée entre ATT et ATU.
+Selon le livre d'Hernan et Robins, « Causal Inference : What If » [@hernan2024], soit $Y$ une issue et $A$ une modalité de traitement. Toute unité statistique possède une paire d'issues potentielles. Ces deux issues sont toutes les deux plausibles, mais une seule se verra réalisée et l'autre restera contrefactuelle. Ces issues potentielles mènent à l'obtention "d'estimands" causaux. L'un d'eux pouvant s'avérer intéressant en épidémiologie, l'*Average Treatment Effect* (**ATE**) qui se définit comme l'effet moyen d'un traitement. Cet ATE peut se découper en deux "estimands" : l'*Average Treatment Effect on the Treated* (**ATT**) qui se définit comme l'effet moyen d'un traitement parmi les traités, et l'*Average Treatment Effect on the Untreated* (**ATU**) qui se définit comme l'effet moyen d'un traitement parmi les non traités. L'ATE est techniquement la moyenne pondérée entre ATT et ATU.
 
-Pour illustrer ces propos, prenons comme unité statistique une lactation. Cette lactation possède deux issues potentielles : soit la réforme, soit la mise à la reproduction pour enchaîner sur une autre lactation. Prenons comme "traitement" A : la survenue (A = 1) ou non (A = 0) d'une mammite. Dans un monde idéal, pour chaque lactation i, il serait possible d'observer les deux issues potentielles. C'est-à-dire Yi1 et Yi0. Cela nous permettrait alors d'obtenir l'effet du traitement pour la personne i qui se définit par $$ẟi = (Yi1 - Yi0)$$, c'est à dire la différence entre l'issue avec traitement et l'issue sans traitement.
+Pour illustrer ces propos, prenons comme unité statistique une lactation. Cette lactation possède deux issues potentielles : soit la réforme, soit la mise à la reproduction pour enchaîner sur une autre lactation. Prenons comme "traitement" $A$ : la survenue ($A = 1$) ou non ($A = 0$) d'une mammite. Dans un monde idéal, pour chaque lactation $i$, il serait possible d'observer les deux issues potentielles. C'est-à-dire $Y_i^1$ et $Y_i^0$. Cela nous permettrait alors d'obtenir l'effet du traitement pour la vache $i$ qui se définit par $\delta_i = (Y_i^1 - Y_i^0)$$, c'est à dire la différence entre l'issue avec traitement et l'issue sans traitement.
 
-A partir de tous les ẟi, il devient alors possible de calculer l'ATE qui devient : $$ATE = E(ẟ) = E(Y1 - Y0)$$.
+A partir de tous les $\delta_i$, il devient alors possible de calculer l'ATE qui devient : $$ATE = E(\delta_i) = E(Y^1 - Y^0)$$.
 
-Si l'on sépare la population en deux sous-groupes : traités et non traités on définit ainsi ATT et ATU de la façon suivante : $$ATT = E(Y1 - Y0 | A = 1)$$ & $$ATU = E(Y1 - Y0 | A = 0)$$
+Si l'on sépare la population en deux sous-groupes : traités et non traités on définit ainsi ATT et ATU de la façon suivante : $$ATT = E(Y^1 - Y^0 | A = 1)$$ & $$ATU = E(Y^1 - Y^0 | A = 0)$$
 
-L'ATE est alors techniquement la moyenne pondérée entre ATT et ATU. $$ATE = proptraitésATT + propnontraitésATU$$
+L'ATE est alors techniquement la moyenne pondérée entre ATT et ATU.
 
-Bien évidemment dans le monde réel, obtenir le ẟi de chaque lactation est impossible. On ne peut pas obtenir la valeur exacte de ATE, mais on peut s'en rapprocher. Pour cela il faut connaître tous les biais de sélection qui viennent influencer nos différentes relations causales.
+$$ATE = ATT \times p(A=1) + ATU \times p(A=0) $$
+
+Bien évidemment dans le monde réel, obtenir le $\delta_i$ de chaque lactation est impossible. On ne peut pas obtenir la valeur exacte de ATE, mais on peut s'en rapprocher. Pour cela il faut connaître tous les biais de sélection qui viennent influencer nos différentes relations causales.
 
 #### 3.3 Directed Acyclic Graphs (DAGs)
 
@@ -108,12 +126,14 @@ Les données nous ont été fournies sous forme de plusieurs tableaux par l'IDEL
 
 ### 5 Construction des modèles statistiques
 
-La première question qui se pose c'est par quels moyens la survenue d'une mammite peut entraîner la mise à la réforme précoce ? La schématisation de cela par le biais d'un DAG peut aider à y voir plus clair et comprendre ces différentes voies. En effet, lors de la survenue d'une mammite, celle-ci peut entraîner un épisode clinique que l'organisme ne saura pas combattre et ainsi entraîner la mort. Bien évidemment les cas de mammites cliniques entraînant des conséquences sur l'état général de l'animal sont rares mais il est important de les prendre en considération. Cette mammite peut également entraîner une baisse de production laitière. Qu'elle soit définitive par la perte d'un ou plusieurs quartiers, ou temporaire à cause de la forte inflammation ou même indirecte lorsque l'éleveur écarte le lait du tank pour respecter les temps d'attente d'un éventuel traitement. Si cette baisse de production laitière entraîne un manque de rentabilité de la vache, l'éleveur peut estimer que le remplacement de cette vache est nécessaire. Finalement, cette mammite la persistance d'un taux de cellules élevé chez une vache peut entraîner la décision de non mise à la reproduction par l'éleveur qui ne veut pas garder cet animal à cause des pénalités financières appliquées sur un lait de tank haut en cellules.
+La première question qui se pose c'est par quels moyens la survenue d'une mammite peut entraîner la mise à la réforme précoce ? La schématisation de cela par le biais d'un DAG peut aider à y voir plus clair et comprendre ces différentes voies (@fig-dag-mammites). En effet, lors de la survenue d'une mammite, celle-ci peut entraîner un épisode clinique que l'organisme ne saura pas combattre et ainsi entraîner la mort. Bien évidemment les cas de mammites cliniques entraînant des conséquences sur l'état général de l'animal sont rares mais il est important de les prendre en considération. Cette mammite peut également entraîner une baisse de production laitière. Qu'elle soit définitive par la perte d'un ou plusieurs quartiers, ou temporaire à cause de la forte inflammation ou même indirecte lorsque l'éleveur écarte le lait du tank pour respecter les temps d'attente d'un éventuel traitement. Si cette baisse de production laitière entraîne un manque de rentabilité de la vache, l'éleveur peut estimer que le remplacement de cette vache est nécessaire. Finalement, cette mammite la persistance d'un taux de cellules élevé chez une vache peut entraîner la décision de non mise à la reproduction par l'éleveur qui ne veut pas garder cet animal à cause des pénalités financières appliquées sur un lait de tank haut en cellules.
 
-```{r DAG mammites, echo = FALSE, message = FALSE, warning = FALSE}
+```{r DAG mammites, message = FALSE, warning = FALSE}
 #| echo: false
 #| fig-width: 3
 #| fig-height: 3
+#| label: fig-dag-mammites
+#| fig-cap: Graphe orienté acyclique représentant les causes de réforme en lien avec les mammites. 
 dag_mammites <- dagify(
   PL ~ M,
   D ~ M,
@@ -140,6 +160,9 @@ La démarche de cette première partie de l'étude a été de décomposer ce gra
 Pour pouvoir amener une vache à produire à nouveau du lait en quantité importante elle doit à nouveau vêler afin de lever l'effet inhibiteur de la progestérone sur la prolactine et permettre à nouveau la lactogenèse et la sécrétion lactée. Le système d'élevage laitier est donc basé sur la capacité d'une vache à revêler afin de produire une nouvelle vague de sécrétion lactée. Si pour une raison ou pour une autre cela n'est plus possible, la vache ne devient plus une valeur économique en termes de production de lait et le seul moyen de valoriser l'animal pour l'éleveur est de la réformer pour la production de viande. Partons du principe que la mise à la reproduction soit une décision de l'éleveur. Il prend cette décision au cours de la lactation actuelle pour permettre à la lactation suivante d'exister. On cherche donc à modéliser cette décision en fonction de la présence ou non d'une mammite. D'autres facteurs influencent cette décision.
 
 ```{r mammite - repro, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-dag-mam-repro
+#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur les perfomances de reproduction. 
+
 # Définir le graphe causal avec les variables latentes
 dag_mam_repro <- dagitty::dagitty('
   dag {
@@ -181,7 +204,7 @@ ggdag(tidy_dag) +
   # title_y <- max(layout(graph)$y) + 0.2  # Ajuster pour l'espacement vertical
 ```
 
-La Figure 4 montre le DAG qui schématise cette décision et les variables qui interviennent potentiellement dans cette décision. La grande majorité des éleveurs laitiers aujourd'hui en France utilisent l'insémination artificielle (AI). Il est donc plus facile pour l'éleveur de gérer sa reproduction et de décider quelle vache inséminer pour l'amener à la prochaine lactation. Il doit donc prendre sa décision en fonction de plusieurs facteurs. Ce que cette étude cherche à démontrer c'est que la survenue d'une mammite en tout début de lactation va avoir un impact sur cette décision. Mais cette décision dépend également d'autres facteurs comme : la parité, la production laitière, le nombre de génisses en attente pour le renouvellement, ainsi qu'un effet aléatoire de troupeau. Ces deux derniers étant des données qui ne nous sont soit non fournies, soit difficile à évaluer.
+La @fig-dag-mam-repro montre le DAG qui schématise cette décision et les variables qui interviennent potentiellement dans cette décision. La grande majorité des éleveurs laitiers aujourd'hui en France utilisent l'insémination artificielle (AI). Il est donc plus facile pour l'éleveur de gérer sa reproduction et de décider quelle vache inséminer pour l'amener à la prochaine lactation. Il doit donc prendre sa décision en fonction de plusieurs facteurs. Ce que cette étude cherche à démontrer c'est que la survenue d'une mammite en tout début de lactation va avoir un impact sur cette décision. Mais cette décision dépend également d'autres facteurs comme : la parité, la production laitière, le nombre de génisses en attente pour le renouvellement, ainsi qu'un effet aléatoire de troupeau. Ces deux derniers étant des données qui ne nous sont soit non fournies, soit difficile à évaluer.
 
 Une fois que l'éleveur ait décidé de mettre son animal à la reproduction il l'insémine une première fois. Ce qui est espéré habituellement en élevage laitier, c'est qu'il y ait fécondation dès la première insémination afin d'obtenir un intervalle vêlage-première insémination (IVIA1) court et ainsi obtenir un intervalle vêlage-vêlage (IVV) plus court également. De nombreux facteurs sont connus comme ayant un impact direct sur la fertilité d'une vache laitière, comme l'âge, le stress thermique, le niveau production. Pour ce qui est de l'influence des mammites, les publications scientifiques semblent plutôt partagées et pour celles qui ont trouvé un effet, il n'est présent que dans la très courte période qui entoure l'IA.
 
@@ -305,15 +328,30 @@ ggdag(tidy_dag) +
 
 Une fois tous les facteurs identifiés, il a été nécessaire de choisir le modèle plus adapté. Pour la reproduction, l'étude se décompose en plusieurs sous-questions. Des modèles différents ont donc été choisis en fonction des différents types de variables.
 
-Pour le modèle d'estimation de l'impact des mammites sur la mise à la reprodiction, sur la réussite à la première IA et sur la probabilité de revêlage, on utilise des variables d'entrée de type binaire. Le modèle le plus adapté semble donc être un modèle de régression logistique binomiale. Ce modèle utilise une fonction de lien *logit*.
+Pour le modèle d'estimation de l'impact des mammites sur la mise à la reproduction, sur la réussite à la première IA et sur la probabilité de revêlage, on utilise des variables d'entrée de type binaire. Le modèle le plus adapté semble donc être un modèle de régression logistique binomiale. Ce modèle utilise une fonction de lien *logit*.
 
-$$ logit(p) = log(p/1-p)$$ $$p ∈ [0,1]$$ On interprète les exponentiels des coefficients qui permet d'obtenir les odds-ratios. C'est ces odds-ratios que l'on doit interpréter car il est compliqué d'obtenir des probabilités avec une régression logistique.
+La régression logistique est utilisée pour modéliser une variable d'intérêt $Y$ binaire. Par exemple, si on s'intéresse à la réforme d'une vache, on a $Y = 1$ si la vache est réformée et $Y = 0$ sinon. Pour une vache $i$, la variable $Y_i$ suit une distribution de Bernoulli de paramètre $p_i$ où $p_i$ est la probabilité de réforme, avec $p_i \in [0,1]$.
+
+$$Y_i \sim Bernoulli(p_i)$$
+La régression logistique consiste à modéliser le logit de $p$ en fonction de covariables d'intérêt. La transformation logit se définit comme suit :
+
+
+$$logit(p) = ln \left( \frac{p}{1-p} \right)$$ 
+
+L'équation du modèle est la suivante :
+
+$$logit( p_i ) = \beta_0 + \beta_1 x_{i1} + \ldots + \beta_n x_{in}$$
+où $\beta_0$ est l'intercept du modèle, $x_{i1}$ à $x_{in}$ sont les valeurs des covariables $1$ à $n$ pour la vache $i$. On peut montrer que pour une variable donnée, l'exponentielle du coefficient $\beta$ représente l'odds de réforme ($\frac{p}{1-p}$) pour la modalité évaluée par rapport à la modalité de référence. On parle d'odds-ratio.
+
+
 
 Pour l'estimation de l'impact des mammites sur le nombre d'inséminations tentées, on a une variable d'entrée de comptage. Le modèle le plus adapté est une régression de Poisson.
 
+$$Y_i \sim Poisson(\lambda_i)$$
+
 Soit Y une variable d'entrée qui suit une loi de poisson P(λ) c'est-à-dire que $E(Y) = V(Y) = λ$. Le but de la régression de Poisson est de réussir a modéliser la loi suivante :
 
-$$Ln(λ) = α + β1x1 + … + βnxn$$
+$$ln(\lambda_i) = \alpha + \beta_1 x_1 + … + \beta_n x_n$$
 
 Avec $(X=x)$ les différentes variables explicatives utilisées dans le modèle.
 
