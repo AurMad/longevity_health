@@ -36,7 +36,7 @@ Cette étude s'intéresse particulièrement à ces infections intramammaires, et
 
 ### Longévité
 
-Dans la littérature on peut trouver différentes définitions de la longévité en élevage laitier. On distingue habituellement la longévité fonctionnelle ou functional longevity (FL) de la longévité vraie ou True longevity (TF) [@rostellato_influence_2021]. La première se donne en rang. Elle se définit classiquement comme l’aptitude d’un individu à repousser le moment de la réforme involontaire. Elle débute au moment du premier vêlage et se termine au moment de la réforme ou de la mort de l’animal. La longévité vraie, elle, se définit comme l’aptitude d’un individu à repousser la réforme, involontaire comme volontaire. Certaines publications utilisent la durée de vie productive ou Lenght of productive life (LPL), elle se donne en jours, et débute au moment du premier vêlage jusqu’à la mort ou la réforme [@grandl_impact_2019]. La période dites “improductive” de l’animal, donc de sa naissance jusqu’à son premier vêlage est peu utilisé dans les études de survie car le réel évènement d'intérêt qui est l’âge au premier vêlage est directement déductible des différentes définitions de la longévité données plus haut. Toutes ces définitions fournies plus haut sont données à l’échelle de l’individu, mais il est également possible de raisonner à l’échelle du troupeau. Certaines publications donnent une définition de longévité moyenne [@de_vries_invited_2011] qui se calcule de la façon suivante : $$\frac{Âge au premier vêlage moyen + 1}{Taux de réforme annuel}$$.
+Dans la littérature on peut trouver différentes définitions de la longévité en élevage laitier. On distingue habituellement la longévité fonctionnelle ou functional longevity (FL) de la longévité vraie ou True longevity (TF) [@rostellato_influence_2021]. La première se donne en rang. Elle se définit classiquement comme l’aptitude d’un individu à repousser le moment de la réforme involontaire. Elle débute au moment du premier vêlage et se termine au moment de la réforme ou de la mort de l’animal. La longévité vraie, elle, se définit comme l’aptitude d’un individu à repousser la réforme, involontaire comme volontaire. Certaines publications utilisent la durée de vie productive ou Lenght of productive life (LPL), elle se donne en jours, et débute au moment du premier vêlage jusqu’à la mort ou la réforme [@grandl_impact_2019]. La période dites “improductive” de l’animal, donc de sa naissance jusqu’à son premier vêlage est peu utilisé dans les études de survie car le réel évènement d'intérêt qui est l’âge au premier vêlage est directement déductible des différentes définitions de la longévité données plus haut. Toutes ces définitions fournies plus haut sont données à l’échelle de l’individu, mais il est également possible de raisonner à l’échelle du troupeau. Certaines publications donnent une définition de longévité moyenne [@de_vries_invited_2011] qui se calcule de la façon suivante : $$\frac{\text{Âge au premier vêlage moyen} + 1}{\text{Taux de réforme annuel}}$$.
 
 On peut également donner le nombre de jours de lactation cumulés du troupeau moyenné, en prenant l’ensemble des lactations terminées dans l’année. On n’inclut pas les lactations en cours, donc cette définition n’intègre pas les primipares qui n’ont pas encore terminé leur première lactation. Cela donne un effectif d’animaux légèrement inférieur à l’effectif réel.
 
@@ -464,9 +464,73 @@ ggdag(tidy_dag) +
 
 La première étape à été de se demander comment représenter la production laitère avec les données fournies. Pour chaque contrôle laitier, une production laitière sur 24h est mesurée. Il existe de nombreux modèles pour représenter une courbe de lactation.
 
+On voit que le pic de lactation intervient généralement avant 40 jours de lactation et que la première phase de la courbe peut être assimilée à une droite passant par une ordonnée à l'origine.
+
+Pour simplifier l'étude, comme la phase d'intérêt est la première phase de lactation, il a été décidé d'assimiler les courbes de lactation à des droites. Il devient ainsi possible de comparer l'écart entre les droites de la lacation en cours et de la lactation précédente en fonction de la survenue ou non d'une mammite.
+
+Le modèle le plus adapté est donc le modèle de régression linéaire mixte. avec $Y$ la production laitière qui peut être modélisée sous la forme : $$Y=\beta_0+\beta_ix_i+...+\beta_nx_n+\epsilon$$
+
+Avec $X=x$ les différentes variables explicatives et $\epsilon$ l'erreur standard.
+
 L'estimand est la recherche de l'effet causal des mammites sur la différence moyenne dans le niveau de production laitière pendant la première phase de lactation jusqu'au pic de lactation.
 
 #### Modélisation de l'impact des mammites sur la probabilité de mort
+
+Imaginons maintenant que la survenue d'un épisode de mammite ayant des conséquences cliniques puisse entraîner la mort de la vache. Cette hypothèse ne conduit pas littéralement à la réforme de l'animal, mais elle entraîne sa sortie involontaire du troupeau et une perte économique non négligeable pour l'éleveur. D'après les différentes publications scientifiques consultées sur le sujet et les connaissances acquises au cours du cursus vétérinaire, il est plutôt rare qu'un épisode clinique entraîne le décès de l'animal. Les rares cas qui surviennent sont généralement povoqué par un passage dans le sang de l'infection.
+
+Il est intéressant de se demander quels autres facteurs interviennent dans cette relation. La @fig-dag-mam-death, représente l'intervention des ces différents facteurs dont notamment la saison et la parité.
+
+```{r,echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-dag-mam-death
+#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur la probabilité de mort instantanée. 
+
+# Définir le graphe causal avec les variables latentes
+dag_mam_repro <- dagitty::dagitty('
+  dag {
+    M [exposure]
+    D [outcome]
+    T [latent]
+    M -> D
+    P -> D
+    T -> D
+    S -> D
+    S -> M
+  }
+')
+
+# Définir les coordonnées pour le DAG
+coordinates(dag_mam_repro) <- list(
+  x = c(M = 0, D = 1, P = 1, T = 1.5, S = 0.5),
+  y = c(M = 2, D = 2, T = 0.5, P = 3, S = 0.5)
+)
+
+# Convertir en tidy_dagitty pour ggdag
+tidy_dag <- tidy_dagitty(dag_mam_repro)
+
+# Ajouter une colonne pour identifier les variables latentes
+tidy_dag$data$status <- ifelse(tidy_dag$data$name %in% c("T", "G"), "latent", "observed")
+
+# Créer le ggdag plot avec le nom des variables au centre des nœuds
+ggdag(tidy_dag) + 
+  geom_dag_node(aes(color = status), size = 10, shape = 21, fill = "black") +
+  geom_dag_text(aes(label = name), color = "white", size = 4) +
+  theme_dag() +
+  scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
+```
+
+L'estimand est la recherche de l'effet causal des mammites sur le risque instantané de mortalité d'une vache laitière.
+
+Un modèle logistique utilisant une fonction de lien suivant une famille binomiale est compliqué à utiliser dans ce cas. On se confronte à un biais cognitif connu sous le nom de « biais du survivant ». C’est-à-dire qu’on ne compte dans notre étude que ceux qui ont survécu et bien évidemment dans le modèle logistique tenté, la survenue d’une mammite apparaissait comme un facteur protecteur pour la survie de l’animal. Ce qui paraît absurde.
+
+Pour pallier à ce problème, le choix a été fait de changer de modèle statistique et de passer à une analyse de survie de type régression de Cox.
+
+La régression de Cox modélise une fonction de survie en fonction du temps $S(t)$ en prenant en considération une fonction de risque instantané qui suit une loi exponentielle $exp(β, X)$ $$h(t,X) = h_0(t)eβX$$
+
+Avec $t$ le paramètre de temps et $X$ les variables explicatives.
+
+$h_0(t)$ est une fonction de risque dépendante uniquement du temps, elle est inconnue d’après Cox, ce qui fait de ce modèle un modèle *semi-paramétrique* car il n’existe pas d’hypothèse sur la fonction du risque de base $h_0(t)$. C’est un modèle simplifié de la réalité mais qui s’adapte à beaucoup de situations.
+
+La régression de Cox permet d’estimer si $X$ explique la fonction S(t) (analyse de la *p-value*) et le ratio des risques (*hazard ratio*).
 
 #### Etude de la dynamique des infections intramammaires
 
