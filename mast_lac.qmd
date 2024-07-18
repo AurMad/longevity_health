@@ -5,7 +5,6 @@ format: pdf
 editor: visual
 ---
 
-
 ```{r setup}
 library(tidyverse)
 library(lme4)
@@ -39,13 +38,10 @@ rec <- read_csv2("generated_datasets/idele_rec_final.csv") |>
   filter(!is.na(milk) & !is.na(scc))
 ```
 
-
 ```{r}
-setwd("C:/Users/joestevesara/Documents/stage_these/longevity_health")
 
-lac <- read.csv2("generated_datasets/lac.csv")
+lac <- 
 ```
-
 
 ## Sélection d'un échantillon
 
@@ -65,7 +61,6 @@ herd_random_sample <- sample(herd_list, 10, replace = FALSE)
 rec <- rec |> 
   filter(herd_id %in% herd_random_sample)
 ```
-
 
 ## Création des courbes de lactation
 
@@ -105,12 +100,9 @@ PL <- lm(milk ~ exp_dim + dim,
 summary(PL)
 ```
 
-
-
 ```{r}
 plot(PL)
 ```
-
 
 ```{r régression lineaire mixte}
 k <- -0.065
@@ -126,14 +118,15 @@ curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
       from = 0, to = 305)
 
 ```
-Nous allons nous concentrer sur le début de la courbe, c'est-à-dire les 90 premiers jours. 
+
+Nous allons nous concentrer sur le début de la courbe, c'est-à-dire les 90 premiers jours.
 
 ```{r}
 curve(fixef(PL1)[1] + fixef(PL1)[2] * x + fixef(PL1)[3] * exp(k * x),
       from = 0, to = 91)
 ```
-Le pic de lactation semble se produire entre 20 et 40 jours. Ce qui correspond a ce qu'on peut trouver dans la littérature. 
-On va essayer mainteant de décrire la tendace par parité. 
+
+Le pic de lactation semble se produire entre 20 et 40 jours. Ce qui correspond a ce qu'on peut trouver dans la littérature. On va essayer mainteant de décrire la tendace par parité.
 
 ```{r}
 rec |> 
@@ -143,10 +136,5 @@ rec |>
   geom_point()+
   geom_smooth(method = "lm", se = FALSE, color = "blue")
 ```
-Le maximum de production semble se trouver pour les rangs 3 et 4. 
 
-
-
-
-
-
+Le maximum de production semble se trouver pour les rangs 3 et 4.

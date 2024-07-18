@@ -129,7 +129,8 @@ lac <- rec |>
     ) |> 
   ungroup()
 ```
-## Ajout des codes de races 
+
+## Ajout des codes de races
 
 ```{r}
 path_to_file <- "data/genea.txt"
@@ -138,6 +139,7 @@ rename(anim_id = ANIM,
 code_race = CORABO) |>
 select(anim_id, code_race)
 ```
+
 ```{r}
 lac_race <- left_join(
   lac |>
@@ -146,15 +148,16 @@ lac_race <- left_join(
   group_by(anim_id)|> 
   ungroup()
 ```
+
 ```{r regroupement des races}
 lac_race <- lac_race |> 
   mutate(race = case_when(code_race == "66" | code_race == "60" ~ "PH"))
 ```
 
-
 ```{r}
 lac <- left_join(lac, lac_race) 
 ```
+
 ## Données mammites cliniques
 
 On va extraire les dates de mammites cliniques afin de les ajouter aux lactations correspondantes sur le tableau de données "lac"
@@ -399,10 +402,9 @@ lac <- lac |>
 
 ```
 
-
 ### enregistrement
 
-```{r}
+```{r, eval = FALSE}
 
 setwd("C:/Users/joestevesara/Documents/stage_these/longevity_health")
 
@@ -554,7 +556,6 @@ lac <- lac |>
          code_race = relevel(as.factor(code_race), ref = "66"))
 ```
 
-
 ### Modèle de référence
 
 Ce modèle ne prend que des données parmis des animaux dont on a des informations sur le début de lactation et la période sèche de la précédente lactation.
@@ -633,7 +634,6 @@ repro_parity_milk_race <- glmer(repro ~ parKat +
 summary(repro_parity_milk_race)
 ```
 
-
 On va maintenant ajouter la variable d'intêret qui est la présence ou non de mammite
 
 ### Modèle complet
@@ -667,7 +667,6 @@ repro_full1 <- glmer(repro ~ parKat +
 
 summary(repro_full1)
 ```
-
 
 Pour l'instant c'est repro_full1 qui donne la meilleure approximation car il possède le plus petit AIC.
 
@@ -740,7 +739,6 @@ p+theme_bw()
 ## position="fill" = rend le graphique proportionnel et empile les barres
 ```
 
-
 Le modèle suivant estime la probabilité qu'une vache mise à la reproduction revêle.
 
 ```{r recalving-var-null-model}
@@ -797,7 +795,6 @@ repro_revel_mast1 <- glmer(repro_revel ~  parKat +
 
 summary(repro_revel_mast1)
 ```
-
 
 Le modèle que je retiens est "repro_revel_mast1", pour l'instant c'est celui qui nous convient le mieux.
 
@@ -925,7 +922,6 @@ success_ia_full2 <- glmer(success_ai1 ~ parKat +
 summary(success_ia_full2)
 ```
 
-
 ### Prédictions de la réussite à la première insémination selon le type de mammite
 
 ```{r}
@@ -1018,7 +1014,6 @@ vif(ai_number_full)
 
 Le nombre d'ia ne semble pas pouvoir être expliqué par la présence ou non de mammite. Il semblerait que la seule variable explicative intéressante pour le modèle soit la parité.
 
-
 ### Prédictions de la réussite à la première insémination selon le type de mammite
 
 ```{r}
@@ -1032,5 +1027,8 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   xlab("") + 
   ylab("Probabilité d'être réinséminée") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+```{r}
+write.csv2(lac, "generated_datasets/lac_final.csv")
 ```
 

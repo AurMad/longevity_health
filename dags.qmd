@@ -11,7 +11,6 @@ library(dagitty)
 library(ggdag)
 ```
 
-
 # DAGs
 
 quelques essais de création de DAGs.
@@ -176,6 +175,7 @@ ggdag(tidy_dag) +
   theme_dag() +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
+
 ```{r mammite - IA1}
 # Définir le graphe causal avec les variables latentes
 dag_mam_repro <- dagitty::dagitty('
@@ -253,6 +253,7 @@ ggdag(tidy_dag) +
   theme_dag() +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
+
 ```{r mammite - vêlage}
 # Définir le graphe causal avec les variables latentes
 dag_mam_repro <- dagitty::dagitty('
@@ -288,6 +289,7 @@ ggdag(tidy_dag) +
   theme_dag() +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
+
 ```{r}
 # Définir le graphe causal avec les variables latentes
 dag_mam_repro <- dagitty::dagitty('
@@ -322,6 +324,7 @@ ggdag(tidy_dag) +
   theme_dag() +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
+
 ```{r mammite - PL}
 # Définir le graphe causal avec les variables latentes
 dag_mam_repro <- dagitty::dagitty('
@@ -360,4 +363,3 @@ ggdag(tidy_dag) +
   theme_dag() +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
-
