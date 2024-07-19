@@ -20,6 +20,7 @@ library(GGally)
 library(effects)
 library(ggpubr)
 library(RColorBrewer)
+library(gtsummary)
 ```
 
 ```{r seuil utilisés}
@@ -62,13 +63,13 @@ Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les donn�
 
 Génération d'une liste d'élevages uniques.
 
-```{r}
+```{r, eval = FALSE}
 herd_list <- unique(rec$herd_id)
 ```
 
 On sélectionne un échantillon de 10 élevages au hasard.
 
-```{r Selection echantillon de 10 elevages}
+```{r Selection echantillon de 10 elevages, eval = FALSE}
 set.seed(42) #On garde la même graine si on veut conserver le même échantillon
 herd_random_sample <- sample(herd_list, 10, replace = FALSE)
 rec <- rec |> 
@@ -151,11 +152,24 @@ lac_race <- left_join(
 
 ```{r regroupement des races}
 lac_race <- lac_race |> 
-  mutate(race = case_when(code_race == "66" | code_race == "60" ~ "PH"))
+  mutate(race = case_when(code_race == "66" | code_race == "60" ~ "PH",
+                          code_race == "46" | code_race == "40" ~ "Montbeliarde",
+                          code_race == "56" | code_race == "50" ~ "Normande",
+                          code_race == "39" ~ "croisée",
+                          code_race != "66" | code_race != "60" | code_race != "46"| code_race != "40" | code_race != "56" | code_race != "50" | code_race != "39" ~ "other"))
 ```
 
 ```{r}
 lac <- left_join(lac, lac_race) 
+```
+```{r}
+table(lac$race)
+```
+
+
+```{r}
+lac <- lac |> 
+  mutate(race = relevel(factor(race), ref = "PH"))
 ```
 
 ## Données mammites cliniques
@@ -360,6 +374,12 @@ hist(lac$milk_early_max_scaled,
      main = "Distribution du maximum de production laitière\npendant les 90 premiers jours de lactation",
      xlab = "Production laitière (distribution centrée réduite)")
 ```
+## Saisonnalité
+
+```{r}
+
+```
+
 
 ## Définition des mammites
 
@@ -404,9 +424,7 @@ lac <- lac |>
 
 ### enregistrement
 
-```{r, eval = FALSE}
-
-setwd("C:/Users/joestevesara/Documents/stage_these/longevity_health")
+```{r}
 
 write_csv2(lac, "generated_datasets/lac.csv")
 ```
@@ -485,6 +503,14 @@ milk_pred <- expand_grid(
     mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
   )
 ```
+
+```{r}
+write_csv2(mast_pred, "generated_datasets/mast_pred.csv")
+write_csv2(mast_pred1, "generated_datasets/mast_pred1.csv")
+write_csv2(parit_pred, "generated_datasets/parity_pred.csv")
+write_csv2(milk_pred, "generated_datasets/milk_pred.csv")
+```
+
 
 ## Décision de mise à la reproduction
 
@@ -655,6 +681,7 @@ summary(repro_full)
 
 ```{r}
 repro_full1 <- glmer(repro ~ parKat + 
+                              race +
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
                               milk_early_max_scaled_p3 + 
@@ -669,6 +696,11 @@ summary(repro_full1)
 ```
 
 Pour l'instant c'est repro_full1 qui donne la meilleure approximation car il possède le plus petit AIC.
+
+```{r}
+t_repro <- tbl_regression(repro_full1, exponentiate = TRUE)
+```
+
 
 On va donc maintenant vérifier sa pertinence.
 
@@ -1028,7 +1060,7 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("Probabilité d'être réinséminée") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
 ```{r}
 write.csv2(lac, "generated_datasets/lac_final.csv")
 ```
-
