@@ -22,11 +22,11 @@ library(RefManageR)
 
 La longévité se définit couramment comme la durée de vie, d'un individu ou d'un groupe d'individus. Elle s'obtient en général, en prenant la durée entre la naissance d'un individu et sa mort [@dallago2021] .
 
-La longevité des vaches laitières a une importance à la fois économique, écologique et sociale. En effet, il a été montré que le fait de garder un animal dans le troupeau plus longtemps permet de réduire le nombre de génisses à élever pour le renouvellement et donc de réduire le nombre d'animaux improductifs à élever. Cela permet également de réduire l'émission de gaz à effet de serre de l'élevage en ayant moins d'animaux sur l'exploitation [@grandl_impact_2019]. Cela a également une composante sociale et de bien-être animal car la capacité à garder un animal plus longtemps et donc à avoir un taux de renouvellement plus faible, peut être indirectement mise en lien avec de meilleures conditions d'élevage [@compton_invited_2017]. Le consommateur peut voir cela comme un indicateur positif de bien-être.
+La longévité des vaches laitières a une importance à la fois économique, écologique et sociale. En effet, il a été montré que le fait de garder un animal dans le troupeau plus longtemps permet de réduire le nombre de génisses à élever pour le renouvellement et donc de réduire le nombre d'animaux improductifs. Cela permet également de réduire l'émission de gaz à effet de serre de l'élevage en ayant moins d'animaux sur l'exploitation [@grandl_impact_2019]. Cela a également une composante sociale et de bien-être animal car la capacité à garder un animal plus longtemps et donc à avoir un taux de renouvellement plus faible, peut être indirectement mise en lien avec de meilleures conditions d'élevage [@compton_invited_2017]. Le consommateur peut voir cela comme un indicateur positif de bien-être.
 
-La réforme en élevage laitier se définit comme la sortie de l'animal du troupeau pour être envoyé à l'abattoir dans le but de produire de la viande. On distingue classiquement deux types de réformes : la réforme volontaire qui intervient généralement suite à la décision de l'éleveur de réformer pour production laitière insuffisante. Et la réforme involontaire, liée à un problème de santé ou de reproduction, qui sans cela n'aurait pas entraîné la réforme de l'animal. Les principales causes de réforme en élevage laitier sont les troubles de reproduction, les problèmes locomoteurs ainsi que les infections intramammaires [@ducrocq_statistical_1994]. L'on pourrait croire que cette dichotomie des réforme est simple mais en réalité il n'est pas toujours aisé de savoir pourquoi réellement une vache a été réformée. On peut considérer une vache boiteuse ou à cellules et finalement l'éleveur décide de la garder car elle produit toujours beaucoup de lait. Ou au contraire une vache réformée pour production insuffisante alors qu'en réalité cette vache n'était pas saine ce qui a entraîné une chute en lait, seul signe visible par l'éleveur. Ou bien l'éleveur souhaite faire entrer plus de génisses au sein du troupeau et pour cela il doit réformer des vaches mais ces critères peuvent varier. C'est un processus décisionnel complexe, qui dépend du profil de l'éleveur ainsi que de la façon dont est géré le troupeau.
+La réforme en élevage laitier se définit comme la sortie de l'animal du troupeau pour être envoyé à l'abattoir dans le but de produire de la viande. On distingue classiquement deux types de réformes : la réforme volontaire qui intervient généralement suite à la décision de l'éleveur de réformer pour production laitière insuffisante. Et la réforme involontaire, liée à un problème de santé ou de reproduction, qui sans cela n'aurait pas entraîné la réforme de l'animal. Les principales causes de réforme en élevage laitier sont les troubles de reproduction, les problèmes locomoteurs ainsi que les infections intramammaires [@ducrocq_statistical_1994]. On pourrait croire que cette dichotomie des réformes est simple mais en réalité il n'est pas toujours aisé de savoir pourquoi réellement une vache a été réformée. On peut considérer une vache boiteuse ou à cellules et finalement l'éleveur décide de la garder car elle produit toujours beaucoup de lait. Ou au contraire une vache réformée pour production insuffisante alors qu'en réalité cette vache n'était pas saine ce qui a entraîné une chute en lait, seul signe visible par l'éleveur. Ou bien l'éleveur souhaite faire entrer plus de génisses au sein du troupeau et pour cela il doit réformer des vaches mais ces critères peuvent varier. C'est un processus décisionnel complexe, qui dépend du profil de l'éleveur ainsi que de la façon dont est géré le troupeau.
 
-Cette étude s'intéresse particulièrement à ces infections intramammaires, et notamment celles qui ont une origine bactérienne que l'on nomme par convention "mammite". Elle a pour objectif d'étudier les liens de causalités entre la survenue d'une mammite et son modèle épidémiologique sur la décision de réforme d'un vache laitière.Elle a également pour objectif de démontrer les effets de la réforme sur la modification des dynamiques d'infection et de guérison au tarissement à l'échelle du troupeau.
+Cette étude s'intéresse particulièrement aux mammites qui sont des inflammations d'au moins un quartier de la mamelle d'origine quasi exclusivement bactérienne. Elle a pour objectif d'étudier les liens de causalités entre la survenue d'une mammite et son modèle épidémiologique sur la décision de réforme d'un vache laitière. Elle a également pour objectif d'évaluer les effets de la réforme sur la modification des dynamiques d'infection et de guérison des mammites au tarissement à l'échelle du troupeau.
 
 # Etude bibliographique
 
@@ -36,9 +36,16 @@ Cette étude s'intéresse particulièrement à ces infections intramammaires, et
 
 ### Longévité
 
-Dans la littérature on peut trouver différentes définitions de la longévité en élevage laitier. On distingue habituellement la longévité fonctionnelle ou functional longevity (FL) de la longévité vraie ou True longevity (TF) [@rostellato_influence_2021]. La première se donne en rang. Elle se définit classiquement comme l’aptitude d’un individu à repousser le moment de la réforme involontaire. Elle débute au moment du premier vêlage et se termine au moment de la réforme ou de la mort de l’animal. La longévité vraie, elle, se définit comme l’aptitude d’un individu à repousser la réforme, involontaire comme volontaire. Certaines publications utilisent la durée de vie productive ou Lenght of productive life (LPL), elle se donne en jours, et débute au moment du premier vêlage jusqu’à la mort ou la réforme [@grandl_impact_2019]. La période dites “improductive” de l’animal, donc de sa naissance jusqu’à son premier vêlage est peu utilisé dans les études de survie car le réel évènement d'intérêt qui est l’âge au premier vêlage est directement déductible des différentes définitions de la longévité données plus haut. Toutes ces définitions fournies plus haut sont données à l’échelle de l’individu, mais il est également possible de raisonner à l’échelle du troupeau. Certaines publications donnent une définition de longévité moyenne [@de_vries_invited_2011] qui se calcule de la façon suivante : $$\frac{\text{Âge au premier vêlage moyen} + 1}{\text{Taux de réforme annuel}}$$.
 
-On peut également donner le nombre de jours de lactation cumulés du troupeau moyenné, en prenant l’ensemble des lactations terminées dans l’année. On n’inclut pas les lactations en cours, donc cette définition n’intègre pas les primipares qui n’ont pas encore terminé leur première lactation. Cela donne un effectif d’animaux légèrement inférieur à l’effectif réel.
+<!-- 
+- j'ai enlevé les abréviations TL, FL et LPL qui ne sont probablement pas réutilisées par la suite.
+- que veux tu dire par 'la première se donne en rang' ? Rang de lactation j'imagine. Est-ce obligé ou est-ce que c'est ce qui a été fait dans la publication citée ?
+- Par contre dans la définition de la longévité moyenne de deVries, l'unité est importante à préciser (à cause du +1)
+-->
+
+Dans la littérature on peut trouver différentes définitions de la longévité en élevage laitier. On distingue habituellement la longévité fonctionnelle ou *functional longevity* de la longévité vraie ou *true longevity* [@rostellato_influence_2021]. La première se donne en rang. Elle se définit classiquement comme l'aptitude d'un individu à repousser le moment de la réforme involontaire. Elle débute au moment du premier vêlage et se termine au moment de la réforme ou de la mort de l'animal. La longévité vraie, elle, se définit comme l'aptitude d'un individu à repousser la réforme, involontaire comme volontaire. Certaines publications utilisent la durée de vie productive ou *length of productive life*, elle se donne en jours, et débute au moment du premier vêlage jusqu'à la mort ou la réforme [@grandl_impact_2019]. La période dite "improductive" de l'animal, donc de sa naissance jusqu'à son premier vêlage est peu utilisée dans les études de survie car le réel évènement d'intérêt qui est l'âge au premier vêlage est directement déductible des différentes définitions de la longévité données plus haut. Toutes ces définitions fournies plus haut sont données à l'échelle de l'individu, mais il est également possible de raisonner à l'échelle du troupeau. Certaines publications donnent une définition de longévité moyenne [@de_vries_invited_2011] qui se calcule de la façon suivante : $$\frac{\text{Âge au premier vêlage moyen} + 1}{\text{Taux de réforme annuel}}$$.
+
+On peut également donner le nombre de jours de lactation cumulés du troupeau moyenné, en prenant l'ensemble des lactations terminées dans l'année. On n'inclut pas les lactations en cours, donc cette définition n'intègre pas les primipares qui n'ont pas encore terminé leur première lactation. Cela donne un effectif d'animaux légèrement inférieur à l'effectif réel.
 
 #### Définition de longévité dans la bibliographie
 
@@ -48,9 +55,15 @@ On peut également donner le nombre de jours de lactation cumulés du troupeau m
 
 #### Longévité et impact environnemental
 
-La production laitière, et plus généralement la production animale, est très souvent critiquée d’être une source majeure d’émission de gaz à effet de serre. L’émission de ces gaz passe essentiellement par la production en méthane par la fermentation gastrique des animaux eux-même, mais également par toutes les machines utilisées pour produire leur alimentation (tracteurs, intrants, conditionnement…) ainsi que toutes les méthodes de transport qui s’intègrent à la filière (transport des animaux, des intrants, de l’alimentation….) et les autres activités nécessaires au maintien d’une exploitation [@flysjo_impact_2011] . Calculer l’empreinte carbone de l’élevage laitier est un processus complexe et souvent les études qui ont cherché à l’estimer ont utilisé des modèles simplifiés. Le résultat obtenu le plus souvent n’est donc pas tout à fait la réalité. Cependant il permet tout de même de comparer différents systèmes de production : par exemple, pour les pays dont le mode d’élevage majoritaire est celui qui maximise le temps de pâturage, l’émission de gaz à effet de serre est principalement liée à la fermentation des animaux (\>50%). Alors que pour les pays qui ont une majorité d’élevages hors-sol, l’émission de gaz à effet de serre provient principalement de la gestion du lisier, de l’alimentation et de l’utilisation d’intrants pour fertiliser les sols [@mazzetto_mapping_2022] .
+<!-- Est-ce que tu ne veux pas dire 'L'élevage laitier' plutôt que la production laitière -->
 
-Le nombre d’études s'intéressant à l’impact environnemental de la longévité des vaches laitières est réduit. Cependant leurs résultats semblent plutôt se mettre d’accord sur l’impact favorable de l’augmentation de la vie productive des vaches laitières sur l’environnement. Par exemple, dans une étude [@grandl_impact_2019], conduite sur trente vaches brunes des alpes, les auteurs ont montré que le fait d’augmenter la vie productive des animaux et réduire le nombre de génisses en phase d’élevage (qui contribuent pour une part non négligeable de l’émission de méthane), pourrait être une solution viable pour réduire l’empreinte carbone des élevages laitiers, particulièrement en évitant de réformer des animaux qui n’ont pas pu effectuer plus d’une lactation.
+<!-- Est-ce que tu ne veux pas dire  'les productions animales' plutôt que la 'production animale' -->
+
+<!-- On parle habituellement de méthane entérique  https://www.inrae.fr/actualites/comment-mesurer-methane-enterique-emis-ruminants-->
+
+La production laitière, et plus généralement la production animale, sont très souvent critiquées en tant que source majeure d'émission de gaz à effet de serre. L'émission de ces gaz passe essentiellement par la production de méthane entérique des animaux eux-mêmes, mais également par toutes les machines utilisées pour produire leur alimentation (tracteurs, intrants, conditionnement...) ainsi que toutes les méthodes de transport qui s'intègrent à la filière (transport des animaux, des intrants, de l'alimentation....) et les autres activités nécessaires au maintien d'une exploitation [@flysjo_impact_2011]. Calculer l'empreinte carbone de l'élevage laitier est un processus complexe et souvent les études qui ont cherché à l'estimer ont utilisé des modèles simplifiés. Le résultat obtenu le plus souvent n'est donc pas tout à fait la réalité. Cependant il permet tout de même de comparer différents systèmes de production : par exemple, pour les pays dont le mode d'élevage majoritaire est celui qui maximise le temps de pâturage, l'émission de gaz à effet de serre est principalement liée aux fermentations entériques (\>50%). Alors que pour les pays qui ont une majorité d'élevages hors-sol, l'émission de gaz à effet de serre provient principalement de la gestion du lisier, de l'alimentation et de l'utilisation d'intrants pour fertiliser les sols [@mazzetto_mapping_2022] .
+
+Le nombre d'études s'intéressant à l'impact environnemental de la longévité des vaches laitières est réduit. Cependant leurs résultats semblent plutôt se mettre d'accord sur l'impact favorable de l'augmentation de la vie productive des vaches laitières sur l'environnement. Par exemple, dans une étude [@grandl_impact_2019], conduite sur trente vaches brunes des alpes, les auteurs ont montré que le fait d'augmenter la vie productive des animaux et réduire le nombre de génisses en phase d'élevage (qui contribuent pour une part non négligeable de l'émission de méthane), pourrait être une solution viable pour réduire l'empreinte carbone des élevages laitiers, particulièrement en évitant de réformer des animaux qui n'ont pas pu effectuer plus d'une lactation.
 
 #### Longevité et impact sociétal
 
@@ -58,7 +71,15 @@ Le nombre d’études s'intéressant à l’impact environnemental de la longév
 
 ### Définition dans la bibliographie
 
-Une étape importante de cette étude est de donner une définition claire du terme mammite et comment nous pouvons l’intégrer dans l’étude. Une mammite, si on prend la définition littérale, c’est une inflammation de la mamelle. Cette définition, bien que claire, est insuffisante si on souhaite étudier son impact sur la longévité des vaches laitières, car elle donne trop peu d’informations susceptibles de nous indiquer par quels mécanismes une mammite pourrait avoir une influence sur la fin de vie d’un animal. Si on regarde les définitions de mammites utilisées dans la littérature, on remarque qu’il n’y pas de réelle homogénéité dans la définition de mammite. Certains pays comme le Danemark interdisent aux éleveurs l'utilisation d'antibiotiques en automédication, ce qui fais que chaque traitement est administré et enregistré par le vétérinaire lui-même. Il devient alors plus facile d'avoir accès à l'utilisation réelle des traitement et l'indication pour laquelle le traitement a été effectué. C'est ce qu'on décidé des auteurs danois [@neerhof_relationships_2000] afin de définir la mammite comme un événement clinique ayant des conséquences visibles reportées par les vétérinaires lors de l’enregistrement des traitements effectués sur un animal (mammite au tarissement, mammite suite à une lésion du traitement, mammite aiguë, etc…). Dans d'autres publications [@archer_association_2013, @sewalem_analysis_2006], la mammite a été définie comme une augmentation du comptage de cellules somatiques (SCC) au-dessus d’un certain seuil établi, sans faire de distinction entre mammite clinique et subclinique. Il est clair qu’il devient difficile de comparer les études entre elles sachant que les définitions sont différentes et donc se basent sur des données très différentes. Ici, c’est bien toute la difficulté, comment donner une définition de mammite assez pertinente pour répondre pleinement ou au moins en grande partie à notre problématique ? La première chose qui a été faite c’est de prendre le terme “mammite” et de le décomposer au maximum afin d’obtenir une définition la plus juste possible. Pour cela il faut tenir compte de son épidémiologie ainsi que de son étiologie.
+<!-- Mettre cette partie après Épidémiologie et Etiologie -->
+
+<!-- Faire plus simple sur la définition des mammites. Inflammation d'au moins un quartier d'origine bactérienne. Ce qu'il est important de faire apparaître est la distinction entre réservoir mammaire associé à mammites chroniques et réservoir environnemental. => Épidémiologie-->
+
+<!-- Les objectifs des études qui s'intéressent aux mammites cliniques et subcliniques sont différents. Il ne s'agit pas vraiment de différences de définition de ce point de vue. -->
+
+<!-- "prendre le terme "mammite" et de le décomposer au maximum afin d'obtenir une définition la plus juste possible" => garder pour le Matériels et méthodes" -->
+
+Une étape importante de cette étude est de donner une définition claire du terme mammite et comment nous pouvons l'intégrer dans l'étude. Une mammite, si on prend la définition littérale, c'est une inflammation de la mamelle. Cette définition, bien que claire, est insuffisante si on souhaite étudier son impact sur la longévité des vaches laitières, car elle donne trop peu d'informations susceptibles de nous indiquer par quels mécanismes une mammite pourrait avoir une influence sur la fin de vie d'un animal. Si on regarde les définitions de mammites utilisées dans la littérature, on remarque qu'il n'y pas de réelle homogénéité dans la définition de mammite. Certains pays comme le Danemark interdisent aux éleveurs l'utilisation d'antibiotiques en automédication, ce qui fait que chaque traitement est administré et enregistré par le vétérinaire lui-même. Il devient alors plus facile d'avoir accès à l'utilisation réelle des traitements et l'indication pour laquelle le traitement a été effectué. C'est ce qu'on décidé des auteurs danois [@neerhof_relationships_2000] afin de définir la mammite comme un évènement clinique ayant des conséquences visibles reportées par les vétérinaires lors de l'enregistrement des traitements effectués sur un animal (mammite au tarissement, mammite suite à une lésion du traitement, mammite aiguë, etc...). Dans d'autres publications [@archer_association_2013, @sewalem_analysis_2006], la mammite a été définie comme une augmentation du comptage de cellules somatiques (CCS) au-dessus d'un certain seuil établi, sans faire de distinction entre mammite clinique et subclinique. Il est clair qu'il devient difficile de comparer les études entre elles sachant que les définitions sont différentes et donc se basent sur des données très différentes. Ici, c'est bien toute la difficulté, comment donner une définition de mammite assez pertinente pour répondre pleinement ou au moins en grande partie à notre problématique ? La première chose qui a été faite c'est de prendre le terme "mammite" et de le décomposer au maximum afin d'obtenir une définition la plus juste possible. Pour cela il faut tenir compte de son épidémiologie ainsi que de son étiologie.
 
 ### Etiologie
 
@@ -70,9 +91,14 @@ Une étape importante de cette étude est de donner une définition claire du te
 
 ## Lien entre mammite et longévité
 
-Comme il est dit dans l’introduction, la décision par l’éleveur de réformer une vache peut être soit volontaire, car il considère que la vache ne produit plus suffisamment de lait et qu’il est temps de la remplacer par une génisse. Soit involontaire, le plus souvent lié à un problème de santé ou de reproduction forçant l’éleveur à se séparer de son animal de manière précoce par rapport à ses attentes pour chaque animal.
+<!-- Ajouter un paragraphe sur les raisons qui poussent l'éleveur à réformer, surtout impact économique : pénalités cellules, coûts de traitement, lait jeté. -->
+<!-- Sur réservoir mammaire, incidence corrélée à la prévalence -->
+<!-- Rapport coût-bénéfice du traitement. Si la vache a peu de chance de guérir il vaut mieux la réformer-->
+<!-- Les réformes incluent habituellement la mort. L'écrire dans la partie bibliographie, même si on en s'y étend pas trop par la suite-->
 
-Un certain nombre d’études se sont intéressées à l’implication des mammites dans la réduction de la longévité des vaches laitières, la mammite étant la maladie la plus représentée en élevage laitier.Une étude de survie sur les élevages danois a été faite [@neerhof_relationships_2000], afin de démontrer qu’une vache traitée pour mammite au cours de sa lactation avait une probabilité plus élevée d’être réformée au cours de cette même lactation. Dans cette étude, les auteurs montrent également qu’être traité pour une mammite au cours d’une lactation n'a pas d’impact sur la probabilité d’être réformé à la lactation suivante. Aux États-Unis, sur des élevages de Holstein et de Jersiaises, [@caraviello_assessment_2005] Ils ont cherché à montrer que les vaches avec un SCC moyen par lactation très élevée (SCC \> 700 000 cell/mL) avaient 2 à 4 fois plus de chances d’être réformées de manière générale et 10 à 25 fois plus de chances d’être réformées pour cause de mammites. Cette observation est d’autant plus vraie pour les élevages qui maintenant un SCC de troupeau faible, ce qui serait donc le reflet d’une politique de réforme plus sévère dans ces élevages. Ils ont également observé que les vaches avec un SCC très faible étaient également plus à risque d’être réformées, particulièrement dans les élevages avec une forte prévalence de germes responsables de mammites, mais aucune conclusion ne peut encore être émise sur la possible existence d’une résistance immunitaire persistante induite par une première inflammation de la mamelle. Au Canada [@sewalem_analysis_2006] ont démontré qu'au-delà d’un certain seuil, le SCC augmente considérablement le risque de réforme, peu importe la race (ici ils ont pris Holstein, Jersiaise, Ayrshire). Selon eux, la recherche d’une amélioration de la santé mammaire des troupeaux serait positivement corrélée à l’amélioration de la longévité des animaux dans ces troupeaux. Sur des élevages biologiques aux Etats-Unis, [@fernandes_effect_2021] ont démontré que les vaches qui présentaient un SCC élevés les trois derniers mois de la précédente lactation, avaient plus de chance de présenter un SCC élevé durant le premier mois de la lactation en cours (ainsi qu’un SCC linear score plus élevé au cours de la lactation) . Ces mêmes vaches présentaient également une probabilité plus élevée d’être réformées. Il est tout de même important de rappeler qu’aux Etats-Unis, l’utilisation d’antibiotiques en élevage biologique est totalement interdite, les vaches nécessitant des traitements antimicrobiens doivent être retirées du troupeau, et leur produits devront passer en conventionnel.
+Comme il est dit dans l'introduction, la décision par l'éleveur de réformer une vache peut être soit volontaire, car il considère que la vache ne produit plus suffisamment de lait et qu'il est temps de la remplacer par une génisse. Soit involontaire, le plus souvent lié à un problème de santé ou de reproduction forçant l'éleveur à se séparer de son animal de manière précoce par rapport à ses attentes pour chaque animal.
+
+Un certain nombre d'études se sont intéressées à l'implication des mammites dans la réduction de la longévité des vaches laitières, la mammite étant la maladie la plus représentée en élevage laitier.Une étude de survie sur les élevages danois a été faite [@neerhof_relationships_2000], afin de démontrer qu'une vache traitée pour mammite au cours de sa lactation avait une probabilité plus élevée d'être réformée au cours de cette même lactation. Dans cette étude, les auteurs montrent également qu'être traité pour une mammite au cours d'une lactation n'a pas d'impact sur la probabilité d'être réformé à la lactation suivante. Aux États-Unis, sur des élevages de Holstein et de Jersiaises, [@caraviello_assessment_2005] Ils ont cherché à montrer que les vaches avec un SCC moyen par lactation très élevée (SCC \> 700 000 cell/mL) avaient 2 à 4 fois plus de chances d'être réformées de manière générale et 10 à 25 fois plus de chances d'être réformées pour cause de mammites. Cette observation est d'autant plus vraie pour les élevages qui maintenant un SCC de troupeau faible, ce qui serait donc le reflet d'une politique de réforme plus sévère dans ces élevages. Ils ont également observé que les vaches avec un SCC très faible étaient également plus à risque d'être réformées, particulièrement dans les élevages avec une forte prévalence de germes responsables de mammites, mais aucune conclusion ne peut encore être émise sur la possible existence d'une résistance immunitaire persistante induite par une première inflammation de la mamelle. Au Canada [@sewalem_analysis_2006] ont démontré qu'au-delà d'un certain seuil, le SCC augmente considérablement le risque de réforme, peu importe la race (ici ils ont pris Holstein, Jersiaise, Ayrshire). Selon eux, la recherche d'une amélioration de la santé mammaire des troupeaux serait positivement corrélée à l'amélioration de la longévité des animaux dans ces troupeaux. Sur des élevages biologiques aux Etats-Unis, [@fernandes_effect_2021] ont démontré que les vaches qui présentaient un SCC élevés les trois derniers mois de la précédente lactation, avaient plus de chance de présenter un SCC élevé durant le premier mois de la lactation en cours (ainsi qu'un SCC linear score plus élevé au cours de la lactation) . Ces mêmes vaches présentaient également une probabilité plus élevée d'être réformées. Il est tout de même important de rappeler qu'aux Etats-Unis, l'utilisation d'antibiotiques en élevage biologique est totalement interdite, les vaches nécessitant des traitements antimicrobiens doivent être retirées du troupeau, et leur produits devront passer en conventionnel.
 
 ### Niveau de production laitière
 
@@ -82,6 +108,15 @@ Un certain nombre d’études se sont intéressées à l’implication des mammi
 
 #### Inférence causale
 
+<!-- Je te suggère de faire une intro plus concrète à cette partie, avant de rentrer dans la théorie. 
+Si on veut prévenir une partie des réformes, il faut en identifier les causes. 
+Réformer pour mammite pourrait avoir des conséquences sur la dynamique des infections intramammaires et la production laitières.
+=> Besoin de comprendre causes et conséquence. Aller au-delà des associations qui ne sont pas forcément causales. Comment faire ?-->
+
+<!-- Que penserais-tu d'illustrer la méthode avec un exemple qui te servirait de fil conducteur? Un peu comme l'exemple de la transplantation cardiaque du premier chapitre de What if?-->
+
+<!-- Il me semble que ça serait plus facile à comprendre si tu introduisais les résultats potentiels et les contrefactuels avant la notion d'estimand. -->
+
 Avant même de commencer toute modélisation ou d'essayer de répondre à un problème par l'analyse de données, il est important de comprendre correctement les relations de cause à effet. Pour cela il faut connaître les bases de l'inférence causale et nous en profiterons pour introduire la notion d'"estimand".
 
 L'inférence causale est le processus par lequel on établit une relation de causalité entre un élément et ses effets. Elle s'attaque à une question fondamentale : Comment déterminer si un évènement est la cause d'un autre ? Nous observons quotidiennement qu'un évènement peut en causer un autre, par exemple on observe qu'un médicament soulage la douleur. Mais en réalité établir une relation de cause à effet est bien plus complexe qu'il n'y parait. En médecine, elle est essentielle pour identifier les traitements efficaces et comprendre les facteurs de risque des maladies. Elle s'appuie sur des méthodes statistiques et des outils rigoureux en tenant compte de divers facteurs tels que :
@@ -89,20 +124,30 @@ L'inférence causale est le processus par lequel on établit une relation de cau
 -   La causalité : une cause est un évènement qui entraîne le changement d'une variable, un effet.
 -   Les variables : ce sont les éléments que l'on mesure ou que l'on observe et qui peuvent être modifiés par la causalité.
 
+<!-- Pour établir la causalité il faut comparaison + randomisation dans l'allocation aux différents groupes comparés. Voir le chapitre Randomized experiments du livre What if? -->
+
 En principe, la méthode la plus rigoureuse pour établir une relation de cause à effet repose sur l'expérience aléatoire. Le principe est de scinder un groupe d'individus ou de sujets d'étude de manière aléatoire entre deux groupes, le groupe des sujets « traités » et le groupe des sujets « non traités » [@lundberg2021]. En comparant les résultats de ces deux groupes, il devient alors possible d'estimer l'effet causal d'un évènement.
 
 #### Estimands
 
+<!-- Je dirais que lundberg2021 propose une manière d'aborder le problème avec les estimands théorique et empirique. -->
+
 L"estimand", c'est le sujet de l'enquête, c'est la quantité que l'on cherche à évaluer qui représente l'effet causal que l'on souhaite mesurer. Il joue un rôle central car il permet de clarifier la question de recherche, choisir la méthodologie adéquate et donner une signification claire et rigoureuse aux résultats obtenus. Il existe plusieurs types d'estimand. Selon le papier de [@lundberg2021], il en existe en réalité deux. Le premier est l'estimand théorique. C'est l'objectif que l'on cherche réellement à atteindre dans l'étude, en dehors du modèle statistique. Il comporte deux éléments :
+
+<!-- On ne sait pas ce que sont les résultats potentiels. -->
 
 -   La quantité spécifique à chaque unité (individu, groupe) qui peut être un résultat observé, un résultat potentiel, la différence entre deux résultats potentiels voire même la combinaison de plusieurs interventions.
 -   La population cible sur pour laquelle on veut estimer cette quantité spécifique. L'estimand théorique représente donc ce que l'on voudrait vraiment savoir si on avait accès à toutes les données possibles, pour tous les individus et dans tous les scénarios envisageables. Le second est l'estimand empirique, qui se base uniquement sur des quantités observables dans les données.
 
 La première étape est donc de chercher les "estimands" et de réussir à établir des relations de causalité ou d'association. Les graphes orientés acycliques (appelés, DAG pour Directed Acyclic Graphs) sont un bon moyen d'illustrer le lien entre l'estimand théorique et l'estimand empirique. La section suivante décrit ce que sont les DAG.
 
+<!-- Je pense que dans ce cas, l'estimand pourrait être un risque relatif, un OR, ou une différence de risque. "Effet de" n'est pas assez précis. -->
+
 Si l'on doit retranscrire cette notion dans le cadre de l'étude, l'estimand théorique serait « Effet de la survenue d'une mammite sur la probabilité de réforme chez les vaches laitières françaises ». Il est très compliqué avec nos données de quantifier formellement cet effet. On peut cependant le diviser en plusieurs petits effets empiriques qui sont plus accessibles avec nos données. Comme l'effet de la survenue d'une mammite sur la probabilité de mise à la reproduction, l'effet de la survenue d'une mammite sur la probabilité de mort ou encore l'effet de la survenue d'une mammite sur la production laitière.
 
 Si nous étions dans un monde idéal, avec un accès à toutes les données possibles, il serait possible d'explorer les "Et si... ?" d'un évènement, autrement appelés les contrefactuels. L'approche contrefactuelle est une méthode consistant à imaginer des réalités alternatives, c'est-à-dire des scénarios qui auraient pu se produire si un évènement ou une condition avaient été différents. Le but est de comprendre l'effet causal d'un facteur en analysant ce qui aurait pu se passer si l'évènement n'avait pas été présent. Cette approche a bien entendu des limites, elle repose sur des suppositions qui peuvent être subjectives ou difficiles à prouver. On ne connait jamais réellement ce qui se serait réellement passé.
+
+<!-- Il me semble que l'estimand va au-delà de ATT et ATU. Regarder la terminologie précise. Je crois que l'estimand doit être une quantité comme différence de risque, OR ou RR. Ce que tu as écrit est pertinent, il faut juste que tu vérifies les noms qu'il faut donner uax différents concepts-->
 
 Selon le livre d'Hernan et Robins, « Causal Inference : What If » [@hernan_causal_2024], soit $Y$ une issue et $A$ une modalité de traitement. Toute unité statistique possède une paire d'issues potentielles. Ces deux issues sont toutes les deux plausibles, mais une seule se verra réalisée et l'autre restera contrefactuelle. Ces issues potentielles mènent à l'obtention "d'estimands" causaux. L'un d'eux pouvant s'avérer intéressant en épidémiologie, l'*Average Treatment Effect* (**ATE**) qui se définit comme l'effet moyen d'un traitement. Cet ATE peut se découper en deux "estimands" : l'*Average Treatment Effect on the Treated* (**ATT**) qui se définit comme l'effet moyen d'un traitement parmi les traités, et l'*Average Treatment Effect on the Untreated* (**ATU**) qui se définit comme l'effet moyen d'un traitement parmi les non traités. L'ATE est techniquement la moyenne pondérée entre ATT et ATU.
 
@@ -118,7 +163,20 @@ $$ATE = ATT \times p(A=1) + ATU \times p(A=0) $$
 
 Bien évidemment dans le monde réel, obtenir le $\delta_i$ de chaque lactation est impossible. On ne peut pas obtenir la valeur exacte de ATE, mais on peut s'en rapprocher. Pour cela il faut connaître tous les biais de sélection qui viennent influencer nos différentes relations causales.
 
+<!-- Je te suggère d'ajouter la partie sur les types de régression ici : logistique, Poisson. Cela te permettra d'inclure comment il est possible de définir les estimands à partir des résultats des régression en utilisant les prédictions marginales. -->
+
+## Modèles statistiques utilisés
+
+### Régression logistique
+
+### Régression de Poisson
+
+## Prédictions marginales et estimands
+
+
 #### Directed Acyclic Graphs (DAGs)
+
+<!-- Leur intérêt principal est de pouvoir identifier les variables à inclure dans un modèle. Si tu as le temps, ça pourrait être bien de donner quelques exemples de chaîne, fourche, collision. -->
 
 Les Directed Acyclic Graphs ou graphiques orientés acycliques en français sont des outils puissants en inférence causale pour représenter les relations de cause à effet entre variables. Leur utilisation permet d'améliorer la rigueur des analyses causales. Pour ce faire, il faut connaître un peu son organisation. Les nœuds représentent les variables. Entre chaque variable, se trouve des flèches indiquant le sens de la causalité. Ce qu'il est important de noter, c'est qu'il n'y a pas de boucles fermées, c'est-à-dire, qu'il n'y a pas de chemin qui revient à un nœud en passant pas d'autres, d'où la qualification d'acyclique. Un DAG de qualité permet de visualiser des relations causales complexes, en les décomposant de manière visuelle permettant ainsi de faciliter la compréhension des interactions entre les variables. Il permet de formuler des hypothèses sur ces interactions en différenciant les variables observables des variables non observables. Il permet également d'évaluer la solidité d'une analyse causale car on peut identifier des failles potentielles dans le raisonnement causal. Enfin il offre un moyen clair et concis de communiquer les résultats d'une étude avec un public moins technique.
 
@@ -134,23 +192,45 @@ Pour répondre ces questions, des données de contrôle laitier et de mammites c
 
 ## Matériels et méthodes
 
+
+## Données
+
+<!-- Décrire plus en détail les jeux de données et le processus de sélection. -->
+<!-- J'ai remonté 2 phrases de la section suivante. -->
+<!-- Les données de mammites cliniques ne mesurent pas la même chose que les données cellules. Il est justifié d'inclure les 2. -->
+
+Les données fournies pour cette étude sont essentiellement des données de contrôle laitier. Les données de mammites enregistrées par les éleveurs étant considérées seules comme peu exhaustives.
+
 L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L'étude prend en compte des données de contrôle laitier collectées entre janvier 1989 et mars 2024, pour un total de 3 818 887 enregistrements. Les différentes données fournies sont disponibles en annexe 1.
+
 
 ### Définition des mammites avec nos données
 
-Les données fournies pour cette étude sont éssentiellement des données de contrôle laitier. Les données de mammites enregristrées par les éleveurs étant considérées seules comme peu exhaustives. Il a été décidé de décomposer les mammites par modèle épidémiologique Selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules suppérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*. On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*. Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaisait pas le statut avant tarissement, ont été retirés de l'étude.
+<!-- Pour les définitions de différents types de mammites, envisage de faire un tableau. On doit voir les critères précis utilisés pour définir chaque type de mammite. -->
+
+ Il a été décidé de décomposer les mammites par modèle épidémiologique selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules supérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*. On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*. Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaissait pas le statut avant tarissement, ont été retirés de l'étude.
 
 ### Processus de décision de mise à la réforme
+
+<!-- Ce n'est pas de la décision de réforme dont tu parles ici, mais de la réforme. C'est différent. -->
+<!-- On n'a pas besoin de savoir que la cause boucherie était codée avec un B. Ça n'aide pas à la compréhension. Penser au lecteur. Le code peut être utile dans le tableau en annexe mais pas ici. -->
 
 Pour ce que est de la décision de mise à la réforme, pour chaque animal sorti, une date de sortie et une cause de sortie a été fournie. Si ce n'est pas le cas alors l'animal n'a pas été pris en compte dans l'étude par manque d'information. Une vache était considérée comme réformée lorsque la cause de sortie indiquée pour elle est *"B"* pour *"boucherie"* (voir les causes de sorties fournies en annexe).
 
 ### Choix des données et création du tableau de données utilisé pour l'étude statistique
+
+<!-- A-t-on besoin de connaître le nom du tableau lac dans le texte? -->
 
 Les données nous ont été fournies sous forme de plusieurs tableaux par l'IDELE. La première étape a donc été d'ordonner les données d'intérêt. Comme l'unité statistique de l'étude est la lactation on a créé un tableau nommé « lac » disponible en annexe 2. Ce tableau est créé à partir de données du contrôle laitier. Chaque lactation est traitée individuellement.
 
 ### Construction des modèles statistiques
 
 La première question qui se pose c'est par quels moyens la survenue d'une mammite peut entraîner la mise à la réforme précoce ? La schématisation de cela par le biais d'un DAG peut aider à y voir plus clair et comprendre ces différentes voies (@fig-dag-mammites). En effet, lors de la survenue d'une mammite, celle-ci peut entraîner un épisode clinique que l'organisme ne saura pas combattre et ainsi entraîner la mort. Bien évidemment les cas de mammites cliniques entraînant des conséquences sur l'état général de l'animal sont rares mais il est important de les prendre en considération. Cette mammite peut également entraîner une baisse de production laitière. Qu'elle soit définitive par la perte d'un ou plusieurs quartiers, ou temporaire à cause de la forte inflammation ou même indirecte lorsque l'éleveur écarte le lait du tank pour respecter les temps d'attente d'un éventuel traitement. Si cette baisse de production laitière entraîne un manque de rentabilité de la vache, l'éleveur peut estimer que le remplacement de cette vache est nécessaire. Finalement, cette mammite la persistance d'un taux de cellules élevé chez une vache peut entraîner la décision de non mise à la reproduction par l'éleveur qui ne veut pas garder cet animal à cause des pénalités financières appliquées sur un lait de tank haut en cellules.
+
+<!-- Expliquer les noms des nœuds. Une figure doit pouvoir se lire sans aller lire le texte. -->
+<!-- La distinction entre vache non mise à la reproduction, vache inséminée réformée non gestante et vache réformée gestante me semble importante à représenter et à expliquer. Je suppose que AI représente insémination artificielle et que F représente fécondation ou fertilité. S'appuyer là-dessus.
+Dire que c'est un schéma général qui va être décomposé dans les parties suivantes.-->
+
 
 ```{r DAG mammites, message = FALSE, warning = FALSE}
 #| echo: false
@@ -179,13 +259,24 @@ Ce DAG n'est pas tout à fait complet, il ne prend pas en compte les autres fact
 
 La démarche de cette première partie de l'étude a été de décomposer ce graphe par voies et d'identifier tous les facteurs pouvant intervenir dans la relation. Nous avons par la suite tenté de modéliser chacune de ces voies afin d'observer l'influence de ces facteurs sur la réforme des animaux.
 
-#### Modélisation de l'impact des mammites sur les performances reproductrices
+<!-- Je te suggère de supprimer ce niveau hiérarchique -->
+
+<!-- #### Modélisation de l'impact des mammites sur les performances reproductrices -->
+
+<!-- Pas sûr que citer les hormones aide à la compréhension. Envisage d'écrire qu'il faut un nouveau vêlage pour initier une nouvelle lactation. -->
 
 Pour pouvoir amener une vache à produire à nouveau du lait en quantité importante elle doit à nouveau vêler afin de lever l'effet inhibiteur de la progestérone sur la prolactine et permettre à nouveau la lactogenèse et la sécrétion lactée. Le système d'élevage laitier est donc basé sur la capacité d'une vache à revêler afin de produire une nouvelle vague de sécrétion lactée. Si pour une raison ou pour une autre cela n'est plus possible, la vache ne devient plus une valeur économique en termes de production de lait et le seul moyen de valoriser l'animal pour l'éleveur est de la réformer pour la production de viande.
 
--   **Décision de mise à la reproduction**
+<!-- Je te suggère d'en faire une partie, comme suit. Idem après. -->
+<!-- -   **Décision de mise à la reproduction** -->
+
+#### Décision de mise à la reproduction
+
+<!-- Il prend cette décision sur la base des informations qu'il a au moment où il pourrait mettre la vache à la reproduction. -->
 
 Partons du principe que la mise à la reproduction soit une décision de l'éleveur. Il prend cette décision au cours de la lactation actuelle pour permettre à la lactation suivante d'exister. On cherche donc à modéliser cette décision en fonction de la présence ou non d'une mammite. D'autres facteurs influencent cette décision.
+
+<!-- Si AI représente l'insémination artificielle dans le DAG précédent, utiliser la même abréviation ici. Peut être $AI_1$? -->
 
 ```{r mammite - repro, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-repro
@@ -232,11 +323,19 @@ ggdag(tidy_dag) +
   # title_y <- max(layout(graph)$y) + 0.2  # Ajuster pour l'espacement vertical
 ```
 
+<!-- L'étude veut évaluer l'existence de/quantifier une relation. L'utilisation du mot démontrer suggère qu'on va tenter de montrer que ça existe, même si ça n'est pas le cas. -->
+
+<!-- La décision ne dépend pas d'un effet aléatoire troupeau. L'effet aléatoire troupeau est une manière de prendre en compte des facteurs non observés qui pourraient agir sur la probabilité d'IA dans le troupeau, par exemple la disponibilité en génisses. -->
+
 La @fig-dag-mam-repro montre le DAG qui schématise cette décision et les variables qui interviennent potentiellement dans cette décision. La grande majorité des éleveurs laitiers aujourd'hui en France utilisent l'insémination artificielle (AI). Il est donc plus facile pour l'éleveur de gérer sa reproduction et de décider quelle vache inséminer pour l'amener à la prochaine lactation. Il doit donc prendre sa décision en fonction de plusieurs facteurs. Ce que cette étude cherche à démontrer c'est que la survenue d'une mammite en tout début de lactation va avoir un impact sur cette décision. Mais cette décision dépend également d'autres facteurs comme : la parité, la production laitière, le nombre de génisses en attente pour le renouvellement, ainsi qu'un effet aléatoire de troupeau. Ces deux derniers étant des données qui ne nous sont soit non fournies, soit difficile à évaluer.
+
+<!-- L'estimand serait plutôt une différence de probabilité. On peut la calculer à partir des probabilités marginales prédites.-->
 
 L'estimand ici est donc la recherche de l'effet causal des différentes catégories de mammites sur la probabilité de mise à la reproduction des vaches laitières.
 
-Le modèle qui convient le mieux est un modèle de **régression logistique binomial** car on utilise une varaible d'entrée de type binaire.Ce modèle utilise une fonction de lien *logit*. La régression logistique est utilisée pour modéliser une variable d'intérêt $Y$ binaire. Par exemple, si on s'intéresse à la mise à la reproduction d'une vache, on a $Y = 1$ si la vache est inséminée et $Y = 0$ sinon. Pour une vache $i$, la variable $Y_i$ suit une distribution de Bernoulli de paramètre $p_i$ où $p_i$ est la probabilité d'être inséminée au moins une fois, avec $p_i \in [0,1]$.
+<!-- Variable d'entrée = variable d'intérêt. Toutes les variables incluses dans le modèle sont en entrée du modèle. Ici, c'est le Y qui est binaire.-->
+
+Le modèle qui convient le mieux est un modèle de **régression logistique binomial** car on utilise une variable d'entrée de type binaire. Ce modèle utilise une fonction de lien *logit*. La régression logistique est utilisée pour modéliser une variable d'intérêt $Y$ binaire. Par exemple, si on s'intéresse à la mise à la reproduction d'une vache, on a $Y = 1$ si la vache est inséminée et $Y = 0$ sinon. Pour une vache $i$, la variable $Y_i$ suit une distribution de Bernoulli de paramètre $p_i$ où $p_i$ est la probabilité d'être inséminée au moins une fois, avec $p_i \in [0,1]$.
 
 $$Y_i \sim Bernoulli(p_i)$$ La régression logistique consiste à modéliser le logit de $p$ en fonction de covariables d'intérêt. La transformation logit se définit comme suit :
 
@@ -253,6 +352,9 @@ $$OR=\frac{P(Y=1|A=1)P(Y=0|A=1)}{P(Y=1|A=0)P(Y=0|A=0)}$$
 -   **Réussite à la première insémination**
 
 Une fois que l'éleveur a décidé de mettre son animal à la reproduction il l'insémine une première fois. Ce qui est espéré habituellement en élevage laitier, c'est qu'il y ait fécondation dès la première insémination afin d'obtenir un intervalle vêlage-première insémination (IVIA1) court et ainsi obtenir un intervalle vêlage-vêlage (IVV) plus court également. De nombreux facteurs sont connus comme ayant un impact direct sur la fertilité d'une vache laitière, comme l'âge, le stress thermique, le niveau production. Pour ce qui est de l'influence des mammites, les publications scientifiques semblent plutôt partagées et pour celles qui ont trouvé un effet, il n'est présent que dans la très courte période qui entoure l'IA. Les facteurs pris en compte dans cette étude son représentés dans la @fig-dag-mam-ai1.
+
+
+<!-- Est-ce que ici le AI1 est le F du premier DAG? -->
 
 ```{r mammite - IA1, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-ai1
@@ -299,7 +401,7 @@ ggdag(tidy_dag) +
 
 L'estimand correspond à la recherche de l'effet causal des différentes catégories de mammites sur la réussite à la $1^{ère}$ IA.
 
-Le modèle qui convient le mieux est là encore un modèle de **régression logistique binomial** car on utilise une varaible d'entrée de type binaire à nouveau.
+Le modèle qui convient le mieux est là encore un modèle de **régression logistique binomial** car on utilise une variable d'entrée de type binaire à nouveau.
 
 La formule de l'estimand est donc la formule de l'odds-ratio mais avec cette fois $Y=1$ quand la vache est fécondée dès la $1^{ère}$ IA :
 
@@ -366,7 +468,7 @@ L'estimand peut donc être formulé comme le rapport des taux d'incidence des in
 
 -   **Revêlage**
 
-Pour aller plus loin l'on pourrait se demander si une fois la vache inséminée elle s'assure une prochaine lactation et donc évite la réforme. Pour cela il faut qu'elle vêle à nouveau et donc on va chercher à modéliser l'impact des mammites sur la probabilité de revêler. De nombreux facteurs complexes interviennent tout au long de la gestation, comme l'âge, la présence d'une maladie systémique ou de l'appareil reproducteur, le stress thermique, etc. l'accès à toutes ses informations n'est pas possible avec ces données fournies. La @fig-dag-mam-revel schématise les variables qui peuvent être intégrées dans le modèle.
+Pour aller plus loin on pourrait se demander si une fois la vache inséminée elle s'assure une prochaine lactation et donc évite la réforme. Pour cela il faut qu'elle vêle à nouveau et donc on va chercher à modéliser l'impact des mammites sur la probabilité de revêler. De nombreux facteurs complexes interviennent tout au long de la gestation, comme l'âge, la présence d'une maladie systémique ou de l'appareil reproducteur, le stress thermique $\ldots$. l'accès à toutes ses informations n'est pas possible avec ces données fournies. La @fig-dag-mam-revel schématise les variables qui peuvent être intégrées dans le modèle.
 
 ```{r mammite - vêlage, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-revel
@@ -414,7 +516,7 @@ La variable d'entrée est là encore une variable binaire, donc le modèle qui c
 
 avec la recherche de l'odds-ration pour la variable d'entrée $Y=1$ si la vache revêle et $Y=0$ sinon. $$OR=\frac{P(Y=1|A=1)P(Y=0|A=1)}{P(Y=1|A=0)P(Y=0|A=0)}$$
 
-#### Modélisation de l'mpact des mammites sur le niveau de production laitière
+#### Modélisation de l'impact des mammites sur le niveau de production laitière
 
 Comme modélisé sur la @fig-dag-mammites, une autre voie qui pourrait conduire à une réforme suite à la survenue d'une mammite serait que la mammite en question entraîne une baisse de production laitière. Ce qui conduirait l'éleveur à décider de remplacer sa vache par une génisse.
 
@@ -466,11 +568,11 @@ La première étape à été de se demander comment représenter la production l
 
 On voit que le pic de lactation intervient généralement avant 40 jours de lactation et que la première phase de la courbe peut être assimilée à une droite passant par une ordonnée à l'origine.
 
-Pour simplifier l'étude, comme la phase d'intérêt est la première phase de lactation, il a été décidé d'assimiler les courbes de lactation à des droites. Il devient ainsi possible de comparer l'écart entre les droites de la lacation en cours et de la lactation précédente en fonction de la survenue ou non d'une mammite.
+Pour simplifier l'étude, comme la phase d'intérêt est la première phase de lactation, il a été décidé d'assimiler les courbes de lactation à des droites. Il devient ainsi possible de comparer l'écart entre les droites de la lactation en cours et de la lactation précédente en fonction de la survenue ou non d'une mammite.
 
 Le modèle le plus adapté est donc le modèle de régression linéaire mixte. avec $Y$ la production laitière qui peut être modélisée sous la forme : $$Y=\beta_0+\beta_ix_i+...+\beta_nx_n+\epsilon$$
 
-Avec $X=x$ les différentes variables explicatives et $\epsilon$ l'erreur standard.
+Avec $X=x$ les différentes variables explicatives et $\epsilon \sim N(0, \sigma^2)$ l'erreur standard.
 
 L'estimand est la recherche de l'effet causal des mammites sur la différence moyenne dans le niveau de production laitière pendant la première phase de lactation jusqu'au pic de lactation.
 
@@ -520,17 +622,21 @@ ggdag(tidy_dag) +
 
 L'estimand est la recherche de l'effet causal des mammites sur le risque instantané de mortalité d'une vache laitière.
 
-Un modèle logistique utilisant une fonction de lien suivant une famille binomiale est compliqué à utiliser dans ce cas. On se confronte à un biais cognitif connu sous le nom de « biais du survivant ». C’est-à-dire qu’on ne compte dans notre étude que ceux qui ont survécu et bien évidemment dans le modèle logistique tenté, la survenue d’une mammite apparaissait comme un facteur protecteur pour la survie de l’animal. Ce qui paraît absurde.
+<!-- Le biais n'est pas que cognitif ici ! -->
 
-Pour pallier à ce problème, le choix a été fait de changer de modèle statistique et de passer à une analyse de survie de type régression de Cox.
+Un modèle logistique utilisant une fonction de lien suivant une famille binomiale est compliqué à utiliser dans ce cas. On se confronte à un biais cognitif connu sous le nom de «biais du survivant». C'est-à-dire qu'on ne compte dans notre étude que ceux qui ont survécu et bien évidemment dans le modèle logistique tenté, la survenue d'une mammite apparaissait comme un facteur protecteur pour la survie de l'animal. Ce qui paraît absurde.
 
-La régression de Cox modélise une fonction de survie en fonction du temps $S(t)$ en prenant en considération une fonction de risque instantané qui suit une loi exponentielle $exp(β, X)$ $$h(t,X) = h_0(t)eβX$$
+Pour pallier ce problème, le choix a été fait de changer de modèle statistique et de passer à une analyse de survie de type régression de Cox.
+
+<!-- Je crois que le BX est en exposant ici. -->
+
+La régression de Cox modélise une fonction de survie en fonction du temps $S(t)$ en prenant en considération une fonction de risque instantané qui suit une loi exponentielle $exp(\beta, X)$ $$h(t,X) = h_0(t)e^{\beta X}$$
 
 Avec $t$ le paramètre de temps et $X$ les variables explicatives.
 
-$h_0(t)$ est une fonction de risque dépendante uniquement du temps, elle est inconnue d’après Cox, ce qui fait de ce modèle un modèle *semi-paramétrique* car il n’existe pas d’hypothèse sur la fonction du risque de base $h_0(t)$. C’est un modèle simplifié de la réalité mais qui s’adapte à beaucoup de situations.
+$h_0(t)$ est une fonction de risque dépendante uniquement du temps, elle est inconnue d'après Cox, ce qui fait de ce modèle un modèle *semi-paramétrique* car il n'existe pas d'hypothèse sur la fonction du risque de base $h_0(t)$. C'est un modèle simplifié de la réalité mais qui s'adapte à beaucoup de situations.
 
-La régression de Cox permet d’estimer si $X$ explique la fonction S(t) (analyse de la *p-value*) et le ratio des risques (*hazard ratio*).
+La régression de Cox permet d'estimer si $X$ explique la fonction S(t) (analyse de la *p-value*) et le ratio des risques (*hazard ratio*).
 
 #### Etude de la dynamique des infections intramammaires
 
