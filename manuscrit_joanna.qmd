@@ -532,7 +532,37 @@ $h_0(t)$ est une fonction de risque dépendante uniquement du temps, elle est in
 
 La régression de Cox permet d’estimer si $X$ explique la fonction S(t) (analyse de la *p-value*) et le ratio des risques (*hazard ratio*).
 
-#### Etude de la dynamique des infections intramammaires
+### Etude de la dynamique des infections intramammaires
+
+La prochaine étape est de décrire la dynamique des infections intramammaires en se servant des comptages cellulaires fournis. Cette étude s'intéresse tout particulièrment au statut de chaque vache avant tarissement et après vêlage. Toute la période entre ces deux évènements est une zone d'ombre car aucune donnée du contrôle laitier ne permet avec certitude de connaître le statut des vache à chaque instant.
+
+Trois sous-questions ont été soulevées :
+
+-   Quelle est la probabilité d'avoir un comptage cellulaire \> 200 000 cell/mL au dernier contrôle de la lactation, c'est-à-dire au dernier contrôle avant tarissement ?
+
+-   Quelle est la probabilité d'une guérison pendant le tarissement ?
+
+-   Quelle est la probabilité d'une nouvelle infection pendant le tarissement ?
+
+#### Probabilité d'avoir un SCC élevé au dernier contrôle avant tarissement
+
+La première chose que l'on a souhaité savoir c'est si, avec nos données, il était possible d'estimer la probabilité d'avoir un comptage cellulaire \> 200 000 cell/mL au dernier contrôle avant tarissement. Nous voulions également savoir si les différentes catégories de mammites ont un impact sur cette probabilité.
+
+Une variable binaire qui prend la valeur 1 si le dernier comptage de la lactation est élevé et 0 sinon a été créée. Ensuite une modélisation à partir d'une régression logistique binomiale a été faite.
+
+Pour les prédictions on a appliqué le même modèle que précédemment.
+
+#### Probabilité d'une guérison pendant le tarissement
+
+Pour connaître la probabilité de guérison au tarissement selon le modèle de mammite, on a créer une variable binaire qui prenait la valeur 1 si le dernier comptage de la lactation était élevé et que le premier comptage de la lactation suivante était inférieur au seuil. Elle prenait la valeur 0 sinon. On appliquait ensuite un régression logistique.
+
+Pour les prédictions on a appliqué le même modèle que précédemment.
+
+#### Probabilité d'une nouvelle infection acquise pendant le tarissement
+
+Pour connaître la probabilité de nouvelle infection au tarissement selon le modèle de mammite, on a créer une variable binaire qui prend la valeur 1 si le dernier comptage de la lactation était en dessous du seuil et le premier comptage de la lactation suivante était supérieur au seuil. Elle prenait la valeur 0 sinon. On appliquait ensuite une régression logistique.
+
+Pour les prédictions on a appliqué le même modèle que précédemment.
 
 ### Etude des contrefactuels
 
