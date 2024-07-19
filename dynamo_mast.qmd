@@ -5,7 +5,6 @@ format: pdf
 editor: visual
 ---
 
-
 ```{r setup}
 #| message: false
 library(tidyverse)
@@ -33,12 +32,116 @@ early_dim_cutoff <- 90
 scc_high_cutoff <- 200
 ```
 
-# Chargement des données utiles 
+# Chargement des données utiles
 
 ```{r}
-lac <- load("generated_datasets/laccomplet.RData")
+lac <- read.csv2("generated_datasets/lac_final.csv")
 ```
 
-# Probabilité d'un SCC élevé au dernier contrôle avant tarissement 
+# Probabilité d'un SCC élevé au dernier contrôle avant tarissement
 
+## modélisation 
+
+```{r}
+lac <- lac |> 
+  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"))
+```
+
+
+```{r}
+scc_high_dp_model <- glmer(infct_end_lac ~ parKat +
+                             milk_early_max_scaled_p1 +
+                             milk_early_max_scaled_p2 +
+                             milk_early_max_scaled_p3 +
+                             milk_early_max_scaled_p4 +
+                             mast_cat1 +
+                             (1| herd_id),
+                           family = binomial(link = "logit"),
+                           data = lac, 
+                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(infct_end_lac))
+
+summary(scc_high_dp_model)
+```
+
+## Prédictions 
+
+```{r}
+prd <- predictions(model = scc_high_dp_model,
+                   newdata = mast_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("")+
+  ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+# Probabilité de guérison au tarissement 
+
+## modélisation 
+
+```{r}
+cure_dp_model <- glmer(nxt_cure ~ parKat +
+                          milk_early_max_scaled_p1 +
+                             milk_early_max_scaled_p2 +
+                             milk_early_max_scaled_p3 +
+                             milk_early_max_scaled_p4 +
+                             mast_cat1 +
+                             (1| herd_id),
+                           family = binomial(link = "logit"),
+                           data = lac, 
+                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(nxt_cure))
+
+summary(cure_dp_model)
+```
+
+## Prédictions
+
+```{r}
+prd1 <- predictions(model = cure_dp_model,
+                   newdata = mast_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("")+
+  ylab("probabilité d'une guérison pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+# Probabilité d'une nouvelle infection après tarissement
+
+## modélisation 
+
+```{r}
+new_inf_model <- glmer(nxt_ninf ~ parKat +
+                          milk_early_max_scaled_p1 +
+                             milk_early_max_scaled_p2 +
+                             milk_early_max_scaled_p3 +
+                             milk_early_max_scaled_p4 +
+                             mast_cat1 +
+                             (1| herd_id),
+                           family = binomial(link = "logit"),
+                           data = lac, 
+                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(nxt_ninf))
+
+summary(new_inf_model)
+```
+
+## Prédictions 
+
+```{r}
+prd2 <- predictions(model = new_inf_model,
+                   newdata = mast_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("")+
+  ylab("probabilité d'une nouvelle infection pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
 
