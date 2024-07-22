@@ -374,11 +374,6 @@ hist(lac$milk_early_max_scaled,
      main = "Distribution du maximum de production laitière\npendant les 90 premiers jours de lactation",
      xlab = "Production laitière (distribution centrée réduite)")
 ```
-## Saisonnalité
-
-```{r}
-
-```
 
 
 ## Définition des mammites
@@ -739,7 +734,28 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-La figure ci-dessous représente les probabilités prédites qu'une vache soit mise à la reproduction en fonction de son statut vis-à-vis des mammites. Les multipares représentent la parité de référence qui est la parité 2.(J'aimerais le faire avec la parité 3 comme référence mais je ne sais pour quelle raison mon modèle ne converge plus...)
+```{r}
+prd <- marginaleffects::predictions(model = repro_full1, 
+                             newdata = parit_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("parité") + 
+  ylab("Probabilité de mise à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+prd <- predictions(model = repro_full1, 
+                             newdata = milk_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() 
+```
+
 
 ## Probabilité de revêlage pour les vaches mises à la reproduction
 
@@ -853,6 +869,29 @@ ggplot(prd, aes(x = factor(mast_cat1), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
+```{r}
+prd <- marginaleffects::predictions(model = repro_revel_mast1, 
+                             newdata = parit_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("parité") + 
+  ylab("Probabilité de revêlage") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+prd <- predictions(model = repro_revel_mast1, 
+                             newdata = milk_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() 
+```
+
+
 ## Probabilité d'être pleine après la première iA
 
 On commence par nommer une variable "sucess_ai1"
@@ -965,8 +1004,30 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
   xlab("") + 
-  ylab("Probabilité d'être pleine suite à la première insémination") +
+  ylab("Probabilité de succès à la première insémination") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+prd <- marginaleffects::predictions(model = success_ia_full1, 
+                             newdata = parit_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("parité") + 
+  ylab("Probabilité de succès à la première insémination") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+prd <- predictions(model = success_ia_full1, 
+                             newdata = milk_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() 
 ```
 
 ## Probabilité d'être réinséminée
@@ -1059,6 +1120,28 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   xlab("") + 
   ylab("Probabilité d'être réinséminée") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+prd <- marginaleffects::predictions(model = ai_number_full1, 
+                             newdata = parit_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("parité") + 
+  ylab("Probabilité d'être réinséminé") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+  prd <- predictions(model = ai_number_full1, 
+                             newdata = milk_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() 
 ```
 
 ```{r}

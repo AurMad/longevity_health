@@ -124,6 +124,8 @@ L'inférence causale est le processus par lequel on établit une relation de cau
 -   La causalité : une cause est un évènement qui entraîne le changement d'une variable, un effet.
 -   Les variables : ce sont les éléments que l'on mesure ou que l'on observe et qui peuvent être modifiés par la causalité.
 
+Par exemple, si on considère qu'une vache est atteinte d'une infection intramammaire d'origine bactérienne, comment observer si la survenue de cette affection a pu causer à cette vache d'être réformée précocemment par rapport à une vache qui n'a jamais été atteinte d'une infection intramammaire.
+
 <!-- Pour établir la causalité il faut comparaison + randomisation dans l'allocation aux différents groupes comparés. Voir le chapitre Randomized experiments du livre What if? -->
 
 En principe, la méthode la plus rigoureuse pour établir une relation de cause à effet repose sur l'expérience aléatoire. Le principe est de scinder un groupe d'individus ou de sujets d'étude de manière aléatoire entre deux groupes, le groupe des sujets « traités » et le groupe des sujets « non traités » [@lundberg2021]. En comparant les résultats de ces deux groupes, il devient alors possible d'estimer l'effet causal d'un évènement.
