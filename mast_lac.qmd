@@ -37,11 +37,10 @@ rec <- read_csv2("generated_datasets/idele_rec_final.csv") |>
   ) |> 
   filter(!is.na(milk) & !is.na(scc))
 ```
-
 ```{r}
-
-lac <- 
+lac <-  read_csv2("generated_datasets/lac.csv")
 ```
+
 
 ## Sélection d'un échantillon
 
@@ -49,13 +48,13 @@ Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les donn�
 
 Génération d'une liste d'élevages uniques.
 
-```{r}
+```{r, eval = FALSE}
 herd_list <- unique(rec$herd_id)
 ```
 
 On sélectionne un échantillon de 10 élevages au hasard.
 
-```{r Selection echantillon de 10 elevages}
+```{r Selection echantillon de 10 elevages, eval = FALSE}
 set.seed(42) #On garde la même graine si on veut conserver le même échantillon
 herd_random_sample <- sample(herd_list, 10, replace = FALSE)
 rec <- rec |> 
@@ -138,3 +137,85 @@ rec |>
 ```
 
 Le maximum de production semble se trouver pour les rangs 3 et 4.
+
+
+## Regroupement des données de mammites au contrôle laitier 
+
+```{r}
+lac <- lac |> 
+  mutate(herd_id = as.character(herd_id))
+```
+
+
+```{r}
+rec_lac <- left_join(rec,
+          lac |> 
+            select(mast_cat1, anim_id, parity, dp_mis),
+          join_by(anim_id, parity))
+```
+
+le tableau lac ne prend que des données qui débutent à partir de 2009 donc on procède au même tri ici. On essaye de garder la première phase de la courbe afin de pouvoir l'apparenter à la phase linéaire de la courbe. 
+
+```{r}
+rec_lac <- rec_lac |> 
+  filter(!is.na(mast_cat1), dim <= 40)
+```
+
+# Modélisation 
+
+## Régression linéaire simple 
+
+```{r}
+lac_start_model <- lmer(milk ~ dim + mast_cat1 + (1|herd_id), data = rec_lac, subset = dp_mis == 0)
+
+summary(lac_start_model)
+```
+
+## Ajout de l'intération 
+
+```{r}
+lac_start_model_full <- lmer(milk ~ dim + mast_cat1 + dim*mast_cat1 + (1|herd_id), data = rec_lac, subset = dp_mis == 0)
+
+summary(lac_start_model_full)
+```
+
+# Prédictions 
+
+```{r}
+## catégories de statuts mammites pour les primipares
+mast_p1 <- rec_lac |>
+  filter(parity == 1 & dp_mis == 0) |>
+  distinct(mast_cat1) |>
+  mutate(mast_cat1 = as.character(mast_cat1)) |>
+  pull(mast_cat1)
+## catégories de statuts mammites pour les multipares
+mast_p2 <- rec_lac |>
+  filter(parity != 1 & dp_mis == 0) |>
+  distinct(mast_cat1) |>
+  mutate(mast_cat1 = as.character(mast_cat1)) |>
+  pull(mast_cat1)
+
+lac_pred <- tibble(
+  mast_cat1 = factor(c(mast_p1, mast_p2)),
+  dim = 0 
+)
+
+level_order <- c("primi_healthy", "primi_env", "primi_cont",
+                 "dpLow_healthy", "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
+```
+
+```{r}
+prd <- predictions(model = lac_start_model_full, 
+                             newdata = lac_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("production laitière") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+```
+
