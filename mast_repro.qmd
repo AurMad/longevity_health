@@ -440,28 +440,23 @@ mast_lev_p2 <- lac |>
   mutate(mast_cat1 = as.character(mast_cat1)) |>
   pull(mast_cat1)
 
-## jeu de données
+
+```
+
+```{r}
 mast_pred <- tibble(
   parKat = factor(c(rep(1, length(mast_lev_p1)),
                     rep(2, length(mast_lev_p2)))),
   mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
-  milk_early_max_scaled_p1 = 0,
-  milk_early_max_scaled_p2 = 0,
-  milk_early_max_scaled_p3 = 0,
-  milk_early_max_scaled_p4 = 0
-)
-
-
-mast_pred1 <- tibble(
-  parKat = factor(c(rep(1, length(mast_lev_p1)),
-                    rep(2, length(mast_lev_p2)))),
-  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
+  race = factor(c(rep("PH",length(mast_cat1)))),
   milk_early_max_scaled_p1 = 0,
   milk_early_max_scaled_p2 = 0,
   milk_early_max_scaled_p3 = 0,
   milk_early_max_scaled_p4 = 0,
-  n_ai = 0)
+)
+```
 
+```{r}
 level_order <- c("primi_healthy", "primi_env", "primi_cont",
                  "dpLow_healthy", "dpLow_env", "dpLow_cont",
                  "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
@@ -469,17 +464,29 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
 ```
 
 ```{r}
+parit_pred1 <- tibble(
+  parKat = factor(1:4),
+   mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "multi_healthy")),
+  race = factor(c(rep("PH",length(parKat)))),
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0,
+)
+```
+
+```{r}
 parit_pred <- expand_grid(
   parKat = factor(1:4),
-  milk_early_max = 0
+  milk_early_max = 0,
+  race = factor("PH")
 ) |> 
   mutate(
     milk_early_max_scaled_p1 = 0,
     milk_early_max_scaled_p2 = 0,
     milk_early_max_scaled_p3 = 0,
     milk_early_max_scaled_p4 = 0,
-    n_ai = 0,
-    mast_cat2 = factor(ifelse(parKat == 1, "primi_healthy", "multi_healthy"))
+    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "multi_healthy"))
   )
 ```
 
@@ -495,15 +502,39 @@ milk_pred <- expand_grid(
     milk_early_max_scaled_p2 = ifelse(parKat == 2, milk_early_max_scaled, 0),
     milk_early_max_scaled_p3 = ifelse(parKat == 3, milk_early_max_scaled, 0),
     milk_early_max_scaled_p4 = ifelse(parKat == 4, milk_early_max_scaled, 0),
-    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy")),
+    race = "PH"
   )
 ```
+
+```{r}
+# Définir les catégories de race
+race_levels <- c("croisée", "Montbeliarde", "Normande", "other")
+```
+
+
+```{r}
+race_pred <- expand_grid(
+  race = factor(race_levels), 
+  milk_early_max = 0
+) |> 
+  mutate(
+    milk_early_max_scaled_p1 = 0,
+    milk_early_max_scaled_p2 = 0,
+    milk_early_max_scaled_p3 = 0,
+    milk_early_max_scaled_p4 = 0,
+    parKat = 3,
+    mast_cat1 = "multi_healthy"
+  )
+```
+
 
 ```{r}
 write_csv2(mast_pred, "generated_datasets/mast_pred.csv")
 write_csv2(mast_pred1, "generated_datasets/mast_pred1.csv")
 write_csv2(parit_pred, "generated_datasets/parity_pred.csv")
 write_csv2(milk_pred, "generated_datasets/milk_pred.csv")
+write_csv2(race_pred, "generated_datasets/race_pred.csv")
 ```
 
 
@@ -722,7 +753,7 @@ summary(mast_pred)
 ## Probabilité de mise à la reproduction selon le statut de l'animal
 
 ```{r}
-prd <- marginaleffects::predictions(model = repro_full1, 
+prd <- predictions(model = repro_full1, 
                              newdata = mast_pred, 
                            re.form = NA, type = "response")
 
@@ -735,8 +766,8 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
 ```
 
 ```{r}
-prd <- marginaleffects::predictions(model = repro_full1, 
-                             newdata = parit_pred, 
+prd <- predictions(model = repro_full1, 
+                             newdata = parit_pred1, 
                            re.form = NA, type = "response")
 
 ggplot(prd, aes(x = factor(parKat), y = estimate)) +

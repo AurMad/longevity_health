@@ -1,0 +1,47 @@
+---
+title: "Etude des contrefactuels"
+author: "Joanna"
+format: pdf
+editor: visual
+---
+
+
+```{r setup}
+#| message: false
+library(tidyverse)
+library(lme4)
+library(marginaleffects)
+library(readxl)
+library(ggplot2)
+library(corrplot)
+library(questionr)
+library(car)
+library(ggeffects)
+library(GGally)
+library(effects)
+library(ggpubr)
+library(RColorBrewer)
+```
+
+```{r seuil utilisés}
+## nombre de jours en dessous duquel on considère qu'on est en début de lactation
+## en moyenne avant première IA
+early_dim_cutoff <- 90
+## SCC cut-off
+## seuil de cellules au-delà duquel on considère
+## qu'il y a mammite clinique
+scc_high_cutoff <- 200
+```
+
+# Chargement des données utiles 
+
+```{r}
+lac <- read.csv2("generated_datasets/lac_final.csv")
+```
+
+# Création de l'échantillon d'étude 
+
+```{r}
+
+```
+
