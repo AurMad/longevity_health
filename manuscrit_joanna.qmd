@@ -243,15 +243,17 @@ La régression logistique est largement utilisé dans les domaines de la médeci
 
 ### Régression de Poisson
 
-Afin de se rapprocher au maximum d'une régression logistique, nous avons décidé d'utiliser une régression de Poisson qui convient parfaitement à une variable d'entrée de type comptage. Pour une vache $i$ : $$Y_i \sim Poisson(\lambda_i)$$
+Afin de se rapprocher au maximum d'une régression logistique, nous avons décidé d'utiliser une régression de Poisson qui convient parfaitement à une variable d'entrée de type comptage. Cette méthode est souvent utilisée pour modéliser le nombre d'évènements survenant dans un intervalle de temps donné. Pour une vache $i$ nous avons le modèle suivant : $$Y_i \sim Poisson(\lambda_i)$$
 
-Soit Y une variable d'entrée qui suit une loi de poisson P(λ) c'est-à-dire que $E(Y) = V(Y) = λ$. Le but de la régression de Poisson est de réussir a modéliser la loi suivante :
+Où $Y_i$ représente le nombre d'évènements observés, tels que le nombre d'inséminations d'une vache laitière sur une lactation par exemple.
+
+Dans ce modèle, $Y$ une variable d'entrée qui suit une loi de poisson \^$P(λ)$ c'est-à-dire que son espérance et sa variance sont égale, $E(Y) = V(Y) = λ$. Le but de la régression de Poisson est de réussir a modéliser la loi suivante qui modélise la relation entre les varaibles explicatives et le paramètre $\lambda$ qui est la moyenne des évènements comptés :
 
 $$ln(\lambda_i) = \alpha + \beta_1 x_1 + … + \beta_n x_n$$
 
-Avec $(X=x)$ les différentes variables explicatives utilisées dans le modèle.
+Avec $(X=x)$ les différentes variables explicatives utilisées dans le modèle et $\alpha$, $\beta_1$,...,$\beta_n$ les coefficients à estimer. L'équation montre que cette relation est log-linéaire.
 
-L'estimand peut donc être formulé comme le rapport des taux d'incidence des inséminations $IRR$. $$IRR=\frac{\lambda_1}{\lambda_0}$$
+L'estimand peut donc être formulé comme le rapport des taux d'incidence $IRR$ qui mesure l'effet des variables explicatives sur le taux d'occurence de l'évènement. $$IRR=\frac{\lambda_1}{\lambda_0}$$. Où $\lambda_0$ et $\lambda_1$ sont les taux d'incidence pour deux niveaux de la variable explicative. Un $IRR$ supérieur à 1 indique une augmentation du taux d'évènement pour $\lambda_1$.
 
 ### Régression de Cox
 
