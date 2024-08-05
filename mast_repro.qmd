@@ -162,14 +162,16 @@ lac_race <- lac_race |>
 ```{r}
 lac <- left_join(lac, lac_race) 
 ```
-```{r}
-table(lac$race)
-```
+
 
 
 ```{r}
 lac <- lac |> 
-  mutate(race = relevel(factor(race), ref = "PH"))
+  mutate(race = relevel(factor(race), ref="PH"))
+```
+
+```{r}
+table(lac$race)
 ```
 
 ## Données mammites cliniques
@@ -375,7 +377,6 @@ hist(lac$milk_early_max_scaled,
      xlab = "Production laitière (distribution centrée réduite)")
 ```
 
-
 ## Définition des mammites
 
 Afin de modéliser l'impact des mammites sur la décision de reproduction, il est important de définir les différents types de mammites. On en définit ici : - mammite à réservoir environnementale : typiquement c'est un épisode de mammite isolé qui guérit rapidement et qui ne suit pas un modèle contagieux mais plutôt un modèle sporadique - mammite à réservoir mammaire : mammite qui tend à passer à la chronicité et entraîner une forte contagions au sein de l'élevage.
@@ -417,12 +418,6 @@ lac <- lac |>
 
 ```
 
-### enregistrement
-
-```{r}
-
-write_csv2(lac, "generated_datasets/lac.csv")
-```
 
 ## Probabilité de mise à la reproduction selon le statut de l'animal
 
@@ -456,8 +451,6 @@ mast_pred <- tibble(
 )
 ```
 
-
-
 ```{r}
 level_order <- c("primi_healthy", "primi_env", "primi_cont",
                  "dpLow_healthy", "dpLow_env", "dpLow_cont",
@@ -465,21 +458,21 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
 
 ```
 
-
-```{r, eval = FALSE}
+```{r}
 parit_pred <- expand_grid(
   parKat = factor(1:4),
-  milk_early_max = 0
-) |> 
-  mutate(
-    milk_early_max_scaled_p1 = 0,
-    milk_early_max_scaled_p2 = 0,
-    milk_early_max_scaled_p3 = 0,
-    milk_early_max_scaled_p4 = 0,
-    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "multi_healthy"))
-  )
-```
+  milk_early_max = 0) |> 
+  mutate(race = "PH", # Ajustez cette ligne selon les niveaux de la variable 'race'
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0,
+  mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+)
 
+parit_pred <- parit_pred |> 
+  mutate(race = as.factor(race))
+```
 
 ```{r}
 milk_pred <- expand_grid(
@@ -503,28 +496,24 @@ milk_pred <- expand_grid(
 race_levels <- c("croisée", "Montbeliarde", "Normande", "other")
 ```
 
-
 ```{r}
-race_pred <- tibble(
-  race = factor(race_levels),
-  mast_cat1 = factor(c(rep("multi_healthy", length(race)))),
-  parKat = factor(c(rep(3, length(race)))),
+race_pred <- expand_grid(
+  race = factor(c("PH", "Normande", "croisée", "Montbeliarde", "other")),
+  milk_early_max = 0) |> 
+  mutate(parKat = factor(c(rep(3, length(race)))), # Ajustez cette ligne selon les niveaux de la variable 'race'
   milk_early_max_scaled_p1 = 0,
   milk_early_max_scaled_p2 = 0,
   milk_early_max_scaled_p3 = 0,
-  milk_early_max_scaled_p4 = 0
-)
+  milk_early_max_scaled_p4 = 0,
+  mast_cat1 = factor(c(rep("dpLow_healthy", length(race)))))
 ```
-
 
 ```{r}
 write_csv2(mast_pred, "generated_datasets/mast_pred.csv")
-write_csv2(mast_pred1, "generated_datasets/mast_pred1.csv")
 write_csv2(parit_pred, "generated_datasets/parity_pred.csv")
 write_csv2(milk_pred, "generated_datasets/milk_pred.csv")
 write_csv2(race_pred, "generated_datasets/race_pred.csv")
 ```
-
 
 ## Décision de mise à la reproduction
 
@@ -534,9 +523,6 @@ lac <- lac |>
     repro = ifelse(!is.na(n_ai) | !is.na(calv_date_nxt), 1, 0))
 ```
 
-```{r}
-str(lac)
-```
 
 # Méthode
 
@@ -712,8 +698,6 @@ t_repro <- tbl_regression(repro_full1, exponentiate = TRUE)
 print(t_repro)
 ```
 
-
-
 On va donc maintenant vérifier sa pertinence.
 
 ### Vérification du modèle
@@ -750,12 +734,10 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("Probabilité de mise à la reproduction") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
+
+
 ```{r}
-str(parit_pred1)
-```
-
-
-```{r, eval = FALSE}
 prd <- predictions(model = repro_full1, 
                    newdata = parit_pred, 
                    re.form = NA, type = "response")
@@ -768,8 +750,7 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-
-```{r, eval = FALSE}
+```{r}
 prd <- predictions(model = repro_full1, 
                    newdata = race_pred, 
                    re.form = NA, type = "response")
@@ -790,7 +771,6 @@ prd <- predictions(model = repro_full1,
 ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
-
 
 ## Probabilité de revêlage pour les vaches mises à la reproduction
 
@@ -905,7 +885,7 @@ ggplot(prd, aes(x = factor(mast_cat1), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-```{r, eval = FALSE }
+```{r}
 prd <- marginaleffects::predictions(model = repro_revel_mast, 
                              newdata = parit_pred, 
                            re.form = NA, type = "response")
@@ -919,6 +899,19 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
 ```
 
 ```{r}
+prd <- marginaleffects::predictions(model = repro_revel_mast, 
+                             newdata = race_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  xlab("race") + 
+  ylab("Probabilité de revêlage") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
 prd <- predictions(model = repro_revel_mast, 
                              newdata = milk_pred, 
                            re.form = NA, type = "response")
@@ -926,7 +919,6 @@ prd <- predictions(model = repro_revel_mast,
 ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
-
 
 ## Probabilité d'être pleine après la première iA
 
@@ -1045,7 +1037,7 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-```{r, eval = FALSE}
+```{r}
 prd <- marginaleffects::predictions(model = success_ia_full1, 
                              newdata = parit_pred, 
                            re.form = NA, type = "response")
@@ -1054,6 +1046,18 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
   xlab("parité") + 
+  ylab("Probabilité de succès à la première insémination") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+```{r}
+prd <- marginaleffects::predictions(model = success_ia_full1, 
+                             newdata = race_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  xlab("race") + 
   ylab("Probabilité de succès à la première insémination") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
@@ -1145,7 +1149,7 @@ vif(ai_number_full)
 
 Le nombre d'ia ne semble pas pouvoir être expliqué par la présence ou non de mammite. Il semblerait que la seule variable explicative intéressante pour le modèle soit la parité.
 
-### Prédictions de la réussite à la première insémination selon le type de mammite
+### Prédictions d'être réinséminé selon le type de mammite
 
 ```{r}
 prd <- marginaleffects::predictions(model = ai_number_full1, 
@@ -1160,7 +1164,7 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-```{r, eval = FALSE}
+```{r}
 prd <- marginaleffects::predictions(model = ai_number_full1, 
                              newdata = parit_pred, 
                            re.form = NA, type = "response")
@@ -1169,6 +1173,18 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
   xlab("parité") + 
+  ylab("Probabilité d'être réinséminé") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+```{r}
+prd <- marginaleffects::predictions(model = ai_number_full1, 
+                             newdata = race_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  xlab("race") + 
   ylab("Probabilité d'être réinséminé") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
@@ -1181,7 +1197,11 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
 ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
+### enregistrement
 
 ```{r}
-write.csv2(lac, "generated_datasets/lac_final.csv")
+
+write_csv2(lac, "generated_datasets/lac.csv")
 ```
+
+
