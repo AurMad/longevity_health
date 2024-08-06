@@ -56,7 +56,7 @@ rec <- read_csv2("generated_datasets/idele_rec_final.csv") |>
 
 ## Sélection d'un échantillon
 
-Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les données du contrôle laitier arfin de simplifier la construction des modèles 
+Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les données du contrôle laitier arfin de simplifier la construction des modèles
 
 Génération d'une liste d'élevages uniques.
 
@@ -73,19 +73,14 @@ rec <- rec |>
   filter(herd_id %in% herd_random_sample)
 ```
 
-## Chargement du tableau de lactation 
+## Chargement du tableau de lactation
 
 ```{r}
-
-setwd("C:/Users/joestevesara/Documents/stage_these/longevity_health")
-
 # Charger le fichier CSV
 lac <- read_csv2("generated_datasets/lac.csv")
 ```
 
-
 La première donnée nécessaire pour réaliser une régression de cox est une donnée de temps.
-
 
 ## Création d'une variable de temps
 
@@ -93,13 +88,12 @@ La première donnée nécessaire pour réaliser une régression de cox est une d
 str(lac)
 ```
 
-On va attribuer un identifiant unique à chaque lactation 
+On va attribuer un identifiant unique à chaque lactation
 
 ```{r}
 lac <- lac |> 
   mutate(lac_id = 1:nrow(lac))
 ```
-
 
 On va considérer le temps de survie comme la capacité de réaliser une lactation entière. Donc c'est l'intervalle vêlage-vêlage.
 
@@ -130,7 +124,7 @@ lac <- lac |>
   mutate(time = as.numeric(time))
 ```
 
-TRUE ~ NA_real_  # Gérer d'autres cas si nécessaire
+TRUE \~ NA_real\_ \# Gérer d'autres cas si nécessaire
 
 ## Création d'une variable d'évènement
 
@@ -145,9 +139,7 @@ lac <- lac |>
 
 On utilise plusieurs paramètres
 
--la parité 
--la production laitière
-_la survenue et le type de mammite
+-la parité -la production laitière \_la survenue et le type de mammite
 
 # Méthode
 
@@ -231,7 +223,6 @@ g$plot <- g$plot + theme(
 print(g)
 ```
 
-
 La courbe n'est pas très parlante car la probabilité de mort suite à la survenue d'une mammite est suremement très proche de 0 quel que soit le type de mammite.
 
 on va essayer de vérifier cela en simplifiant le type de mammite avec juste mammite ou pas mammite
@@ -240,7 +231,6 @@ on va essayer de vérifier cela en simplifiant le type de mammite avec juste mam
 mast_death <- survfit(Surv(time, death) ~ mast_cat2, type = "kaplan-meier", data = lac |>
                         filter(n_ctrl_early > 0 & dp_mis == 0))
 ```
-
 
 ```{r}
 # Créer le graphique de survie avec ggsurvplot
@@ -274,7 +264,8 @@ g$plot <- g$plot + theme(
 # Afficher le graphique
 print(g)
 ```
-On va essayer de simplifier encore plus ce grapique 
+
+On va essayer de simplifier encore plus ce grapique
 
 ```{r}
 lac <- lac |> 
@@ -324,9 +315,8 @@ print(g)
 
 ```{r}
 lac <- lac |> 
-  mutate(parKat = as.factor(parKat)
+  mutate(parKat = as.factor(parKat))
 ```
-
 
 ```{r modele simple}
 # Ajuster un modèle de Cox simple
@@ -336,23 +326,25 @@ cox_model_simple <- coxme(Surv(time, death) ~ parKat + (1 | herd_id), data = lac
 summary(cox_model_simple)
 ```
 
-On va essayer de compliquer un peu ce modèle en y ajoutant plus de variables explicatives. 
+On va essayer de compliquer un peu ce modèle en y ajoutant plus de variables explicatives.
 
 ```{r}
-cox_model_essai <- coxph(Surv(time, death) ~ parKat + mast_cat1, data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
+cox_model_essai <- coxph(Surv(time, death) ~ parKat + mast_cat3, data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
 
 summary(cox_model_essai)
 
 start_values <- coef(cox_model_essai)
 ```
+```{r}
+sapply(subset_data[, c("parKat", "mast_cat3")], function(x) length(unique(x)))
+```
 
 
 ```{r}
 # Ajuster le modèle avec mast_cat1 uniquement
-model_mast_cat1 <- coxme(Surv(time, death) ~ mast_cat1 + (1 | herd_id), data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
+model_mast_cat1 <- coxme(Surv(time, death) ~ parKat + mast_cat3 + (1 | herd_id), data = lac, subset = n_ctrl_early > 0 & dp_mis == 0, init = start_values)
 summary(model_mast_cat1)
 ```
-
 
 ```{r}
 # Vérifiez les données pour les valeurs manquantes
@@ -370,11 +362,11 @@ sum(is.infinite(lac$parKat))
 sum(is.infinite(lac$mast_cat1))
 sum(is.infinite(lac$herd_id))
 ```
+
 ```{r}
 lac <- lac |> 
   mutate(death = as.factor(death))
 ```
-
 
 ```{r}
 # Assurez-vous que les variables sont correctement formatées
@@ -401,10 +393,7 @@ anova(fit1, fit2)
 
 ```
 
-
 ```{r modele plus complique}
-
-
 cox_model_full <- coxme(Surv(time, death) ~ parKat + mast_cat1 + (1 | herd_id), data = lac, subset = (n_ctrl_early > 0 & dp_mis == 0), init = start_values)
 summary(cox_model_full)
 ```
