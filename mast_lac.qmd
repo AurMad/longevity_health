@@ -1,7 +1,7 @@
 ---
 title: "impact des mammites sur le niveau de production laitière"
 author: "Joanna"
-format: pdf
+format: html
 editor: visual
 ---
 
@@ -37,10 +37,10 @@ rec <- read_csv2("generated_datasets/idele_rec_final.csv") |>
   ) |> 
   filter(!is.na(milk) & !is.na(scc))
 ```
+
 ```{r}
 lac <-  read_csv2("generated_datasets/lac.csv")
 ```
-
 
 ## Sélection d'un échantillon
 
@@ -138,32 +138,30 @@ rec |>
 
 Le maximum de production semble se trouver pour les rangs 3 et 4.
 
-
-## Regroupement des données de mammites au contrôle laitier 
+## Regroupement des données de mammites au contrôle laitier
 
 ```{r}
 lac <- lac |> 
   mutate(herd_id = as.character(herd_id))
 ```
 
-
 ```{r}
 rec_lac <- left_join(rec,
           lac |> 
-            select(mast_cat1, anim_id, parity, dp_mis),
+            select(mast_cat1, anim_id, parity, dp_mis, parKat, race),
           join_by(anim_id, parity))
 ```
 
-le tableau lac ne prend que des données qui débutent à partir de 2009 donc on procède au même tri ici. On essaye de garder la première phase de la courbe afin de pouvoir l'apparenter à la phase linéaire de la courbe. 
+le tableau lac ne prend que des données qui débutent à partir de 2009 donc on procède au même tri ici. On essaye de garder la première phase de la courbe afin de pouvoir l'apparenter à la phase linéaire de la courbe.
 
 ```{r}
 rec_lac <- rec_lac |> 
   filter(!is.na(mast_cat1), dim <= 40)
 ```
 
-# Modélisation 
+# Modélisation
 
-## Régression linéaire simple 
+## Régression linéaire simple
 
 ```{r}
 lac_start_model <- lmer(milk ~ dim + mast_cat1 + (1|herd_id), data = rec_lac, subset = dp_mis == 0)
@@ -171,7 +169,7 @@ lac_start_model <- lmer(milk ~ dim + mast_cat1 + (1|herd_id), data = rec_lac, su
 summary(lac_start_model)
 ```
 
-## Ajout de l'intération 
+## Ajout de l'intération
 
 ```{r}
 lac_start_model_full <- lmer(milk ~ dim + mast_cat1 + dim*mast_cat1 + (1|herd_id), data = rec_lac, subset = dp_mis == 0)
@@ -179,7 +177,25 @@ lac_start_model_full <- lmer(milk ~ dim + mast_cat1 + dim*mast_cat1 + (1|herd_id
 summary(lac_start_model_full)
 ```
 
-# Prédictions 
+```{r}
+rec_lac <- rec_lac |> 
+  mutate(parKat = relevel(as.factor(parKat), ref = "3"))
+
+lac_start_model_full1 <- lmer(milk ~ dim + mast_cat1 + dim*mast_cat1 + parKat + (1|herd_id), data = rec_lac, subset = dp_mis == 0)
+
+summary(lac_start_model_full1)
+```
+
+```{r}
+rec_lac <- rec_lac |> 
+  mutate(race = relevel(as.factor(race), ref = "PH"))
+
+lac_start_model_full2 <- lmer(milk ~ dim + mast_cat1 + dim*mast_cat1 + parKat + race + (1|herd_id), data = rec_lac, subset = dp_mis == 0)
+
+summary(lac_start_model_full2)
+```
+
+# Prédictions
 
 ```{r}
 ## catégories de statuts mammites pour les primipares
@@ -195,9 +211,12 @@ mast_p2 <- rec_lac |>
   mutate(mast_cat1 = as.character(mast_cat1)) |>
   pull(mast_cat1)
 
-lac_pred <- tibble(
+lac_mast_pred <- tibble(
   mast_cat1 = factor(c(mast_p1, mast_p2)),
-  dim = 0 
+   parKat = factor(c(rep(1, length(mast_p1)),
+                    rep(2, length(mast_p2)))),
+  dim = 0,
+  race = factor(c(rep("PH",length(mast_cat1))))
 )
 
 level_order <- c("primi_healthy", "primi_env", "primi_cont",
@@ -205,9 +224,10 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
                  "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
 ```
 
+
 ```{r}
-prd <- predictions(model = lac_start_model_full, 
-                             newdata = lac_pred, 
+prd <- predictions(model = lac_start_model_full2, 
+                             newdata = lac_mast_pred, 
                            re.form = NA, type = "response")
 
 ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
@@ -217,5 +237,79 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("production laitière") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
+
+```{r}
+lac_dim_pred <- expand_grid(
+  dim = seq(0, 40, by = 1),
+  parKat = factor(1 : 4)
+) |> 
+  mutate(
+  mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy")),
+    race = "PH")
+```
+
+```{r}
+prd <- predictions(model = lac_start_model_full2, 
+                             newdata = lac_dim_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = dim, y = estimate, col = parKat)) +
+  geom_line() 
+```
+
+```{r}
+lac_parit_pred <- expand_grid(
+  parKat = factor(1:4),
+  dim = 0) |> 
+  mutate(race = "PH", # Ajustez cette ligne selon les niveaux de la variable 'race'
+  mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+)
+
+lac_parit_pred <- lac_parit_pred |> 
+  mutate(race = as.factor(race))
+```
+
+```{r}
+prd <- predictions(model = lac_start_model_full2, 
+                   newdata = lac_parit_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  xlab("parité") + 
+  ylab("Production laitière") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+```{r}
+lac_race_pred <- expand_grid(
+  race = factor(c("PH", "Normande", "croisée", "Montbeliarde", "other")),
+  dim = 0) |> 
+  mutate(parKat = factor(c(rep(3, length(race)))), # Ajustez cette ligne selon les niveaux de la variable 'race'
+  mast_cat1 = factor(c(rep("dpLow_healthy", length(race)))))
+```
+
+```{r}
+prd <- predictions(model = lac_start_model_full2, 
+                   newdata = lac_race_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  xlab("race") + 
+  ylab("Probabilité de mise à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+# Enregistrements 
+
+```{r}
+write_csv2(rec_lac, "generated_datasets/rec_lac.csv")
+write_csv2(lac_mast_pred, "generated_datasets/lac_mast_pred.csv")
+write_csv2(lac_dim_pred, "generated_datasets/lac_dim_pred.csv")
+write_csv2(lac_race_pred, "generated_datasets/lac_race_pred.csv")
+write_csv2(lac_parit_pred, "generated_datasets/lac_parit_pred.csv")
 ```
 

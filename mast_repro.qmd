@@ -163,8 +163,6 @@ lac_race <- lac_race |>
 lac <- left_join(lac, lac_race) 
 ```
 
-
-
 ```{r}
 lac <- lac |> 
   mutate(race = relevel(factor(race), ref="PH"))
@@ -418,7 +416,6 @@ lac <- lac |>
 
 ```
 
-
 ## Probabilité de mise à la reproduction selon le statut de l'animal
 
 ```{r formatage des categories de mammites pour les predictions}
@@ -522,7 +519,6 @@ lac <- lac |>
   mutate(
     repro = ifelse(!is.na(n_ai) | !is.na(calv_date_nxt), 1, 0))
 ```
-
 
 # Méthode
 
@@ -734,8 +730,6 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("Probabilité de mise à la reproduction") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
-
-
 
 ```{r}
 prd <- predictions(model = repro_full1, 
@@ -1049,6 +1043,7 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   ylab("Probabilité de succès à la première insémination") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
 ```{r}
 prd <- marginaleffects::predictions(model = success_ia_full1, 
                              newdata = race_pred, 
@@ -1176,6 +1171,7 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   ylab("Probabilité d'être réinséminé") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
 ```{r}
 prd <- marginaleffects::predictions(model = ai_number_full1, 
                              newdata = race_pred, 
@@ -1197,11 +1193,10 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
 ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
+
 ### enregistrement
 
 ```{r}
 
 write_csv2(lac, "generated_datasets/lac.csv")
 ```
-
-
