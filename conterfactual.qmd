@@ -5,7 +5,6 @@ format: pdf
 editor: visual
 ---
 
-
 ```{r setup}
 #| message: false
 library(tidyverse)
@@ -33,15 +32,116 @@ early_dim_cutoff <- 90
 scc_high_cutoff <- 200
 ```
 
-# Chargement des données utiles 
+# Chargement des données utiles
 
 ```{r}
-lac <- read.csv2("generated_datasets/lac_final.csv")
+lac <- read.csv2("generated_datasets/lac.csv")
 ```
 
-# Création de l'échantillon d'étude 
+# Création de l'échantillon d'étude
+
+Prenons tous les animaux qui ont vêler en 2022 par exemple.
+
+```{r}
+lac_ctr <- lac |> 
+  filter(year == "2022", !is.na(calv_date_prev))
+```
+
+```{r}
+right_calv <- min(lac_ctr$calv_date_prev)
+left_calv <- max(lac_ctr$calv_date_prev)
+```
+
+```{r}
+lac_exp <- lac |> 
+  filter(right_calv <= calv_date & calv_date <= left_calv)
+```
+
+# Mise en place de l'issue contrefactuelle
+
+```{r}
+lac_exp <- lac_exp |> 
+  mutate(repro_ctr = ifelse(mast_cat1 != "primi_healthy" & mast_cat1 != "dpLow_healthy" & mast_cat1 != "primi_env" & mast_cat1 != "dpHigh_healthy" & mast_cat1 != "dpHigh_env" & mast_cat1 != "dpLow_env", 0, 1))
+```
 
 ```{r}
 
+p<-ggplot(lac_exp |> 
+            filter(n_ctrl_early > 0 & dp_mis == 0)) +
+aes(x = repro_ctr, fill = mast_cat1) +
+geom_bar(position="fill") +
+xlab("mise à la reproduction") +
+ylab("Effectifs") +
+labs(fill = "catégories") +
+scale_fill_brewer(palette = "PRGn") 
+p+theme_bw()
+## x = Nbre de groupe sur l'axe x
+## fill = Nbre de barres par groupe
+## position="fill" = rend le graphique proportionnel et empile les barres
 ```
 
+```{r}
+lac_exp <- lac_exp |> 
+  arrange(anim_id) |>
+  mutate(lac_id = 1:nrow(lac_exp))
+```
+
+```{r}
+lac_exp <- lac_exp |> 
+  group_by(anim_id) |> 
+  mutate(delete = ifelse(lag(repro) != lag(repro_ctr), 1, 0))
+```
+
+```{r}
+lac_exp_deleted <- lac_exp |> 
+  filter(delete != 1)
+```
+
+# Prédictions
+
+```{r}
+lac_exp_deleted <- lac_exp_deleted |> 
+  mutate(race = as.factor(race),
+         mast_cat1 = as.factor(mast_cat1),
+         parKat = as.factor(parKat))
+```
+
+
+```{r}
+prd <- predictions(model = scc_high_dp_model,
+                   newdata = lac_exp_deleted,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("Statut mammite")+
+  ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+```{r}
+prd1 <- predictions(model = cure_dp_model,
+                   newdata = lac_exp_deleted,
+                   re.form = NA, type = "response")
+
+ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("statut mammite")+
+  ylab("probabilité d'une guérison pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+
+```{r}
+prd2 <- predictions(model = new_inf_model,
+                   newdata = lac_exp_deleted,
+                   re.form = NA, type = "response")
+
+ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("statut mammite")+
+  ylab("probabilité d'une nouvelle infection pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
