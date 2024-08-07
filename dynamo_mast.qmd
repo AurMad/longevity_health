@@ -1,7 +1,7 @@
 ---
 title: "dynamiques des infections intramammaires lors du tarissement"
 author: "Joanna"
-format: pdf
+format: html
 editor: visual
 ---
 
@@ -35,7 +35,18 @@ scc_high_cutoff <- 200
 # Chargement des données utiles
 
 ```{r}
-lac <- read.csv2("generated_datasets/lac_final.csv")
+lac <- read.csv2("generated_datasets/lac.csv")
+mast_pred <- read.csv2("generated_datasets/mast_pred.csv")
+parit_pred <- read.csv2("generated_datasets/parity_pred.csv")
+milk_pred <- read.csv2("generated_datasets/milk_pred.csv")
+race_pred <- read.csv2("generated_datasets/race_pred.csv")
+```
+
+```{r}
+level_order <- c("primi_healthy", "primi_env", "primi_cont",
+                 "dpLow_healthy", "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
+
 ```
 
 # Probabilité d'un SCC élevé au dernier contrôle avant tarissement
@@ -44,7 +55,8 @@ lac <- read.csv2("generated_datasets/lac_final.csv")
 
 ```{r}
 lac <- lac |> 
-  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"))
+  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"),
+         race = relevel(factor(race), ref="PH"))
 ```
 
 
@@ -55,15 +67,25 @@ scc_high_dp_model <- glmer(infct_end_lac ~ parKat +
                              milk_early_max_scaled_p3 +
                              milk_early_max_scaled_p4 +
                              mast_cat1 +
+                             race +
                              (1| herd_id),
                            family = binomial(link = "logit"),
                            data = lac, 
-                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(infct_end_lac))
+                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(infct_end_lac),
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
 summary(scc_high_dp_model)
 ```
 
 ## Prédictions 
+
+```{r}
+mast_pred <- mast_pred |> 
+  mutate(race = as.factor(race),
+         parKat = as.factor(parKat),
+         mast_cat1 = as.factor(mast_cat1))
+```
+
 
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
@@ -73,9 +95,64 @@ prd <- predictions(model = scc_high_dp_model,
 ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("")+
+  xlab("Statut mammite")+
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+```{r}
+parit_pred <- parit_pred |> 
+  mutate(race = as.factor(race),
+         parKat = as.factor(parKat),
+         mast_cat1 = as.factor(mast_cat1))
+```
+
+
+```{r}
+prd <- predictions(model = scc_high_dp_model,
+                   newdata = parit_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y=conf.low, xend = parKat, yend = conf.high))+
+  xlab("parité")+
+  ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+```{r}
+race_pred <- race_pred |> 
+  mutate(race = as.factor(race),
+         parKat = as.factor(parKat),
+         mast_cat1 = as.factor(mast_cat1))
+```
+
+
+```{r}
+prd <- predictions(model = scc_high_dp_model,
+                   newdata = race_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y=conf.low, xend = race, yend = conf.high))+
+  xlab("race")+
+  ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+```{r}
+milk_pred <- milk_pred |> 
+  mutate(race = as.factor(race),
+         parKat = as.factor(parKat),
+         mast_cat1 = as.factor(mast_cat1))
+```
+
+```{r}
+prd <- predictions(model = scc_high_dp_model, 
+                   newdata = milk_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() 
 ```
 
 # Probabilité de guérison au tarissement 
@@ -89,10 +166,12 @@ cure_dp_model <- glmer(nxt_cure ~ parKat +
                              milk_early_max_scaled_p3 +
                              milk_early_max_scaled_p4 +
                              mast_cat1 +
+                             race + 
                              (1| herd_id),
                            family = binomial(link = "logit"),
                            data = lac, 
-                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(nxt_cure))
+                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(nxt_cure),
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
 summary(cure_dp_model)
 ```
@@ -107,10 +186,48 @@ prd1 <- predictions(model = cure_dp_model,
 ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("")+
+  xlab("statut mammite")+
   ylab("probabilité d'une guérison pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
+
+```{r}
+prd <- predictions(model = cure_dp_model,
+                   newdata = parit_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y=conf.low, xend = parKat, yend = conf.high))+
+  xlab("parité")+
+  ylab("probabilité d'une guérison pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+```{r}
+prd <- predictions(model = cure_dp_model,
+                   newdata = race_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y=conf.low, xend = race, yend = conf.high))+
+  xlab("race")+
+  ylab("probabilité d'une guérison pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+
+```{r}
+prd <- predictions(model = cure_dp_model, 
+                   newdata = milk_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() 
+```
+
 # Probabilité d'une nouvelle infection après tarissement
 
 ## modélisation 
@@ -122,10 +239,12 @@ new_inf_model <- glmer(nxt_ninf ~ parKat +
                              milk_early_max_scaled_p3 +
                              milk_early_max_scaled_p4 +
                              mast_cat1 +
+                             race +
                              (1| herd_id),
                            family = binomial(link = "logit"),
                            data = lac, 
-                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(nxt_ninf))
+                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(nxt_ninf),
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
 summary(new_inf_model)
 ```
@@ -140,8 +259,44 @@ prd2 <- predictions(model = new_inf_model,
 ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("")+
+  xlab("statut mammite")+
   ylab("probabilité d'une nouvelle infection pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
+
+```{r}
+prd <- predictions(model = new_inf_model,
+                   newdata = parit_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y=conf.low, xend = parKat, yend = conf.high))+
+  xlab("parité")+
+  ylab("probabilité d'une nouvelle infection pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+```{r}
+prd <- predictions(model = new_inf_model,
+                   newdata = race_pred,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y=conf.low, xend = race, yend = conf.high))+
+  xlab("race")+
+  ylab("probabilité d'une nouvelle infection pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+
+```{r}
+prd <- predictions(model = new_inf_model, 
+                   newdata = milk_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() 
+```

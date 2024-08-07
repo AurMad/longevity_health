@@ -63,13 +63,13 @@ Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les donn�
 
 Génération d'une liste d'élevages uniques.
 
-```{r}
+```{r, eval = FALSE}
 herd_list <- unique(rec$herd_id)
 ```
 
 On sélectionne un échantillon de 10 élevages au hasard.
 
-```{r Selection echantillon de 10 elevages}
+```{r Selection echantillon de 10 elevages, eval = FALSE}
 set.seed(42) #On garde la même graine si on veut conserver le même échantillon
 herd_random_sample <- sample(herd_list, 10, replace = FALSE)
 rec <- rec |> 
@@ -446,6 +446,18 @@ mast_pred <- tibble(
   milk_early_max_scaled_p3 = 0,
   milk_early_max_scaled_p4 = 0,
 )
+
+mast_pred1 <- tibble(
+  parKat = factor(c(rep(1, length(mast_lev_p1)),
+                    rep(2, length(mast_lev_p2)))),
+  mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
+  race = factor(c(rep("PH",length(mast_cat1)))),
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0,
+  n_ai = 0
+)
 ```
 
 ```{r}
@@ -469,6 +481,21 @@ parit_pred <- expand_grid(
 
 parit_pred <- parit_pred |> 
   mutate(race = as.factor(race))
+
+parit_pred1 <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = 0) |> 
+  mutate(race = "PH", # Ajustez cette ligne selon les niveaux de la variable 'race'
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0,
+  n_ai = 0,
+  mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+)
+
+parit_pred1 <- parit_pred1 |> 
+  mutate(race = as.factor(race))
 ```
 
 ```{r}
@@ -486,7 +513,38 @@ milk_pred <- expand_grid(
     mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy")),
     race = "PH"
   )
+
+milk_pred1 <- expand_grid(
+  parKat = factor(1:4),
+  milk_early_max = seq(10, 50, by = .1)
+ ) |> 
+  mutate(
+    milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
+           milk_early_max_sd,
+    n_ai = 0, 
+    milk_early_max_scaled_p1 = ifelse(parKat == 1, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p2 = ifelse(parKat == 2, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p3 = ifelse(parKat == 3, milk_early_max_scaled, 0),
+    milk_early_max_scaled_p4 = ifelse(parKat == 4, milk_early_max_scaled, 0),
+    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy")),
+    race = "PH"
+  )
 ```
+
+```{r}
+nai_pred <- expand_grid(
+  parKat = factor(1:4),
+  n_ai = seq(1, 10, by = 1)
+ ) |> 
+  mutate(
+    milk_early_max_scaled_p1 = 0,
+    milk_early_max_scaled_p2 = 0,
+    milk_early_max_scaled_p3 = 0,
+    milk_early_max_scaled_p4 = 0,
+    mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy")),
+    race = "PH")
+```
+
 
 ```{r}
 # Définir les catégories de race
@@ -502,6 +560,17 @@ race_pred <- expand_grid(
   milk_early_max_scaled_p2 = 0,
   milk_early_max_scaled_p3 = 0,
   milk_early_max_scaled_p4 = 0,
+  mast_cat1 = factor(c(rep("dpLow_healthy", length(race)))))
+
+race_pred1 <- expand_grid(
+  race = factor(c("PH", "Normande", "croisée", "Montbeliarde", "other")),
+  milk_early_max = 0) |> 
+  mutate(parKat = factor(c(rep(3, length(race)))), # Ajustez cette ligne selon les niveaux de la variable 'race'
+  milk_early_max_scaled_p1 = 0,
+  milk_early_max_scaled_p2 = 0,
+  milk_early_max_scaled_p3 = 0,
+  milk_early_max_scaled_p4 = 0,
+  n_ai = 0,
   mast_cat1 = factor(c(rep("dpLow_healthy", length(race)))))
 ```
 
@@ -612,7 +681,7 @@ prob_repro
 
 ### Modèle avec parité et production laitière
 
-```{r}
+```{r, eval = FALSE}
 repro_parity <- glmer(repro ~ parKat + (1 | herd_id),
                     data = lac,
                     subset = n_ctrl_early > 0 & dp_mis == 0,
@@ -621,7 +690,7 @@ repro_parity <- glmer(repro ~ parKat + (1 | herd_id),
 summary(repro_parity)
 ```
 
-```{r}
+```{r, eval = FALSE}
 repro_parity_milk <- glmer(repro ~ parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
@@ -637,7 +706,7 @@ summary(repro_parity_milk)
 
 Ce modèle semble correct, les résidus varient de -19.7623 à 2.4783, avec une médiane de 0.3450, ce qui suggère quelques observations extrêmes (potentiellement influentes).
 
-```{r}
+```{r, eval = FALSE}
 repro_parity_milk_race <- glmer(repro ~ parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
@@ -656,7 +725,7 @@ On va maintenant ajouter la variable d'intêret qui est la présence ou non de m
 
 ### Modèle complet
 
-```{r}
+```{r, eval = FALSE}
 repro_full <- glmer(repro ~ parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
@@ -682,7 +751,8 @@ repro_full1 <- glmer(repro ~ parKat +
                       (1 | herd_id),
                     data = lac,
                     subset = n_ctrl_early > 0 & dp_mis == 0,
-                    family = binomial(link = "logit"))
+                    family = binomial(link = "logit"),
+                    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
 summary(repro_full1)
 ```
@@ -822,7 +892,7 @@ prob_revel
 
 On va maintenant compliquer graduellement le modèle en essayant de trouver le modèle le plus juste possible. On va commencer par utiliser exactement les mêmes variables que pour le modèle de mise à la reproduction.
 
-```{r}
+```{r, eval = FALSE}
 repro_revel_mast <- glmer(repro_revel ~  parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
@@ -867,8 +937,8 @@ vif(repro_revel_mast1)
 ## Probabilité de revêlage suite à la mise à la reproduction selon la parité
 
 ```{r}
-prd <- marginaleffects::predictions(model = repro_revel_mast,
-                             newdata = mast_pred,
+prd <- marginaleffects::predictions(model = repro_revel_mast1,
+                             newdata = mast_pred1,
                            re.form = NA, type = "response")
 
 ggplot(prd, aes(x = factor(mast_cat1), y = estimate)) +
@@ -880,8 +950,8 @@ ggplot(prd, aes(x = factor(mast_cat1), y = estimate)) +
 ```
 
 ```{r}
-prd <- marginaleffects::predictions(model = repro_revel_mast, 
-                             newdata = parit_pred, 
+prd <- marginaleffects::predictions(model = repro_revel_mast1, 
+                             newdata = parit_pred1, 
                            re.form = NA, type = "response")
 
 ggplot(prd, aes(x = factor(parKat), y = estimate)) +
@@ -893,8 +963,8 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
 ```
 
 ```{r}
-prd <- marginaleffects::predictions(model = repro_revel_mast, 
-                             newdata = race_pred, 
+prd <- marginaleffects::predictions(model = repro_revel_mast1, 
+                             newdata = race_pred1, 
                            re.form = NA, type = "response")
 
 ggplot(prd, aes(x = factor(race), y = estimate)) +
@@ -906,8 +976,22 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
 ```
 
 ```{r}
-prd <- predictions(model = repro_revel_mast, 
-                             newdata = milk_pred, 
+prd <- marginaleffects::predictions(model = repro_revel_mast1, 
+                             newdata = nai_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(n_ai), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = n_ai, y = conf.low, xend = n_ai, yend = conf.high)) +
+  xlab("nombre d'IA") + 
+  ylab("Probabilité de revêlage") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
+```{r}
+prd <- predictions(model = repro_revel_mast1, 
+                             newdata = milk_pred1, 
                            re.form = NA, type = "response")
 
 ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
@@ -970,7 +1054,7 @@ prob_success_ai1
 
 ### Modèle complet
 
-```{r}
+```{r, eval = FALSE}
 success_ia_full <- glmer(success_ai1 ~ parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
