@@ -77,6 +77,11 @@ scc_high_dp_model <- glmer(infct_end_lac ~ parKat +
 summary(scc_high_dp_model)
 ```
 
+```{r}
+write_csv2(scc_high_dp_model, "generated_datasets/scc_high_dp_model.csv")
+```
+
+
 ## Prédictions 
 
 ```{r}
@@ -176,6 +181,11 @@ cure_dp_model <- glmer(nxt_cure ~ parKat +
 summary(cure_dp_model)
 ```
 
+```{r}
+write_csv2(cure_dp_model, "generated_datasets/cure_dp_model.csv")
+```
+
+
 ## Prédictions
 
 ```{r}
@@ -248,6 +258,11 @@ new_inf_model <- glmer(nxt_ninf ~ parKat +
 
 summary(new_inf_model)
 ```
+
+```{r}
+write_csv2(new_inf_model, "generated_datasets/new_inf_model.csv")
+```
+
 
 ## Prédictions 
 
