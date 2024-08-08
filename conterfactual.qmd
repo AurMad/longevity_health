@@ -1,7 +1,7 @@
 ---
 title: "Etude des contrefactuels"
 author: "Joanna"
-format: pdf
+format: html
 editor: visual
 ---
 
@@ -36,7 +36,19 @@ scc_high_cutoff <- 200
 
 ```{r}
 lac <- read.csv2("generated_datasets/lac.csv")
+load("generated_datasets/scc_high_dp_model.RData")
+load("generated_datasets/cure_dp_model.RData")
+load("generated_datasets/new_inf_model.RData")
 ```
+
+
+```{r}
+level_order <- c("primi_healthy", "primi_env", "primi_cont",
+                 "dpLow_healthy", "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
+
+```
+
 
 # Création de l'échantillon d'étude
 
@@ -47,9 +59,11 @@ lac_ctr <- lac |>
   filter(year == "2022", !is.na(calv_date_prev))
 ```
 
+On prend esuite toutes les dates des précédents vêlages, ce qui nous permet de sélectionner un échantillon plus grand d'animaux. Dont les génisses mises à la reproduction pour la première fois et les vaches qui n'ont pas revêlé. 
+
 ```{r}
-right_calv <- min(lac_ctr$calv_date_prev)
-left_calv <- max(lac_ctr$calv_date_prev)
+right_calv <- max(lac_ctr$calv_date_prev)
+left_calv <- min(lac_ctr$calv_date_prev)
 ```
 
 ```{r}
@@ -145,3 +159,15 @@ ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("probabilité d'une nouvelle infection pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
+**Le problème avec cette approche c'est que les modèles prédictifs sont entraînés sur des données réelles et si on applique simplement ces modèles aux données où l'issue a été modifiée de manière contrefactuelle, les prédictions seront biaisées car elles sont influencées par les caractéristiques observées. Cela explique la grande variabilité des résultats.**
+
+On va commencer par calculer le nombre d'animaux réformés pour chaque troupeau. 
+
+```{r}
+lac_exp_deleted <- lac_exp_deleted |> 
+  group_by(herd_id) |> 
+   mutate(culling = )
+```
+
+
