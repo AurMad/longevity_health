@@ -4,3 +4,16 @@ fertility_lac.csv
 lac_repro.csv
 lac_cull.csv
 idele_rec_final.csv
+race_pred.csv
+parity_pred.csv
+milk_pred.csv
+mast_pred.csv
+mast_pred1.csv
+lac_parit_pred.csv
+lac_mast_pred.csv
+lac_race_pred.csv
+rec_lac.csv
+cure_dp_model.RData
+lac_dim_pred.csv
+new_inf_model.RData
+scc_high_dp_model.RData
