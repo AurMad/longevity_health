@@ -1,8 +1,13 @@
 ---
 title: "Impact des mammites sur la reproduction"
 author: "Joanna"
-format: pdf
+format: 
+  html:
+    toc: true
+    toc-depth: 3
 editor: visual
+execute: 
+  cache: true
 ---
 
 ```{r setup}
@@ -23,7 +28,7 @@ library(RColorBrewer)
 library(gtsummary)
 ```
 
-```{r seuil utilisés}
+```{r seuils utilisés}
 ## nombre de jours en dessous duquel on considère qu'on est en début de lactation
 ## en moyenne avant première IA
 early_dim_cutoff <- 90
@@ -33,11 +38,13 @@ early_dim_cutoff <- 90
 scc_high_cutoff <- 200
 ```
 
-# Matériel
+# Données
 
-## Données
+## Contrôles élémentaires
 
-Chargement des données de contrôle laitier fournies par IDELE
+### Chargement des données
+
+Chargement des données de contrôle laitier fournies par IDELE. On a une ligne par vache-date de contrôle.
 
 ```{r chargement donnees}
 #| message: false
@@ -56,29 +63,44 @@ rec <- read_csv2("generated_datasets/idele_rec_final.csv") |>
   ) |> 
   filter(!is.na(milk) & !is.na(scc))
 ```
+Il y a dans ce jeux de données initial :
 
-## Sélection d'un échantillon
+- `r nrow(rec)` contrôles individuels
+- `r length(unique(rec$anim_id))` vaches
+- `r length(unique(rec$herd_id))` élevages
 
-Cette partie ne sert qu'à sélectionner un échantillon parmis toutes les données du contrôle laitier arfin de simplifier la construction des modèles
+Des contrôles laitiers sont disponibles entre le `r min(rec$ctrl_date)` et le `r max(rec$ctrl_date)`.
+
+### Sélection d'un échantillon (optionnel / test du code)
+
+Cette partie ne sert qu'à sélectionner un échantillon parmi toutes les données du contrôle laitier afin de simplifier la construction des modèles
 
 Génération d'une liste d'élevages uniques.
 
-```{r, eval = FALSE}
+```{r list of herds}
+#| eval: false
 herd_list <- unique(rec$herd_id)
 ```
 
-On sélectionne un échantillon de 10 élevages au hasard.
+Dans un premier temps, on sélectionne un échantillon de 10 élevages au hasard pour tester le code. Ne pas évaluer dans la version finale.
 
-```{r Selection echantillon de 10 elevages, eval = FALSE}
+```{r Selection echantillon de 10 elevages}
+#| eval: false
 set.seed(42) #On garde la même graine si on veut conserver le même échantillon
+
 herd_random_sample <- sample(herd_list, 10, replace = FALSE)
+
 rec <- rec |> 
   filter(herd_id %in% herd_random_sample)
 ```
 
-## Création d'un jeu de données lactations
+## Données lactation
 
-Dans ce jeu de données on a le contrôle laitier par lactation, qui est l'unité statistique qui nous intéresse. A cela on ajoute les données de la lactation précédente et celles de la lactation suivante. A patir de ces données on définit si la vache est infectée ou non avant tarissement, infectée ou non en début de la lactation suivante et à partir de ça on peut définir si elle s'est infecté au cours du tarissement, si elle a guérit au tarissement ou si elle est restée infectée malgré le tarissement.
+La lactation, qui est l'unité statistique qui nous intéresse.
+
+### Création d'un jeu de données lactations à partir des contrôles élémentaires
+
+On créée un jeu de données lactation à partir des contrôles élémentaires. A cela on ajoute les données de la lactation précédente et celles de la lactation suivante. A partir de ces données on définit si la vache est infectée ou non avant tarissement, infectée ou non en début de la lactation suivante et à partir de ça on peut définir si elle s'est infecté au cours du tarissement, si elle a guérit au tarissement ou si elle est restée infectée malgré le tarissement.
 
 ```{r}
 lac <- rec |> 
@@ -130,15 +152,18 @@ lac <- rec |>
     ) |> 
   ungroup()
 ```
+Il y a à ce stade `r nrow(lac)` lactations chez `r length(unique(lac$anim_id))` vaches dans `r length(unique(lac$herd_id))` élevages.
 
-## Ajout des codes de races
+### Ajout des codes races
 
-```{r}
+On va chercher les races de chaque vache dans le fichier `genea.txt`.
+
+```{r codes races}
 path_to_file <- "data/genea.txt"
+
 genea <- read_csv2(path_to_file) |>
-rename(anim_id = ANIM,
-code_race = CORABO) |>
-select(anim_id, code_race)
+  rename(anim_id = ANIM, code_race = CORABO) |>
+  select(anim_id, code_race)
 ```
 
 ```{r}
@@ -151,6 +176,21 @@ lac_race <- left_join(
 ```
 
 ```{r regroupement des races}
+# plus lisible que la syntaxe orignale 
+lac_race <- lac_race |> 
+  mutate(race = case_when(code_race == "66" | code_race == "60" ~ "PH",
+                          code_race == "46" | code_race == "40" ~ "Montbéliarde",
+                          code_race == "56" | code_race == "50" ~ "Normande",
+                          code_race == "39" ~ "Croisée",
+                          .default = "other"))
+
+lac <- left_join(lac, lac_race)  |>
+  mutate(race = relevel(factor(race), ref="PH"))
+```
+
+
+```{r regroupement des races ancienne syntaxe}
+#| eval: false
 lac_race <- lac_race |> 
   mutate(race = case_when(code_race == "66" | code_race == "60" ~ "PH",
                           code_race == "46" | code_race == "40" ~ "Montbeliarde",
@@ -159,14 +199,9 @@ lac_race <- lac_race |>
                           code_race != "66" | code_race != "60" | code_race != "46"| code_race != "40" | code_race != "56" | code_race != "50" | code_race != "39" ~ "other"))
 ```
 
-```{r}
-lac <- left_join(lac, lac_race) 
-```
 
-```{r}
-lac <- lac |> 
-  mutate(race = relevel(factor(race), ref="PH"))
-```
+Il y a à l'issue de cette étape des données pour `r nrow(lac)` lactations. Il semble qu'aucune lactation n'ait été perdue.
+
 
 ```{r}
 table(lac$race)
@@ -174,17 +209,18 @@ table(lac$race)
 
 ## Données mammites cliniques
 
-On va extraire les dates de mammites cliniques afin de les ajouter aux lactations correspondantes sur le tableau de données "lac"
+On va extraire les dates de mammites cliniques afin de les ajouter aux lactations correspondantes sur le tableau de données `lac`.
 
-```{r chargement des donnees}
+```{r chargement des donnees mammites cliniques}
 path_to_file <- "data/mammites.txt"
+
 mamt <- read_csv2(path_to_file) |>
-rename(anim_id = ANIM,
-cm_date = DAMACL) |>
-select(anim_id, cm_date)
+  rename(anim_id = ANIM,
+         cm_date = DAMACL) |>
+  select(anim_id, cm_date)
 ```
 
-POur chaque lactation on ajoute les dates de mammites cliniques et on considère que les lactations débutent 30 jours avant vêlage (on prend en considération une phase de préparation au vêlage pouvant modifier la sensibilité individuelle et la réponse des animaux)
+Pour chaque lactation on ajoute les dates de mammites cliniques et on considère que les lactations débutent 30 jours avant vêlage (on prend en considération une phase de préparation au vêlage pouvant modifier la sensibilité individuelle et la réponse des animaux).
 
 ```{r}
 lac_cm <- left_join(
@@ -205,13 +241,13 @@ lac_cm <- left_join(
   ungroup()
 ```
 
-cm_fisrt et cm_last prennent des valeurs égales à -inf et inf --\> je ne sais pas encore pourquoi
+`cm_fisrt` et `cm_last` prennent des valeurs égales à `-inf` et `inf` --\> je ne sais pas encore pourquoi.
 
-le code suivant devrait résoudre ce problème
+Le code suivant devrait résoudre ce problème
 
 ```{r}
 lac_cm$cm_first[is.infinite(lac_cm$cm_first)] <- NA
-lac_cm$cm_last[is.infinite(lac_cm$cm_last)] <- NA
+lac_cm$cm_last[is.infinite(lac_cm$cm_last)]   <- NA
 ```
 
 fusion avec le jeu de données initial
@@ -231,6 +267,7 @@ rm(lac_cm) ## supprime lac_cm de l'espace de travail
 ```{r donnees ai}
 #| message: false
 path_to_file <- "data/extra_femia_20240415.csv"
+
 ai <- read_csv(path_to_file) |> 
   select(anim, DAINAR) |> 
   rename(anim_id = anim,
@@ -260,7 +297,7 @@ lac <- left_join(lac, nlac) |>
 
 ## Agrégation des données par élevage et par an
 
-Les données contrôle laitier et inséminations artificielles sont agrégées à l'échelle élevage-année. L'objectif est de sélectionner les élevages dans lesquels une proportion suffisante des vaches sont inséminées. Ici on compte le nombre de contrôle par élevage, le nombre de vaches contrôlées par élevage et la proporions de primipares contrôlées.
+Les données contrôle laitier et inséminations artificielles sont agrégées à l'échelle élevage-année. L'objectif est de sélectionner les élevages dans lesquels une proportion suffisante des vaches sont inséminées. Ici on compte le nombre de contrôles par élevage, le nombre de vaches contrôlées par élevage et la proportion de primipares contrôlées.
 
 ```{r agregation elevage-annee}
 rec_hdyr <- rec |> 
@@ -271,8 +308,10 @@ rec_hdyr <- rec |>
             p_primi_rec = round(length(parity[parity == 1]) / length(parity), 3)) |> 
   ungroup()
 ```
+On a ici des données pour `r nrow(rec_hdyr)` élevages-années dans `r length(unique(rec_hdyr$herd_id))` élevages.
 
-Les premières IA de chaque élevage sont comptées
+
+Les IA premières de chaque élevage sont comptées
 
 ```{r}
 ai_hdyr <- lac |> 
@@ -290,7 +329,13 @@ hdyr <- inner_join(rec_hdyr, ai_hdyr) |>
   mutate(p_ai = round(n_cows_ai / n_cows_rec, 3))
 ```
 
-On va commencer par ajouter une variable d'année au tableau des lactations. Par année et par élevage on va calculer : - le nombre de vêlages - le nombre de vêlages de primipares - la proportion de vêlages de primipares sur le nombre de vêlage total - le nombre de premières inséminations - la proportion de premières inséminations sur le nombre de vêlages total
+On va commencer par ajouter une variable d'année au tableau des lactations. Par année et par élevage on va calculer : 
+
+- le nombre de vêlages 
+- le nombre de vêlages de primipares 
+- la proportion de vêlages de primipares sur le nombre de vêlage total 
+- le nombre de premières inséminations 
+- la proportion de premières inséminations sur le nombre de vêlages total
 
 ```{r lac-herd-summary}
 lac <- lac |> 
@@ -311,7 +356,7 @@ hdyr <- left_join(hdyr, lac_hrd_yr)
 pairs(hdyr[, c("p_primi_rec", "p_calvings_p1", "p_ai", "p_ai_clv")])
 ```
 
-Le graphique ci-dessous donne en abscisse la proportions de vêlages de primipares et en ordonnées la proportions de premières inséminations par rapport au nombre de vêlages. Cela permet de faire une sélection pour avoir un groupe plus homogène.
+Le graphique ci-dessous donne en abscisse la proportion de vêlages de primipares et en ordonnées la proportion de premières inséminations par rapport au nombre de vêlages. Cela permet de faire une sélection pour avoir un groupe plus homogène.
 
 ```{r plot-replacement-rate-proportion-ai-per-calving}
 plot(p_ai_clv ~ p_calvings_p1, data = hdyr)
@@ -326,8 +371,9 @@ hdyr_sel <- hdyr |>
 
 lac <- left_join(hdyr_sel, lac)
 ```
+On a des données pour `r nrow(lac)`, dans `r length(unique(lac$herd_id))` élevages.
 
-## Observations conservées pour l'analyse
+## Sélection des lactations avec au moins un contrôle avant 90 jours
 
 On ne conserve que les lactations avec au moins 1 contrôle laitier avant 90 jours de lactation.
 
@@ -336,9 +382,13 @@ lac <- lac |>
   filter(n_ctrl_early > 0)
 ```
 
-## Parités
+Il reste `r nrow(lac)` lactations.
 
-Pour simplifier l'analyse, je décide de séparer les primipares et les mutlipares. J'utilise la parité 3 comme référence car c'est la parité pour laquelle on considère la vache comme rentable.
+# Créations de variables pour les analyses
+
+## Parité
+
+Les parités supérieures à 3 sont regroupées dans une modalité 4. La nouvelle variable s'appelle `parKat`. J'utilise la parité 3 comme référence car c'est la parité pour laquelle on considère la vache comme rentable.
 
 ```{r definition parite}
 lac <- lac |> 
@@ -348,6 +398,11 @@ lac <- lac |>
 ## Production laitière en début de lactation
 
 On va commencer par ajouter la production laitière en début de lactation et la standardiser pour en faire une variable comparable. De plus il faut différencier la PL des primipares avec la PL des multipares car elles ne sont pas vraiment comparables, en réalité une multipare produit généralement plus qu'une primipare.
+
+```{r}
+hist(lac$milk_early_max)
+```
+
 
 ```{r normalisation du max de production laitière}
 milk_early_max_mean <- with(lac[lac$n_ctrl_early > 0,], 
@@ -369,7 +424,7 @@ lac <- lac |>
 
 ```
 
-```{r}
+```{r histogramme des production laitières standardisées}
 hist(lac$milk_early_max_scaled,
      main = "Distribution du maximum de production laitière\npendant les 90 premiers jours de lactation",
      xlab = "Production laitière (distribution centrée réduite)")
@@ -377,15 +432,21 @@ hist(lac$milk_early_max_scaled,
 
 ## Définition des mammites
 
-Afin de modéliser l'impact des mammites sur la décision de reproduction, il est important de définir les différents types de mammites. On en définit ici : - mammite à réservoir environnementale : typiquement c'est un épisode de mammite isolé qui guérit rapidement et qui ne suit pas un modèle contagieux mais plutôt un modèle sporadique - mammite à réservoir mammaire : mammite qui tend à passer à la chronicité et entraîner une forte contagions au sein de l'élevage.
+Afin de modéliser l'impact des mammites sur la décision de reproduction, il est important de définir les différents types de mammites. On en définit ici : 
 
-On va également différencier les différentes périodes de survenue des mammites en se concentrant tout d'abord sur la période de début de lactation : - Les primipares débutent leur toute première lactation, elle n'ont pas encore connu de période sèche et n'ont pas encore eu l'occasion de se contaminer - Les multipares ont déjà pu se contaminer lors de la lactation précédente, on va donc prendre en compte son statut lors de la période sèche.
+- mammite à réservoir environnemental : typiquement c'est un épisode de mammite isolé qui guérit rapidement et qui ne suit pas un modèle contagieux mais plutôt un modèle sporadique 
+- mammite à réservoir mammaire : mammite qui tend à passer à la chronicité et entraîner une forte contagions au sein de l'élevage.
 
-Le statut "primi" sera donc considéré comme référence.
+On va également différencier les différentes périodes de survenue des mammites en se concentrant tout d'abord sur la période de début de lactation : 
+
+- Les primipares débutent leur toute première lactation, elle n'ont pas encore connu de période sèche et n'ont pas encore eu l'occasion de se contaminer 
+- Les multipares ont déjà pu se contaminer lors de la lactation précédente, on va donc prendre en compte son statut lors de la période sèche.
+
+Le statut `primi` sera donc considéré comme référence.
 
 ### Statut au tarissement
 
-```{r}
+```{r définitions des statuts mammites au tarissement}
 lac <- lac |> 
   mutate(dp_status = case_when(
     parity == 1 ~ "primi",
@@ -394,9 +455,9 @@ lac <- lac |>
     dp_status = relevel(factor(dp_status), ref = "primi"))
 ```
 
-### Type de mammite
+### Types de mammite
 
-```{r}
+```{r définition des catégories de mammites}
 lac <- lac |> 
   mutate( mast_cat = case_when(
     n_scc_high_early == 0 & n_cm_early == 0 ~ "healthy",
@@ -408,15 +469,29 @@ lac <- lac |>
   )
 ```
 
-Certaines multipares n'ont pas de données pour la lactation précédente. Elles sont identifiées et exclues de l'analyse.
 
-```{r}
-lac <- lac |> 
-  mutate(dp_mis = ifelse(parity > 1 & is.na(scc_last_prev_lac), 1, 0))
 
+```{r ordre des niveaux de facteurs}
+level_order <- c("primi_healthy", "primi_env", "primi_cont",
+                 "dpLow_healthy", "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
+
+## par ordre de fréquence / logique
+level_order_breed <- c("PH", "Montbéliarde", "Normande", "Croisée", "Other")
 ```
 
-## Probabilité de mise à la reproduction selon le statut de l'animal
+Certaines multipares n'ont pas de données pour la lactation précédente. Elles sont identifiées et exclues de l'analyse.
+
+```{r suppression des lactations de multipares sans données pour la lactation précédente}
+lac <- lac |> 
+  mutate(dp_mis = ifelse(parity > 1 & is.na(scc_last_prev_lac), 1, 0))
+```
+
+# Création de jeux de données pour les prédictions
+
+L'objectif de ces jeux de données est de pouvoir visualiser les effets estimés par les modèles. Dans chaque jeux de données on ne fait varier qu'une variable d'intérêt, les autres sont maintenues à un niveau *moyen*, pour la comparaison.
+
+Le chunk ci-dessous créée des listes de toutes les catégories de mammites prises en compte.
 
 ```{r formatage des categories de mammites pour les predictions}
 ## catégories de statuts mammites pour les primipares
@@ -431,9 +506,10 @@ mast_lev_p2 <- lac |>
   distinct(mast_cat1) |>
   mutate(mast_cat1 = as.character(mast_cat1)) |>
   pull(mast_cat1)
-
-
 ```
+
+
+Jeux de données pour la prédiction de l'effet du statut mammite. Une version prend en compte le nombre d'inséminations artificielles.
 
 ```{r}
 mast_pred <- tibble(
@@ -460,12 +536,7 @@ mast_pred1 <- tibble(
 )
 ```
 
-```{r}
-level_order <- c("primi_healthy", "primi_env", "primi_cont",
-                 "dpLow_healthy", "dpLow_env", "dpLow_cont",
-                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
 
-```
 
 ```{r}
 parit_pred <- expand_grid(
@@ -501,7 +572,7 @@ parit_pred1 <- parit_pred1 |>
 ```{r}
 milk_pred <- expand_grid(
   parKat = factor(1:4),
-  milk_early_max = seq(10, 50, by = .1)
+  milk_early_max = seq(10, 60, by = .1)
  ) |> 
   mutate(
     milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
@@ -516,7 +587,7 @@ milk_pred <- expand_grid(
 
 milk_pred1 <- expand_grid(
   parKat = factor(1:4),
-  milk_early_max = seq(10, 50, by = .1)
+  milk_early_max = seq(10, 60, by = .1)
  ) |> 
   mutate(
     milk_early_max_scaled = (milk_early_max - milk_early_max_mean) / 
@@ -545,15 +616,14 @@ nai_pred <- expand_grid(
     race = "PH")
 ```
 
-
 ```{r}
 # Définir les catégories de race
-race_levels <- c("croisée", "Montbeliarde", "Normande", "other")
+race_levels <- c("Croisée", "Montbéliarde", "Normande", "other")
 ```
 
 ```{r}
 race_pred <- expand_grid(
-  race = factor(c("PH", "Normande", "croisée", "Montbeliarde", "other")),
+  race = factor(c("PH", "Normande", "Croisée", "Montbéliarde", "other")),
   milk_early_max = 0) |> 
   mutate(parKat = factor(c(rep(3, length(race)))), # Ajustez cette ligne selon les niveaux de la variable 'race'
   milk_early_max_scaled_p1 = 0,
@@ -563,7 +633,7 @@ race_pred <- expand_grid(
   mast_cat1 = factor(c(rep("dpLow_healthy", length(race)))))
 
 race_pred1 <- expand_grid(
-  race = factor(c("PH", "Normande", "croisée", "Montbeliarde", "other")),
+  race = factor(c("PH", "Normande", "Croisée", "Montbéliarde", "other")),
   milk_early_max = 0) |> 
   mutate(parKat = factor(c(rep(3, length(race)))), # Ajustez cette ligne selon les niveaux de la variable 'race'
   milk_early_max_scaled_p1 = 0,
@@ -587,29 +657,31 @@ write_csv2(race_pred, "generated_datasets/race_pred.csv")
 lac <- lac |> 
   mutate(
     repro = ifelse(!is.na(n_ai) | !is.na(calv_date_nxt), 1, 0))
+
+
 ```
 
-# Méthode
+# Probabilité de mise à la reproduction en fonction du statut mammite
 
-## Déscription de la mise à la reproduction selon la présence ou non d'une mammite
+## Analyse descriptive
 
 ```{r}
 # Tableau d'effectif
-Tab<-table(lac$repro, lac$mast_cat1)
+Tab <- table(lac$repro, lac$mast_cat1)
 Tab
 ```
 
 ```{r}
+p <- ggplot(lac |>
+              filter(n_ctrl_early > 0 & dp_mis == 0)) +
+  aes(x = as.character(repro), fill = mast_cat1) +
+  geom_bar(position = "fill") +
+  xlab("Mise à la reproduction") +
+  ylab("Proportion") +
+  labs(fill = "Catégories") +
+  scale_fill_brewer(palette = "PRGn")
 
-p<-ggplot(lac |> 
-            filter(n_ctrl_early > 0 & dp_mis == 0)) +
-aes(x = repro, fill = mast_cat1) +
-geom_bar(position="fill") +
-xlab("mise à la reproduction") +
-ylab("Effectifs") +
-labs(fill = "catégories") +
-scale_fill_brewer(palette = "PRGn") 
-p+theme_bw()
+p + theme_bw()
 ## x = Nbre de groupe sur l'axe x
 ## fill = Nbre de barres par groupe
 ## position="fill" = rend le graphique proportionnel et empile les barres
@@ -634,7 +706,9 @@ print(cor_matrix)
 corrplot(cor_matrix, method = "circle")
 ```
 
-## Modélisation de l'impact des mammites sur la probabilité de mise à la reproduction
+## Variables recodées pour modèles
+
+Variables facteurs recodées.
 
 ```{r}
 lac <- lac |> 
@@ -643,11 +717,12 @@ lac <- lac |>
          code_race = relevel(as.factor(code_race), ref = "66"))
 ```
 
-### Modèle de référence
 
-Ce modèle ne prend que des données parmis des animaux dont on a des informations sur le début de lactation et la période sèche de la précédente lactation.
+## Modèle de référence
 
-```{r modèle de référence}
+Ce modèle ne prend que des données parmi des animaux dont on a des informations sur le début de lactation et la période sèche de la précédente lactation.
+
+```{r mise à la repro modèle de référence}
 repro_null <- glmer(repro ~ 1 + (1 | herd_id),
                     data = lac,
                     subset = n_ctrl_early > 0 & dp_mis == 0,
@@ -656,7 +731,7 @@ repro_null <- glmer(repro ~ 1 + (1 | herd_id),
 summary(repro_null)
 ```
 
-On peut grâce à ce modèle obtenir la probabilité de mise à la reproduction mais pour cela il faut d'abords calculer
+On peut grâce à ce modèle obtenir la probabilité de mise à la reproduction mais pour cela il faut d'abord calculer
 
 ```{r methode de prediction des probabilites}
 # Obtenir les prédictions sur l'échelle de probabilité
@@ -679,7 +754,7 @@ prob_repro <- as.double(round(invlogit(fixef(repro_null)), 3))
 prob_repro
 ```
 
-### Modèle avec parité et production laitière
+## Modèle avec parité
 
 ```{r, eval = FALSE}
 repro_parity <- glmer(repro ~ parKat + (1 | herd_id),
@@ -689,6 +764,9 @@ repro_parity <- glmer(repro ~ parKat + (1 | herd_id),
 
 summary(repro_parity)
 ```
+
+
+## Modèle avec parité et production laitière
 
 ```{r, eval = FALSE}
 repro_parity_milk <- glmer(repro ~ parKat + 
@@ -721,26 +799,33 @@ repro_parity_milk_race <- glmer(repro ~ parKat +
 summary(repro_parity_milk_race)
 ```
 
-On va maintenant ajouter la variable d'intêret qui est la présence ou non de mammite
+On va maintenant ajouter la variable d’intérêt qui est la présence ou non de mammite
 
-### Modèle complet
 
-```{r, eval = FALSE}
-repro_full <- glmer(repro ~ parKat + 
+## Modèle complet
+
+```{r}
+repro_full1 <- glmer(repro ~ parKat + 
+                              race +
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
                               milk_early_max_scaled_p3 + 
                               milk_early_max_scaled_p4 + 
-                             dp_status + mast_cat +
+                              mast_cat1 +
                       (1 | herd_id),
                     data = lac,
                     subset = n_ctrl_early > 0 & dp_mis == 0,
                     family = binomial(link = "logit"))
 
-summary(repro_full)
+summary(repro_full1)
 ```
 
+
 ```{r}
+#| eval: false
+
+
+# le modèle converge même sans modifier l'argument control
 repro_full1 <- glmer(repro ~ parKat + 
                               race +
                               milk_early_max_scaled_p1 + 
@@ -761,7 +846,7 @@ Pour l'instant c'est repro_full1 qui donne la meilleure approximation car il pos
 
 ```{r}
 t_repro <- tbl_regression(repro_full1, exponentiate = TRUE)
-print(t_repro)
+# print(t_repro)
 ```
 
 On va donc maintenant vérifier sa pertinence.
@@ -778,7 +863,7 @@ vif(repro_full1)
 terms(repro_full1)
 ```
 
-tous les VIF sont inférieurs à 5 donc les variables sont suffisemment indépendantes.
+tous les VIF sont inférieurs à 5 donc les variables sont suffisamment indépendantes.
 
 ## Calcul des effets marginaux
 
@@ -809,9 +894,8 @@ prd <- predictions(model = repro_full1,
 ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
-  xlab("parité") + 
-  ylab("Probabilité de mise à la reproduction") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+  xlab("Parité") + 
+  ylab("Probabilité de mise à la reproduction")
 ```
 
 ```{r}
@@ -822,10 +906,11 @@ prd <- predictions(model = repro_full1,
 ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
-  xlab("race") + 
+  xlab("Race") + 
   ylab("Probabilité de mise à la reproduction") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
 
 ```{r}
 prd <- predictions(model = repro_full1, 
@@ -836,7 +921,104 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
 
-## Probabilité de revêlage pour les vaches mises à la reproduction
+
+## Modèle final Aurélien
+
+### Modèle
+
+Modèle équivalent à `repro_full1`.
+
+```{r mise à la repro - modèle final}
+mise_repro_final <- glmer(repro ~ parKat + 
+                              race +
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 +
+                      (1 | herd_id),
+                    data = lac,
+                    subset = n_ctrl_early > 0 & dp_mis == 0,
+                    family = binomial(link = "logit"))
+
+summary(mise_repro_final)
+```
+
+### Effets prédits par le modèle
+
+Définition de limites communes pour l'axe des ordonnées.
+
+```{r mise à la repro ylim}
+limy <- c(.4, 1)
+```
+
+
+- parité
+
+```{r mise à la repro prédiction effect parité}
+prd <- predictions(model = mise_repro_final, 
+                   newdata = parit_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  ylim(limy) +
+  xlab("Parité") + 
+  ylab("Probabilité de mise à la reproduction")
+```
+
+- race
+
+```{r mise à la repro prédiction effet race}
+race_pred <- race_pred |> 
+  mutate(race = fct_relevel(race, level_order_breed))
+
+prd <- predictions(model = mise_repro_final, 
+                   newdata = race_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  ylim(limy) +
+  xlab("Race") + 
+  ylab("Probabilité de mise à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+- production laitière
+
+```{r mise à la repro - effet production laitière}
+prd <- predictions(model = mise_repro_final, 
+                   newdata = milk_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() +
+  ylim(.4, 1)
+```
+
+- Statut mammites
+
+```{r mise à la repro - effets prédits par le modèle}
+prd <- predictions(model = mise_repro_final, 
+                             newdata = mast_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  ylim(limy) +
+  xlab("") + 
+  ylab("Probabilité de mise à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
+# Probabilité de revêlage pour les vaches mises à la reproduction
+
+## Analyse descriptive
 
 Une variable binaire prenant la valeur 1 si la vache revêle et 0 autrement est construite.
 
@@ -852,15 +1034,16 @@ lac <- lac |>
 ```
 
 ```{r}
-p<-ggplot(lac |> 
-            filter(n_ctrl_early > 0 & repro == 1 & dp_mis == 0)) +
-aes(x = repro_revel, fill = mast_cat1) +
-geom_bar(position="fill") +
-xlab("revêle") +
-ylab("Effectifs") +
-labs(fill = "catégories") +
-scale_fill_brewer(palette = "PRGn") 
-p+theme_bw()
+p <- ggplot(lac |>
+              filter(n_ctrl_early > 0 & repro == 1 & dp_mis == 0)) +
+  aes(x = repro_revel, fill = mast_cat1) +
+  geom_bar(position = "fill") +
+  xlab("revêle") +
+  ylab("Effectifs") +
+  labs(fill = "catégories") +
+  scale_fill_brewer(palette = "PRGn")
+
+p + theme_bw()
 ## x = Nbre de groupe sur l'axe x
 ## fill = Nbre de barres par groupe
 ## position="fill" = rend le graphique proportionnel et empile les barres
@@ -988,7 +1171,6 @@ ggplot(prd, aes(x = factor(n_ai), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-
 ```{r}
 prd <- predictions(model = repro_revel_mast1, 
                              newdata = milk_pred1, 
@@ -998,7 +1180,101 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
 
-## Probabilité d'être pleine après la première iA
+
+## Modèle final Aurélien
+
+Je mets les mêmes variables que dans le modèles de mise à la reproduction. Je n'inclus pas le nombre d'inséminations dans un premier temps.
+
+```{r revêlage après mise à la reproduction modèle final}
+repro_revel_mast_final <- glmer(repro_revel ~  parKat + 
+                              milk_early_max_scaled_p1 + 
+                              milk_early_max_scaled_p2 + 
+                              milk_early_max_scaled_p3 + 
+                              milk_early_max_scaled_p4 + 
+                              mast_cat1 + 
+                              race +
+                           (1 |herd_id),
+                          family = binomial(link = "logit"),
+                          data = lac,
+                         subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0)
+
+summary(repro_revel_mast_final)
+```
+
+### Effets prédits par le modèle
+
+```{r mise à la repro ylim}
+limy <- c(0, 1)
+```
+
+
+- parité
+
+```{r mise à la repro prédiction effect parité}
+prd <- predictions(model = repro_revel_mast_final, 
+                   newdata = parit_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  ylim(limy) +
+  xlab("Parité") + 
+  ylab("Probabilité de revêlage pour les\nvaches mises à la reproduction")
+```
+
+- race
+
+```{r mise à la repro prédiction effet race}
+race_pred <- race_pred |> 
+  mutate(race = fct_relevel(race, level_order_breed))
+
+prd <- predictions(model = repro_revel_mast_final, 
+                   newdata = race_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(race), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  ylim(limy) +
+  xlab("Race") + 
+  ylab("Probabilité de revêlage pour les\nvaches mises à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+- production laitière
+
+```{r mise à la repro - effet production laitière}
+prd <- predictions(model = repro_revel_mast_final, 
+                   newdata = milk_pred, 
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  geom_line() +
+  ylim(limy) +
+  ylab("Probabilité de revêlage pour les\nvaches mises à la reproduction") +
+  xlab("Production laitière maximale entre le vêlage et 90 jours de lactation (kg)")
+```
+- Statut mammites
+
+```{r mise à la repro - effets prédits par le modèle}
+prd <- predictions(model = repro_revel_mast_final, 
+                             newdata = mast_pred,
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  ylim(limy) +
+  xlab("") + 
+  ylab("Probabilité de revêlage pour les\nvaches mises à la reproduction") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
+
+
+# Probabilité d'être pleine après la première iA
 
 On commence par nommer une variable "sucess_ai1"
 
@@ -1150,22 +1426,23 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
 
-## Probabilité d'être réinséminée
+# Nombre d'inséminations
 
 Ici on a une variable de comptage et non plus une variable binaire. La régression logistique n'est donc pas la plus adaptée à ce cas de figure. On va donc préférer la régression de Poisson.
 
-### Description des données
+## Description des données
 
 ```{r}
-p<-ggplot(lac |> 
-            filter(n_ctrl_early > 0 & repro == 1 & dp_mis == 0)) +
-aes(x = n_ai, fill = mast_cat1) +
-geom_bar(position="fill") +
-xlab("nombre d'inséminations") +
-ylab("Effectifs") +
-labs(fill = "catégories")+
-scale_fill_brewer(palette = "PRGn") 
-p+theme_bw()
+p <- ggplot(lac |>
+              filter(n_ctrl_early > 0 & repro == 1 & dp_mis == 0)) +
+  aes(x = n_ai, fill = mast_cat1) +
+  geom_bar(position = "fill") +
+  xlab("nombre d'inséminations") +
+  ylab("Effectifs") +
+  labs(fill = "catégories") +
+  scale_fill_brewer(palette = "PRGn")
+
+p + theme_bw()
 ## x = Nbre de groupe sur l'axe x
 ## fill = Nbre de barres par groupe
 ## position="fill" = rend le graphique proportionnel et empile les barres
@@ -1173,7 +1450,7 @@ p+theme_bw()
 
 On voit qu'il y a plus une tendance à plus essayer sur les génisses.
 
-### Modèle de référence
+## Modèle de référence
 
 ```{r}
 lac <- lac |> 
@@ -1278,9 +1555,24 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
 
-### enregistrement
+
+## Modèle final Aurélien
+
 
 ```{r}
+ai_number_full1 <- glmer(n_ai ~ parKat + 
+                              race*milk_early_max_scaled_p1 + 
+                              race*milk_early_max_scaled_p2 + 
+                              race*milk_early_max_scaled_p3 + 
+                              race*milk_early_max_scaled_p4 + 
+                              mast_cat1 +
+                              race +
+                      (1 | herd_id),
+                    data = lac,
+                    subset = !is.na(n_ai) & n_ai > 0 & dp_mis == 0,
+                    family = poisson)
 
-write_csv2(lac, "generated_datasets/lac.csv")
+summary(ai_number_full1)
 ```
+
+
