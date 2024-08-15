@@ -174,23 +174,9 @@ hd_yr1 |>
 
 Modèle complet. L'interaction entre catégories mammites et production laitière est incluse pour prendre en compte la possibilité que certaines vaches à mammites ne soient pas réformées du fait d'une production laitière élevée. Cela pourrait conduire à une association positive entre production laitière et CCS élevée parce que les vaches à CCS élevées ont plus de chance d'être gardée si elles ont une CCS élevée.
 
-```{r}
-scc_high_dp_model <- glmer(infct_end_lac ~ factor(parKat) +
-                             mast_cat1*milk_early_max_scaled_p1 +
-                             mast_cat1*milk_early_max_scaled_p2 +
-                             mast_cat1*milk_early_max_scaled_p3 +
-                             mast_cat1*milk_early_max_scaled_p4 +
-                             I(dim_last - 200) +
-                             mast_cat1 +
-                             race +
-                             (1| herd_id),
-                           family = binomial(link = "logit"),
-                           data = lac, 
-                           subset = n_ctrl_early > 0 & dim_last > 200 & dp_mis == 0 & !is.na(infct_end_lac),
-                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
+Le stade de lactation au dernier contrôle est aussi pris en compte. La courbe de lactation pour les CCS augmente avec le stade de lactation. Les vaches avec des lactations longues ont plus de chance d'avoir une dernière CCS élevée.
 
-summary(scc_high_dp_model)
-```
+
 ```{r}
 scc_high_dp_model <- glmer(infct_end_lac ~ factor(parKat) +
                              milk_early_max_scaled_p1 +
