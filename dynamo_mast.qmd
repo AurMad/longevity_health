@@ -35,62 +35,189 @@ scc_high_cutoff <- 200
 # Chargement des données utiles
 
 ```{r}
-lac <- read.csv2("generated_datasets/lac.csv")
+lac <- read.csv2("generated_datasets/idele_lac_final.csv")
 mast_pred <- read.csv2("generated_datasets/mast_pred.csv")
 parit_pred <- read.csv2("generated_datasets/parity_pred.csv")
 milk_pred <- read.csv2("generated_datasets/milk_pred.csv")
 race_pred <- read.csv2("generated_datasets/race_pred.csv")
+
+level_order_mast <- c("primi_healthy", "primi_env", "primi_cont",
+                 "dpLow_healthy", "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
+```
+
+# Jeu de données mammites pendant la période tarie
+
+L'objectif ici est de construire le jeu de données avec les indicateurs d'intérêt pour l'étude de la dynamique des mammites pendant la période tarie. Ce jeux de données est à l'échelle élevage-année de vêlage. C'est à dire que dans chaque élevage, on prend chaque vache qui vêle une année donnée et on regarde la situation des vaches incluses lors de leur vêlage suivant s'il y en a un.
+
+La variable année de vêlage s'appelle `year`.
+
+```{r vérification de la signification et des interrelations entre colonnes}
+#| eval: false
+lac |> 
+  select(herd_id, anim_id, calv_date, dim_last, scc_last, scc_first_nxt_lac, infct_end_lac, infct_ctrl1_nxt_lac, nxt_cure, nxt_ninf) |> 
+  View()
+```
+
+Pour chaque troupeau année, on extrait le nombre de lactations avec un vêlage survenant dans l'année, le nombre de vaches correspondant. Le nombre de recontrôle permet de connaître le nombre de vaches avec une lactation suivante. Cela permettra d'exclure les années pour lesquelles on n'a plus assez de données sur les vaches. Les autres variables sont en lien avec la dynamiques des CCS de part et d'autre de la période tarie.
+
+```{r création du jeux de données élevage année de vêlage}
+hd_yr <- lac |> 
+  mutate(lac_id = 1:n()) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_cows = length(unique(anim_id)),
+            n_lacs = length(unique(lac_id)),
+            n_rectrl = length(scc_first_nxt_lac[!is.na(scc_first_nxt_lac)]),
+            n_low_end_lac = length(nxt_ninf[!is.na(nxt_ninf)]),
+            n_high_end_lac = length(nxt_cure[!is.na(nxt_cure)]),
+            p_rectrl = round(n_rectrl / n_lacs, 3),
+            ninf_rate = round(length(nxt_ninf[!is.na(nxt_ninf) & nxt_ninf == 1]) / length(nxt_ninf[!is.na(nxt_ninf)]), 3),
+            cure_rate = round(length(nxt_cure[!is.na(nxt_cure) & nxt_cure == 1]) / length(nxt_ninf[!is.na(nxt_cure)]), 3))
+```
+
+La première question à se poser est celle de la sélection des élevages-années sur la base de la proportions de vaches recontrôlées lors de la lactation suivante. En effet, en fin de période d'étude, lors de l'arrêt de l'activité d'élevage ou lors de l'arrêt du contrôle laitier on n'aura plus de données pour la lactation suivante. On regarde la distribution de la proportion des lactations avec au moins un recontrôle lors de lactation suivante pour se fixer un seuil
+
+```{r proportion de lactation avec au moins un recontrôle}
+hd_yr |> 
+  filter(n_rectrl > 30) |> 
+  ggplot(aes(x = p_rectrl)) +
+  geom_histogram() +
+  xlab("Proportion de lactations avec au moins un contrôle lors de la lactation suivante.")
+```
+
+Si on se base sur l'année, en se disant que la plupart des vaches qui ont vêlé en 2021 ont eu le temps de revêler, on peut fixer un seuil de proportion de recontrôle à 50%.
+
+```{r proportion de lactation avec au moins un recontrôle en fonction de l'année}
+hd_yr |> 
+  filter(year %in% 2021:2023) |> 
+  ggplot(aes(x = p_rectrl, col = factor(year))) +
+  geom_density() +
+  xlab("Proportion de lactations avec au moins un contrôle lors de la lactation suivante.")
+```
+
+Sélection des élevages-années d'intérêt. Le jeux de données compte 1240 lignes et 168 élevages.
+
+```{r sélection élevages-années}
+hd_yr <- hd_yr |> 
+  filter(n_rectrl > 30 & p_rectrl > .5)
+
+nrow(hd_yr)
+
+length(unique(hd_yr$herd_id))
 ```
 
 ```{r}
-level_order <- c("primi_healthy", "primi_env", "primi_cont",
-                 "dpLow_healthy", "dpLow_env", "dpLow_cont",
-                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
-
+hist(hd_yr$ninf_rate,
+     main = "Distribution des proportions de nouvelles infections\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
+     xlab = "Proportion de nouvelles infections")
 ```
+```{r}
+hist(hd_yr$cure_rate,
+     main = "Distribution des proportions de guérisons\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
+     xlab = "Proportion de guérisons")
+```
+
+Même idée, mais avec en plus une ligne par catégorie de mammites.
+
+```{r création du jeux de données élevage année de vêlage stratifié par catégorie de mammites}
+hd_yr1 <- lac |>
+  mutate(lac_id = 1:n()) |> 
+  group_by(herd_id, year, mast_cat1) |> 
+  summarise(n_cows = length(unique(anim_id)),
+            n_lacs = length(unique(lac_id)),
+            n_rectrl = length(scc_first_nxt_lac[!is.na(scc_first_nxt_lac)]),
+            n_low_end_lac = length(nxt_ninf[!is.na(nxt_ninf)]),
+            n_high_end_lac = length(nxt_cure[!is.na(nxt_cure)]),
+            p_rectrl = round(n_rectrl / n_lacs, 3),
+            ninf_rate = round(length(nxt_ninf[!is.na(nxt_ninf) & nxt_ninf == 1]) / length(nxt_ninf[!is.na(nxt_ninf)]), 3),
+            cure_rate = round(length(nxt_cure[!is.na(nxt_cure) & nxt_cure == 1]) / length(nxt_ninf[!is.na(nxt_cure)]), 3))
+
+hd_yr1 <- left_join(
+  hd_yr |> 
+    select(herd_id, year),
+  hd_yr1
+)
+```
+On calcule les taux de nouvelles infections et de guérison moyens par catégorie de mammites. C'est assez conforme à l'attendu pour les guérisons. Intéressant de constater que le taux de nouvelles infections est lui aussi influencé par la situation en début de lactation précédente.
+
+
+```{r}
+hd_yr1 |> 
+  filter(mast_cat1 %in% level_order_mast) |> 
+  group_by(mast_cat1) |> 
+  summarise(ninf_mean = mean(ninf_rate, na.rm = TRUE),
+            cure_mean = mean(cure_rate, na.rm = TRUE))
+```
+
+
+```{r taux de nouvelles infections en fonction du statut mammite en début de lactation agrégé à l'échelle élevage année}
+hd_yr1 |> 
+  filter(mast_cat1 %in% level_order_mast) |> 
+  ggplot(aes(y = ninf_rate, x = mast_cat1)) +
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r taux de guérison en fonction du statut mammite en début de lactation agrégé à l'échelle élevage année}
+hd_yr1 |> 
+  filter(mast_cat1 %in% level_order_mast) |> 
+  ggplot(aes(y = cure_rate, x = mast_cat1)) +
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
 
 # Probabilité d'un SCC élevé au dernier contrôle avant tarissement
 
-## modélisation 
+## Modèles
+
+Modèle complet. L'interaction entre catégories mammites et production laitière est incluse pour prendre en compte la possibilité que certaines vaches à mammites ne soient pas réformées du fait d'une production laitière élevée. Cela pourrait conduire à une association positive entre production laitière et CCS élevée parce que les vaches à CCS élevées ont plus de chance d'être gardée si elles ont une CCS élevée.
 
 ```{r}
-lac <- lac |> 
-  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"),
-         race = relevel(factor(race), ref="PH"))
-```
-
-
-```{r}
-scc_high_dp_model <- glmer(infct_end_lac ~ parKat +
-                             milk_early_max_scaled_p1 +
-                             milk_early_max_scaled_p2 +
-                             milk_early_max_scaled_p3 +
-                             milk_early_max_scaled_p4 +
+scc_high_dp_model <- glmer(infct_end_lac ~ factor(parKat) +
+                             mast_cat1*milk_early_max_scaled_p1 +
+                             mast_cat1*milk_early_max_scaled_p2 +
+                             mast_cat1*milk_early_max_scaled_p3 +
+                             mast_cat1*milk_early_max_scaled_p4 +
+                             I(dim_last - 200) +
                              mast_cat1 +
                              race +
                              (1| herd_id),
                            family = binomial(link = "logit"),
                            data = lac, 
-                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(infct_end_lac),
+                           subset = n_ctrl_early > 0 & dim_last > 200 & dp_mis == 0 & !is.na(infct_end_lac),
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
+
+summary(scc_high_dp_model)
+```
+```{r}
+scc_high_dp_model <- glmer(infct_end_lac ~ factor(parKat) +
+                             milk_early_max_scaled_p1 +
+                             milk_early_max_scaled_p2 +
+                             milk_early_max_scaled_p3 +
+                             milk_early_max_scaled_p4 +
+                             poly(I((dim_last - 200)/100), 3) +
+                             mast_cat1 +
+                             race +
+                             (1| herd_id),
+                           family = binomial(link = "logit"),
+                           data = lac, 
+                           subset = n_ctrl_early > 0 & dim_last > 200 & dp_mis == 0 & !is.na(infct_end_lac),
                            control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
 summary(scc_high_dp_model)
 ```
 
-```{r}
-write_csv2(scc_high_dp_model, "generated_datasets/scc_high_dp_model.csv")
-```
-
-
-## Prédictions 
+## Prédictions
 
 ```{r}
 mast_pred <- mast_pred |> 
   mutate(race = as.factor(race),
          parKat = as.factor(parKat),
-         mast_cat1 = as.factor(mast_cat1))
+         mast_cat1 = as.factor(mast_cat1),
+         dim_last = rep(305))
 ```
-
 
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
@@ -104,13 +231,14 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
 ```{r}
 parit_pred <- parit_pred |> 
   mutate(race = as.factor(race),
          parKat = as.factor(parKat),
-         mast_cat1 = as.factor(mast_cat1))
+         mast_cat1 = as.factor(mast_cat1),
+         dim_last = 305)
 ```
-
 
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
@@ -124,13 +252,14 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
 ```{r}
 race_pred <- race_pred |> 
   mutate(race = as.factor(race),
          parKat = as.factor(parKat),
-         mast_cat1 = as.factor(mast_cat1))
+         mast_cat1 = as.factor(mast_cat1),
+         dim_last = 305)
 ```
-
 
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
@@ -144,11 +273,13 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
 ```{r}
 milk_pred <- milk_pred |> 
   mutate(race = as.factor(race),
          parKat = as.factor(parKat),
-         mast_cat1 = as.factor(mast_cat1))
+         mast_cat1 = as.factor(mast_cat1),
+         dim_last = 305)
 ```
 
 ```{r}
@@ -160,22 +291,23 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
 
-# Probabilité de guérison au tarissement 
+# Probabilité de guérison au tarissement
 
-## modélisation 
+## modélisation
 
 ```{r}
-cure_dp_model <- glmer(nxt_cure ~ parKat +
+cure_dp_model <- glmer(nxt_cure ~ factor(parKat) +
                           milk_early_max_scaled_p1 +
                              milk_early_max_scaled_p2 +
                              milk_early_max_scaled_p3 +
                              milk_early_max_scaled_p4 +
                              mast_cat1 +
+                             poly(I((dim_last - 200)/100), 3) +
                              race + 
                              (1| herd_id),
                            family = binomial(link = "logit"),
                            data = lac, 
-                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(nxt_cure),
+                           subset = n_ctrl_early > 0 & dim_last > 200 & dp_mis == 0 & !is.na(nxt_cure),
                            control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
 summary(cure_dp_model)
@@ -184,7 +316,6 @@ summary(cure_dp_model)
 ```{r}
 write_csv2(cure_dp_model, "generated_datasets/cure_dp_model.csv")
 ```
-
 
 ## Prédictions
 
@@ -201,7 +332,6 @@ ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
-
 ```{r}
 prd <- predictions(model = cure_dp_model,
                    newdata = parit_pred,
@@ -228,7 +358,6 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
-
 ```{r}
 prd <- predictions(model = cure_dp_model, 
                    newdata = milk_pred, 
@@ -240,20 +369,21 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
 
 # Probabilité d'une nouvelle infection après tarissement
 
-## modélisation 
+## modélisation
 
 ```{r}
-new_inf_model <- glmer(nxt_ninf ~ parKat +
+new_inf_model <- glmer(nxt_ninf ~ factor(parKat) +
                           milk_early_max_scaled_p1 +
                              milk_early_max_scaled_p2 +
                              milk_early_max_scaled_p3 +
                              milk_early_max_scaled_p4 +
                              mast_cat1 +
+                             poly(I((dim_last - 200)/100), 3) +
                              race +
                              (1| herd_id),
                            family = binomial(link = "logit"),
                            data = lac, 
-                           subset = n_ctrl_early > 0 & repro == 1 & dp_mis == 0 & !is.na(nxt_ninf),
+                           subset = n_ctrl_early > 0 & dim_last > 200 & dp_mis == 0 & !is.na(nxt_ninf),
                            control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
 
 summary(new_inf_model)
@@ -263,8 +393,7 @@ summary(new_inf_model)
 write_csv2(new_inf_model, "generated_datasets/new_inf_model.csv")
 ```
 
-
-## Prédictions 
+## Prédictions
 
 ```{r}
 prd2 <- predictions(model = new_inf_model,
@@ -279,7 +408,6 @@ ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
-
 ```{r}
 prd <- predictions(model = new_inf_model,
                    newdata = parit_pred,
@@ -306,7 +434,6 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
-
 ```{r}
 prd <- predictions(model = new_inf_model, 
                    newdata = milk_pred, 
@@ -315,3 +442,101 @@ prd <- predictions(model = new_inf_model,
 ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
+
+# Dynamique des infections pendant la période sèche
+
+Dans cette partie, les données sont agrégées par troupeau-année de vêlage. La variable année de vêlage s'appelle `year`.
+
+```{r}
+lac |> 
+  select(herd_id, anim_id, calv_date, dim_last, scc_last, scc_first_nxt_lac, infct_end_lac, infct_ctrl1_nxt_lac, nxt_cure, nxt_ninf) |> 
+  View()
+```
+
+
+```{r}
+hd_yr <- lac |> 
+  mutate(lac_id = 1:n()) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_cows = length(unique(anim_id)),
+            n_lacs = length(unique(lac_id)),
+            n_rectrl = length(scc_first_nxt_lac[!is.na(scc_first_nxt_lac)]),
+            n_low_end_lac = length(nxt_ninf[!is.na(nxt_ninf)]),
+            n_high_end_lac = length(nxt_cure[!is.na(nxt_cure)]),
+            p_rectrl = round(n_rectrl / n_lacs, 3),
+            ninf_rate = round(length(nxt_ninf[!is.na(nxt_ninf) & nxt_ninf == 1]) / length(nxt_ninf[!is.na(nxt_ninf)]), 3),
+            cure_rate = round(length(nxt_cure[!is.na(nxt_cure) & nxt_cure == 1]) / length(nxt_ninf[!is.na(nxt_cure)]), 3))
+```
+```{r}
+hd_yr1 <- lac |>
+  mutate(lac_id = 1:n()) |> 
+  group_by(herd_id, year, mast_cat1) |> 
+  summarise(n_cows = length(unique(anim_id)),
+            n_lacs = length(unique(lac_id)),
+            n_rectrl = length(scc_first_nxt_lac[!is.na(scc_first_nxt_lac)]),
+            n_low_end_lac = length(nxt_ninf[!is.na(nxt_ninf)]),
+            n_high_end_lac = length(nxt_cure[!is.na(nxt_cure)]),
+            p_rectrl = round(n_rectrl / n_lacs, 3),
+            ninf_rate = round(length(nxt_ninf[!is.na(nxt_ninf) & nxt_ninf == 1]) / length(nxt_ninf[!is.na(nxt_ninf)]), 3),
+            cure_rate = round(length(nxt_cure[!is.na(nxt_cure) & nxt_cure == 1]) / length(nxt_ninf[!is.na(nxt_cure)]), 3))
+
+ls_mast_cat1 <- c("dpHigh_cont", "dpHigh_env", "dpHigh_healthy", "dpLow_env", 
+"dpLow_healthy", "primi_cont", "primi_env", "primi_healthy", 
+"dpLow_cont")
+
+```
+
+```{r}
+hd_yr1 |> 
+  filter(mast_cat1 %in% ls_mast_cat1) |> 
+  group_by(mast_cat1) |> 
+  summarise(ninf_mean = mean(ninf_rate, na.rm = TRUE),
+            cure_mean = mean(cure_rate, na.rm = TRUE))
+```
+
+
+```{r}
+
+hd_yr1 |> 
+  filter(mast_cat1 %in% ls_mast_cat1) |> 
+  ggplot(aes(y = ninf_rate, x = mast_cat1)) +
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+ls_mast_cat1 <- c("dpHigh_cont", "dpHigh_env", "dpHigh_healthy", "dpLow_env", 
+"dpLow_healthy", "primi_cont", "primi_env", "primi_healthy", 
+"dpLow_cont")
+
+hd_yr1 |> 
+  filter(mast_cat1 %in% ls_mast_cat1) |> 
+  ggplot(aes(y = cure_rate, x = mast_cat1)) +
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+hd_yr |> 
+  filter(n_rectrl > 30) |> 
+  ggplot(aes(x = p_rectrl)) +
+  geom_histogram()
+```
+
+```{r}
+hd_yr <- hd_yr |> 
+  filter(n_rectrl > 30 & p_rectrl > .3)
+```
+
+```{r}
+hist(hd_yr$ninf_rate)
+```
+```{r}
+hist(hd_yr$cure_rate)
+```
+
+```{r}
+plot(ninf_rate ~ cure_rate, data = hd_yr)
+```
+
+
