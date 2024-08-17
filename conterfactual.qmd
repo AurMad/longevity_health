@@ -41,14 +41,12 @@ load("generated_datasets/cure_dp_model.RData")
 load("generated_datasets/new_inf_model.RData")
 ```
 
-
 ```{r}
 level_order <- c("primi_healthy", "primi_env", "primi_cont",
                  "dpLow_healthy", "dpLow_env", "dpLow_cont",
                  "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
 
 ```
-
 
 # Création de l'échantillon d'étude
 
@@ -59,7 +57,7 @@ lac_ctr <- lac |>
   filter(year == "2022", !is.na(calv_date_prev))
 ```
 
-On prend esuite toutes les dates des précédents vêlages, ce qui nous permet de sélectionner un échantillon plus grand d'animaux. Dont les génisses mises à la reproduction pour la première fois et les vaches qui n'ont pas revêlé. 
+On prend esuite toutes les dates des précédents vêlages, ce qui nous permet de sélectionner un échantillon plus grand d'animaux. Dont les génisses mises à la reproduction pour la première fois et les vaches qui n'ont pas revêlé.
 
 ```{r}
 right_calv <- max(lac_ctr$calv_date_prev)
@@ -120,7 +118,6 @@ lac_exp_deleted <- lac_exp_deleted |>
          parKat = as.factor(parKat))
 ```
 
-
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
                    newdata = lac_exp_deleted,
@@ -133,6 +130,7 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
 ```{r}
 prd1 <- predictions(model = cure_dp_model,
                    newdata = lac_exp_deleted,
@@ -145,7 +143,6 @@ ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("probabilité d'une guérison pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
-
 
 ```{r}
 prd2 <- predictions(model = new_inf_model,
@@ -162,12 +159,10 @@ ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
 
 **Le problème avec cette approche c'est que les modèles prédictifs sont entraînés sur des données réelles et si on applique simplement ces modèles aux données où l'issue a été modifiée de manière contrefactuelle, les prédictions seront biaisées car elles sont influencées par les caractéristiques observées. Cela explique la grande variabilité des résultats.**
 
-On va commencer par calculer le nombre d'animaux réformés pour chaque troupeau. 
+On va commencer par calculer le nombre d'animaux réformés pour chaque troupeau.
 
 ```{r}
 lac_exp_deleted <- lac_exp_deleted |> 
   group_by(herd_id) |> 
    mutate(culling = )
 ```
-
-

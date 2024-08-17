@@ -16,6 +16,8 @@ library(tidyverse)
 library(dagitty)
 library(ggdag)
 library(RefManageR)
+library(knitr)
+library(kableExtra)
 ```
 
 # Introduction
@@ -333,8 +335,7 @@ Par exemple, les groupes $A$ et $B$ sont interchangeables que si on considère d
 
 Les Directed Acyclic Graphs (DAGs) ou graphiques orientés acycliques en français sont des outils puissants en inférence causale pour représenter les relations de cause à effet entre variables. Leur intérêt est de pouvoir identifier les variables à inclure pour le modèle. Pour ce faire, il faut connaître un peu son organisation. Les nœuds représentent les variables. Entre chaque variable, se trouve des flèches indiquant le sens de la causalité. Ce qu'il est important de noter, c'est qu'il n'y a pas de boucles fermées, c'est-à-dire, qu'il n'y a pas de chemin qui revient à un nœud en passant pas d'autres, d'où la qualification d'acyclique. Un DAG de qualité permet de visualiser des relations causales complexes, en les décomposant de manière visuelle permettant ainsi de faciliter la compréhension des interactions entre les variables. Il permet de formuler des hypothèses sur ces interactions en différenciant les variables observables des variables non observables. Enfin il offre un moyen clair et concis de communiquer les résultats d'une étude avec un public moins technique.
 
-Il existe plusieurs types de relations représentées par les DAG: 
-- Les *chaînes* : Par exemple pour illustrer très simplement la relation entre une mammite M ayant un impact sur l'IA, qui elle aura un impact sur la réforme R.
+Il existe plusieurs types de relations représentées par les DAG: - Les *chaînes* : Par exemple pour illustrer très simplement la relation entre une mammite M ayant un impact sur l'IA, qui elle aura un impact sur la réforme R.
 
 ```{r, message = FALSE, warning = FALSE}
 #| echo: false
@@ -353,8 +354,8 @@ dag_chaine <- dagify(
 
 ggdag(dag_chaine) + theme_dag()
 ```
-- Les *fourches* : Par exemple pour illustrer la relation entre mammite et IA, et entre mammite et PL.
 
+-   Les *fourches* : Par exemple pour illustrer la relation entre mammite et IA, et entre mammite et PL.
 
 ```{r, message = FALSE, warning = FALSE}
 #| echo: false
@@ -373,8 +374,8 @@ dag_fourche <- dagify(
 
 ggdag(dag_fourche) + theme_dag()
 ```
-- Les *collisions* : par exemple pour illustrer l'impact de l'IA sur la réforme et l'impact de la PL sur la réforme. 
 
+-   Les *collisions* : par exemple pour illustrer l'impact de l'IA sur la réforme et l'impact de la PL sur la réforme.
 
 ```{r, message = FALSE, warning = FALSE}
 #| echo: false
@@ -490,7 +491,7 @@ Pour répondre ces questions, des données de contrôle laitier et de mammites c
 
 ## Matériels et méthodes
 
-## Données
+## Description des données
 
 <!-- Décrire plus en détail les jeux de données et le processus de sélection. -->
 
@@ -502,9 +503,33 @@ Les données fournies pour cette étude sont essentiellement des données de con
 
 L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L'étude prend en compte des données de contrôle laitier collectées entre janvier 1989 et mars 2024, pour un total de 3 818 887 enregistrements. Les différentes données fournies sont disponibles en annexe 1.
 
+Dans les données de contrôle laitier fournies, on a un total de 144 311 vaches en lactation et 10 066 dates de contrôles allant d'octobre 1989 à mars 2024.Grâce aux données complémentaires fournies il nous a été possible de rajouter le numéro de cheptel à chaque vache pour chaque date de contrôle. En filtrant pour n'obtenir que les animaux dont les dates de contrôles sont comprises entre la date d'entrée dans le cheptel et la date de sortie si elle est indiquée, on obtient un total de 143 311 animaux pour 4769 trouoeaux. 
+La sélection suivante a été ensuite réalisée  
+- les dates de contrôles avec minimum 10 vaches étaient conservées. 
+- Il fallait un minimum de 11 contrôles et un maximum de 12 contrôles pour chaque combinaisons de troupeau/année. 
+Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parité 1 à la parité 14, et 6 202 dates de contrôle allant de janvier 2000 à décembre 2023. 
+
+Un nouveau data frame a permis ensuite de combiner les données obtenues en les regroupant par lactation. Un premier tri retire tous les animaux dont les données de PL et de SCC ne sont pas assez exhaustives, cette première transformation donne un total de 217 577 lactations qui regroupe 83 991 animaux. Ensuite une dernière étape permet de ne sélectionner que les élevages avec une proportion suffisante de vêlages, c'est-à-dire au moins 70% de vêlages parmi les vaches inséminées dont au moins 15 à 50% de primipares. Il reste au total 127 541 lactations dont 58 579 animaux appartenant à 231 élevages. 
+
 ### Définition des mammites avec nos données
 
 <!-- Pour les définitions de différents types de mammites, envisage de faire un tableau. On doit voir les critères précis utilisés pour définir chaque type de mammite. -->
+
+```{r}
+df <- data.frame(
+  Colonne1 = c("A", "B", "C"),
+  Colonne2 = c(1, 2, 3),
+  Colonne3 = c(TRUE, FALSE, TRUE)
+)
+
+# Créer un tableau avec kable
+kable(df, caption = "Exemple de Tableau", booktabs = TRUE) |> 
+  kable_styling(bootstrap_options = c("responsive", "striped"), full_width = F) |> 
+  column_spec(1, color = "darkgrey", background = "white") |> 
+  column_spec(2, color = "darkgrey", background = "white") |> 
+  column_spec(3, color = "darkgrey", background = "white")
+```
+
 
 Il a été décidé de décomposer les mammites par modèle épidémiologique selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules supérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*. On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*. Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaissait pas le statut avant tarissement, ont été retirés de l'étude.
 

@@ -78,7 +78,7 @@ summary(scc_high_dp_model)
 ```
 
 ```{r}
-write_csv2(scc_high_dp_model, "generated_datasets/scc_high_dp_model.csv")
+save(scc_high_dp_model, file = "generated_datasets/scc_high_dp_model.RData")
 ```
 
 
@@ -182,7 +182,7 @@ summary(cure_dp_model)
 ```
 
 ```{r}
-write_csv2(cure_dp_model, "generated_datasets/cure_dp_model.csv")
+save(cure_dp_model, file = "generated_datasets/cure_dp_model.RData")
 ```
 
 
@@ -260,7 +260,7 @@ summary(new_inf_model)
 ```
 
 ```{r}
-write_csv2(new_inf_model, "generated_datasets/new_inf_model.csv")
+save(new_inf_model, file = "generated_datasets/new_inf_model.RData")
 ```
 
 

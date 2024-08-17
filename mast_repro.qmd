@@ -1281,6 +1281,5 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
 ### enregistrement
 
 ```{r}
-
 write_csv2(lac, "generated_datasets/lac.csv")
 ```
