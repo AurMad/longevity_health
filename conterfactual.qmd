@@ -42,6 +42,15 @@ load("generated_datasets/new_inf_model.RData")
 ```
 
 ```{r}
+lac <- lac |> 
+  mutate(calv_date = as.Date(calv_date, "%Y-%m-%d"))
+```
+
+```{r}
+str(lac)
+```
+
+```{r}
 level_order <- c("primi_healthy", "primi_env", "primi_cont",
                  "dpLow_healthy", "dpLow_env", "dpLow_cont",
                  "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
@@ -57,7 +66,7 @@ lac_ctr <- lac |>
   filter(year == "2022", !is.na(calv_date_prev))
 ```
 
-On prend esuite toutes les dates des précédents vêlages, ce qui nous permet de sélectionner un échantillon plus grand d'animaux. Dont les génisses mises à la reproduction pour la première fois et les vaches qui n'ont pas revêlé.
+On prend ensuite toutes les dates des précédents vêlages, ce qui nous permet de sélectionner un échantillon plus grand d'animaux. Dont les génisses mises à la reproduction pour la première fois et les vaches qui n'ont pas revêlé.
 
 ```{r}
 right_calv <- max(lac_ctr$calv_date_prev)
@@ -66,7 +75,7 @@ left_calv <- min(lac_ctr$calv_date_prev)
 
 ```{r}
 lac_exp <- lac |> 
-  filter(right_calv <= calv_date & calv_date <= left_calv)
+  filter(  calv_date <= right_calv & calv_date >= left_calv)
 ```
 
 # Mise en place de l'issue contrefactuelle
@@ -109,18 +118,81 @@ lac_exp_deleted <- lac_exp |>
   filter(delete != 1)
 ```
 
+```{r}
+table(lac_exp_deleted$mast_cat1)
+```
+
+Autre tentative
+
+```{r}
+lac_essai <- lac_exp |>
+  group_by(anim_id) |> 
+  filter(parity == max(parity) & dp_mis == 0)
+```
+
+```{r}
+lac_essai_1 <- lac_essai|> 
+  mutate(mast_cat1 = case_when(parKat == 1 & mast_cat1 == "primi_healthy" ~ "primi_healthy",
+                               parKat == 1 & mast_cat1 == "primi_env" ~ "primi_env",
+                               parKat == 1 & mast_cat1 != "primi_healthy" & mast_cat1 != "primi_env" ~ "primi_healthy",
+                               parKat != 1 & mast_cat1 == "dpLow_healthy" ~ "dpLow_healthy",
+                               parKat != 1 & mast_cat1 == "dpHigh_healthy" ~ "dpHigh_healthy",
+                               parKat != 1 & mast_cat1 == "dpLow_env" ~ "dpLow_env",
+                               parKat != 1 & mast_cat1 == "dpHigh_env" ~ "dpHigh_env",
+                               parKat != 1 & mast_cat1 != "dpLow_healthy" & mast_cat1 != "dpHigh_healthy" & mast_cat1 != "dpHigh_env" & mast_cat1 != "dpLow_env" ~ "dpLow_healthy"))
+```
+
+ 
+```{r}
+levels(lac_essai_1$mast_cat1)
+```
+
+
+```{r}
+table(lac_essai$mast_cat1)
+```
+
+```{r}
+table(lac_essai_1$mast_cat1)
+```
+
+
 # Prédictions
 
 ```{r}
-lac_exp_deleted <- lac_exp_deleted |> 
+lac_essai <- lac_essai |> 
   mutate(race = as.factor(race),
          mast_cat1 = as.factor(mast_cat1),
          parKat = as.factor(parKat))
 ```
 
+
+```{r}
+lac_essai_1 <- lac_essai_1 |> 
+  mutate(race = as.factor(race),
+         mast_cat1 = as.factor(mast_cat1),
+         parKat = as.factor(parKat))
+```
+
+
+
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
-                   newdata = lac_exp_deleted,
+                   newdata = lac_essai,
+                   re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("Statut mammite")+
+  ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+
+```{r}
+prd <- predictions(model = scc_high_dp_model,
+                   newdata = lac_essai_1,
                    re.form = NA, type = "response")
 
 ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
@@ -133,7 +205,7 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
 
 ```{r}
 prd1 <- predictions(model = cure_dp_model,
-                   newdata = lac_exp_deleted,
+                   newdata = lac_essai,
                    re.form = NA, type = "response")
 
 ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
@@ -145,8 +217,22 @@ ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
 ```
 
 ```{r}
+prd1 <- predictions(model = cure_dp_model,
+                   newdata = lac_essai_1,
+                   re.form = NA, type = "response")
+
+ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("statut mammite")+
+  ylab("probabilité d'une guérison pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+
+```{r}
 prd2 <- predictions(model = new_inf_model,
-                   newdata = lac_exp_deleted,
+                   newdata = lac_essai,
                    re.form = NA, type = "response")
 
 ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
@@ -157,7 +243,22 @@ ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
-**Le problème avec cette approche c'est que les modèles prédictifs sont entraînés sur des données réelles et si on applique simplement ces modèles aux données où l'issue a été modifiée de manière contrefactuelle, les prédictions seront biaisées car elles sont influencées par les caractéristiques observées. Cela explique la grande variabilité des résultats.**
+```{r}
+prd2 <- predictions(model = new_inf_model,
+                   newdata = lac_essai_1,
+                   re.form = NA, type = "response")
+
+ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  xlab("statut mammite")+
+  ylab("probabilité d'une nouvelle infection pendant le tarissement")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+
+
+**Le problème avec cette approche c'est que les modèles prédictifs sont entraînés sur des données réelles et si on applique simplement ces modèles aux données où l'issue a été modifiée de manière contrefactuelle, les prédictions seront biaisées car elles sont influencées par les caractéristiques observées. Cela explique-t-il la grande variabilité des résultats ?**
 
 On va commencer par calculer le nombre d'animaux réformés pour chaque troupeau.
 
