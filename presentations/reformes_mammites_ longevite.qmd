@@ -1,0 +1,201 @@
+---
+title: "Les réformes pour mammites comme levier d'action pour l'augmentation de la longévité des vaches laitières."
+lang: fr
+format: 
+  revealjs:
+    incremental: false
+    slide-number: c/t
+    show-slide-number: all
+    theme: [simple, style_pres.scss]
+---
+
+## Réformes pour mammites
+
+- Mammites (infections intramammaires) rapportées comme la 2$^{ème}$ cause de réforme par la plupart des études, après les problèmes de reproduction
+
+- **Peut-on envisager d'augmenter la longévité en diminuant les réformes pour mammites ?**
+
+## Epidémiologie des mammites
+
+- Mammites des vaches laitières :
+  - Inflammations d'au moins un quartier
+  - Causées par une infection bactérienne
+
+- 2 types d'infections (schématiquement)
+  - Mammites à réservoir mammaire
+  - Mammites à réservoir environnemental
+
+## Mammites à réservoir mammaire
+
+- Infections par des bactéries à réservoir mammaire
+  - bactéries adaptées à la survie dans la mamelle
+  - infections chroniques
+  - guérissent mal en lactation
+  - guérison pendant le tarissement variable
+  - chronicité des infections fait monter les cellules du tank
+ 
+## Mammites à réservoir environnemental
+ 
+- Infections par des bactéries à réservoir environnemental
+  - bactéries présentes dans l'environnement
+  - origine primaire souvent fécale
+  - guérissent habituellement bien
+  - impact sur les cellules du lait de tank peut être faible
+
+## Les mammites comme causes de réforme
+
+- Motivations des éleveurs à réformer pour mammites :
+  - Infections chroniques à l'origine de pénalités cellules
+  - Infections chroniques = réservoirs d'infections pour les vaches saines
+  - Traitements répétés
+  - Baisses de production laitière suite à la perte d'un ou plusieurs quartier
+
+- **Comment les éleveurs intègrent-ils les informations sur les mammites dans leur décision de réformer ?**
+
+## Conséquences des réformes pour mammites
+
+- Diminution de la prévalence des infections par réformes des vaches incurables
+  - Diminution des pénalités cellules
+  - Diminution de l'incidence des infections
+- Augmentation de la production laitière :
+  - par réforme des vaches avec un ou des quartiers non fonctionnels
+  - parce que les vaches infectées produisent moins de lait
+
+- **Quelles sont les conséquences des réformes pour mammites sur la dynamiques des infections intramammaires et la production laitière, surtout autour de la période tarie ?**
+
+## Représentation des liens entre mammites et réformes
+
+Le schéma suivant représente les éléments que nous prenons en compte dans la modélisation des liens entre mammites et réformes.
+
+```{r diagramme liens mammites réformes, engine = 'tikz'}
+\usetikzlibrary{decorations.pathreplacing} % Library for curly braces
+
+\begin{tikzpicture}
+
+    % Define main coordinates
+    \coordinate (velage-n) at (0, 0);
+    \coordinate (velage-n1) at (10, 0);  % Represents Vêlage_{n+1}
+    \coordinate (reforme) at (10, 1);  % Represents Vêlage_{n+1}
+    \coordinate (dim-end) at (12, 0);    % End of the entire timeline
+    \coordinate (dim-var-start) at (1.3, 0); % Start of dashed segment
+    \coordinate (dim-var-end) at (5, 0);     % End of dashed segment
+
+    % Draw the timeline with a dashed segment
+    \draw[thick] (velage-n) -- (dim-var-start); % Solid line
+    \draw[thick, dashed] (dim-var-start) -- (dim-var-end); % Dashed segment
+    \draw[thick, ->] (dim-var-end) -- (dim-end); % Solid line continuing to the end
+
+    % Points for Vêlage_n and Vêlage_{n+1}
+    \filldraw[black] (velage-n) circle (2pt) node[above=5pt] {Vêlage\textsubscript{n}};
+    \filldraw[black] (velage-n1) circle (2pt) node[above=5pt] {Vêlage\textsubscript{n+1}};
+    \filldraw[black] (reforme) circle (2pt) node[above=5pt]{};
+
+    % Contrôles laitiers de début de lactation with curly brace
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}]
+        (0, -0.75) -- (1.8, -0.75) node[midway, below=5pt, align=center] {Statut mammites,\\production laitière de\\début de lactation};
+
+
+    % Insémination artificielle 1 with curly brace
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}]
+        (1.5, -2.5) -- (4, -2.5) node[midway, below=5pt] {Mise à la reproduction};
+
+    % Insémination fécondante with curly brace
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}]
+        (1.5, -3.25) -- (5, -3.25) node[midway, below=5pt] {Fécondation};
+
+    % Materializing the specific period before Vêlage n+1 (60 days before)
+    \draw[ultra thick, blue] (7.5, 0) -- (10, 0) node[midway, below=10pt] {Période tarie}; 
+
+    % Dernier contrôle de la lactation n at x=7
+    \filldraw[red] (7.5, 0) circle (2pt); % Point at x=7
+    \draw[thick] (7.5, 0) -- (7, -1) 
+        node[below=5pt, align=center] {Statut mammites,\\production laitière\\de fin de lactation}; % Dropping line and label
+
+    % Premier contrôle de la lactation n+1 at x=11
+    \filldraw[red] (10.5, 0) circle (2pt); % Point at x=11
+    \draw[thick] (10.5, 0) -- (11, -1) 
+        node[below=5pt, align=center] {Statut mammites,\\production laitière\\de début de lactation}; % Dropping line and label
+
+% Curved line starting from the dashed line and ending above Vêlage n+1
+    \draw[thick,dashed] (3, 0) .. controls (4, .05) and (4.5, 1) .. (10, 1) 
+        node[above=5pt] {Réforme};
+
+\end{tikzpicture}
+```
+
+## Liens entre mammites et réformes - hypothèses
+
+- Nos hypothèses sont :
+  - Le statut vis-à-vis des mammites et la production laitière en début de lactation influencent la décision de l'éleveur de mettre une vache à la reproduction.
+  - Toutes les vaches mises à la reproduction ne seront pas gestantes. Les vaches non gestantes seront réformées.
+  - Le statut mammite et la production laitière en début de lactation, en fin de lactation et en début de lactation suivante sont liés. Les choix de réforme ont des répercussions sur la lactation suivante 
+
+## Liens entre mammites et réformes - questions
+
+
+## Modélisation des liens entre mammites et réformes
+
+
+```{r diagramme modélisation liens mammites réformes, engine = 'tikz'}
+\usetikzlibrary{decorations.pathreplacing} % Library for curly braces
+
+\begin{tikzpicture}
+
+    % Define main coordinates
+    \coordinate (velage-n) at (0, 0);
+    \coordinate (velage-n1) at (10, 0);  % Represents Vêlage_{n+1}
+    \coordinate (reforme) at (10, 1);  % Represents Vêlage_{n+1}
+    \coordinate (dim-end) at (12, 0);    % End of the entire timeline
+    \coordinate (dim-var-start) at (1.3, 0); % Start of dashed segment
+    \coordinate (dim-var-end) at (5, 0);     % End of dashed segment
+
+    % Draw the timeline with a dashed segment
+    \draw[thick] (velage-n) -- (dim-var-start); % Solid line
+    \draw[thick, dashed] (dim-var-start) -- (dim-var-end); % Dashed segment
+    \draw[thick, ->] (dim-var-end) -- (dim-end); % Solid line continuing to the end
+
+    % Points for Vêlage_n and Vêlage_{n+1}
+    \filldraw[black] (velage-n) circle (2pt) node[above=5pt] {Vêlage\textsubscript{n}};
+    \filldraw[black] (velage-n1) circle (2pt) node[above=5pt] {Vêlage\textsubscript{n+1}};
+    \filldraw[black] (reforme) circle (2pt) node[above=5pt]{};
+
+    % 90-day tick mark
+    \draw[thick] (1.8, -0.1) -- (1.8, 0.1) node[below=5pt] {90 jours};
+
+    % Contrôles laitiers de début de lactation with curly brace
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}]
+        (0, -0.75) -- (1.8, -0.75) node[midway, below=5pt, align=center] {Contrôles laitiers de\\début de lactation $n$};
+
+
+    % Insémination artificielle 1 with curly brace
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}]
+        (1.5, -2.5) -- (4, -2.5) node[midway, below=5pt] {Insémination\textsubscript{1}};
+
+    % Insémination fécondante with curly brace
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}]
+        (1.5, -3.25) -- (5, -3.25) node[midway, below=5pt] {Insémination fécondante};
+
+    % Materializing the specific period before Vêlage n+1 (60 days before)
+    \draw[ultra thick, blue] (7.5, 0) -- (10, 0) node[midway, below=10pt] {Période tarie}; 
+
+\foreach \x in {.25, .9, 1.5}{
+    \filldraw[red] (\x, 0) circle (2pt); % Point at x=11
+ }
+
+    % Dernier contrôle de la lactation n at x=7
+    \filldraw[red] (7, 0) circle (2pt); % Point at x=7
+    \draw[thick] (7, 0) -- (7, -1) 
+        node[below=5pt, align=center] {Dernier contrôle de\\la lactation $n$}; % Dropping line and label
+
+    % Premier contrôle de la lactation n+1 at x=11
+    \filldraw[red] (11, 0) circle (2pt); % Point at x=11
+    \draw[thick] (11, 0) -- (11, -1) 
+        node[below=5pt, align=center] {Premier contrôle de\\la lactation $n+1$}; % Dropping line and label
+
+% Curved line starting from the dashed line and ending above Vêlage n+1
+    \draw[thick,dashed] (3, 0) .. controls (4, .05) and (4.5, 1) .. (10, 1) 
+        node[above=5pt] {Réforme};
+
+\end{tikzpicture}
+```
+
