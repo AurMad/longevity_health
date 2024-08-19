@@ -114,8 +114,11 @@ lac_exp <- lac_exp |>
 ```
 
 ```{r}
-lac_exp_deleted <- lac_exp |> 
-  filter(delete != 1)
+lac_exp <- lac_exp |> 
+  filter(dp_mis == 0)
+
+lac_exp <- lac_exp |> 
+  drop_na(mast_cat1)
 ```
 
 ```{r}
@@ -124,14 +127,14 @@ table(lac_exp_deleted$mast_cat1)
 
 Autre tentative
 
-```{r}
+```{r, eval = FALSE}
 lac_essai <- lac_exp |>
   group_by(anim_id) |> 
   filter(parity == max(parity) & dp_mis == 0)
 ```
 
 ```{r}
-lac_essai_1 <- lac_essai|> 
+lac_essai_1 <- lac_exp|> 
   mutate(mast_cat1 = case_when(parKat == 1 & mast_cat1 == "primi_healthy" ~ "primi_healthy",
                                parKat == 1 & mast_cat1 == "primi_env" ~ "primi_env",
                                parKat == 1 & mast_cat1 != "primi_healthy" & mast_cat1 != "primi_env" ~ "primi_healthy",
@@ -149,7 +152,7 @@ levels(lac_essai_1$mast_cat1)
 
 
 ```{r}
-table(lac_essai$mast_cat1)
+table(lac_exp$mast_cat1)
 ```
 
 ```{r}
@@ -160,7 +163,7 @@ table(lac_essai_1$mast_cat1)
 # Prédictions
 
 ```{r}
-lac_essai <- lac_essai |> 
+lac_exp <- lac_exp |> 
   mutate(race = as.factor(race),
          mast_cat1 = as.factor(mast_cat1),
          parKat = as.factor(parKat))
@@ -178,7 +181,7 @@ lac_essai_1 <- lac_essai_1 |>
 
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
-                   newdata = lac_essai,
+                   newdata = lac_exp,
                    re.form = NA, type = "response")
 
 ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
@@ -205,7 +208,7 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
 
 ```{r}
 prd1 <- predictions(model = cure_dp_model,
-                   newdata = lac_essai,
+                   newdata = lac_exp,
                    re.form = NA, type = "response")
 
 ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
@@ -232,7 +235,7 @@ ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
 
 ```{r}
 prd2 <- predictions(model = new_inf_model,
-                   newdata = lac_essai,
+                   newdata = lac_exp,
                    re.form = NA, type = "response")
 
 ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
