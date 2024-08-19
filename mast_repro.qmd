@@ -45,6 +45,7 @@ Chargement du jeu de données lactations généré par le script `data_prep/make
 ```{r chargement données lactations}
 lac <- read_csv2("generated_datasets/idele_lac_final.csv")
 ```
+
 # Création de jeux de données pour les prédictions
 
 L'objectif de ces jeux de données est de pouvoir visualiser les effets estimés par les modèles. Dans chaque jeux de données on ne fait varier qu'une variable d'intérêt, les autres sont maintenues à un niveau *moyen*, pour la comparaison.

@@ -53,12 +53,6 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
 
 ## modélisation 
 
-```{r}
-lac <- lac |> 
-  mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"),
-         race = relevel(factor(race), ref="PH"))
-```
-
 
 ```{r}
 scc_high_dp_model <- glmer(infct_end_lac ~ parKat +
