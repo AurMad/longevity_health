@@ -35,7 +35,7 @@ scc_high_cutoff <- 200
 # Chargement des données utiles
 
 ```{r}
-lac <- read.csv2("generated_datasets/lac.csv")
+lac <- read.csv2("generated_datasets/idele_lac_final.csv")
 load("generated_datasets/scc_high_dp_model.RData")
 load("generated_datasets/cure_dp_model.RData")
 load("generated_datasets/new_inf_model.RData")
@@ -45,6 +45,13 @@ load("generated_datasets/new_inf_model.RData")
 lac <- lac |> 
   mutate(calv_date = as.Date(calv_date, "%Y-%m-%d"))
 ```
+
+```{r}
+lac <- lac |> 
+  mutate(
+    repro = ifelse(!is.na(n_ai), 1, 0))
+```
+
 
 ```{r}
 str(lac)
@@ -57,216 +64,329 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
 
 ```
 
+```{r}
+lac <- lac |> 
+  mutate(race = as.factor(race),
+         mast_cat1 = as.factor(mast_cat1),
+         parKat = as.factor(parKat))
+```
+
+```{r}
+str(lac)
+```
+
+
 # Création de l'échantillon d'étude
 
-Prenons tous les animaux qui ont vêler en 2022 par exemple.
+On va commencer par construire un jeu de données à l'échelle élevage-année de vêlage.
+
+```{r création du jeu de donnees elevage annee de velage}
+hd_yr <- lac |> 
+  mutate(lac_id = 1:n()) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_cows = length(unique(anim_id)), #nombre de vaches qui vêle par troupeau par an
+            n_lacs = length(unique(lac_id)), #nombre de lactations
+            n_rectrl = length(scc_first_nxt_lac[!is.na(scc_first_nxt_lac)]), #nombre de vaches recontrôlées pour la lactation suivante
+            n_low_end_lac = length(nxt_ninf[!is.na(nxt_ninf)]), 
+            n_high_end_lac = length(nxt_cure[!is.na(nxt_cure)]),
+            p_rectrl = round(n_rectrl / n_lacs, 3), #proportion de recontrôles
+            ninf_rate = round(length(nxt_ninf[!is.na(nxt_ninf) & nxt_ninf == 1]) / length(nxt_ninf[!is.na(nxt_ninf)]), 3), #proportion de nouvelles infections
+            cure_rate = round(length(nxt_cure[!is.na(nxt_cure) & nxt_cure == 1]) / length(nxt_ninf[!is.na(nxt_cure)]), 3)) #proportion de guérisons
+```
+```{r proportion de lactation avec au moins un recontrôle}
+hd_yr |> 
+  filter(n_rectrl > 30) |> 
+  ggplot(aes(x = p_rectrl)) +
+  geom_histogram() +
+  xlab("Proportion de lactations avec au moins un contrôle lors de la lactation suivante.")
+```
+```{r proportion de lactation avec au moins un recontrôle en fonction de l'année}
+hd_yr |> 
+  filter(year %in% 2021:2023) |> 
+  ggplot(aes(x = p_rectrl, col = factor(year))) +
+  geom_density() +
+  xlab("Proportion de lactations avec au moins un contrôle lors de la lactation suivante.")
+```
+Il semble judicieux de fixer le seuil à 50% de recontrôles et au moins 30 vaches recontrôlées par élevage-année
+
+
+```{r sélection élevages-années}
+hd_yr <- hd_yr |> 
+  filter(n_rectrl > 30 & p_rectrl > .5)
+
+nrow(hd_yr)
+
+length(unique(hd_yr$herd_id))
+```
+```{r}
+hist(hd_yr$ninf_rate,
+     main = "Distribution des proportions de nouvelles infections\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
+     xlab = "Proportion de nouvelles infections")
+```
+IL semblerait que le taux de nouvelles infection tourne plutôt autour de 0,15
+
+```{r}
+hist(hd_yr$cure_rate,
+     main = "Distribution des proportions de guérisons\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
+     xlab = "Proportion de guérisons")
+```
+Il semblerait que le taux de guérison tourne autour de 0,7
+
+Même chose avec cette fois une distinction par catégories de mammites 
+
+```{r création du jeux de données élevage année de vêlage stratifié par catégorie de mammites}
+hd_yr1 <- lac |>
+  mutate(lac_id = 1:n()) |> 
+  group_by(herd_id, year, mast_cat1) |> 
+  summarise(n_cows = length(unique(anim_id)),
+            n_lacs = length(unique(lac_id)),
+            n_rectrl = length(scc_first_nxt_lac[!is.na(scc_first_nxt_lac)]),
+            n_low_end_lac = length(nxt_ninf[!is.na(nxt_ninf)]),
+            n_high_end_lac = length(nxt_cure[!is.na(nxt_cure)]),
+            p_rectrl = round(n_rectrl / n_lacs, 3),
+            ninf_rate = round(length(nxt_ninf[!is.na(nxt_ninf) & nxt_ninf == 1]) / length(nxt_ninf[!is.na(nxt_ninf)]), 3),
+            cure_rate = round(length(nxt_cure[!is.na(nxt_cure) & nxt_cure == 1]) / length(nxt_ninf[!is.na(nxt_cure)]), 3))
+
+hd_yr1 <- left_join(
+  hd_yr |> 
+    select(herd_id, year),
+  hd_yr1
+)
+```
+
+On calcule à nouveau les mêmes taux mais cette fois en moyenne par catégories de mammites.
+
+
+```{r}
+hd_yr1 |> 
+  filter(mast_cat1 %in% level_order) |> 
+  group_by(mast_cat1) |> 
+  summarise(ninf_mean = mean(ninf_rate, na.rm = TRUE),
+            cure_mean = mean(cure_rate, na.rm = TRUE))
+```
+
+Cela semble assez cohérent aux vues des résultats obtenues ultérieurement. 
+
+```{r taux de nouvelles infections en fonction du statut mammite en début de lactation agrégé à l'échelle élevage année}
+hd_yr1 |> 
+  filter(mast_cat1 %in% level_order) |> 
+  ggplot(aes(y = ninf_rate, x = mast_cat1)) +
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+Il semblerait pour certaines catégories, le taux de nouvelles infection est assez proche de 0, comme "dpLow_healthy" alors que par exemple pour "dpHigh_cont" on observe une grande variabilité avec un taux qui se rapprche fortement de 1. 
+
+```{r taux de guérison en fonction du statut mammite en début de lactation agrégé à l'échelle élevage année}
+hd_yr1 |> 
+  filter(mast_cat1 %in% level_order) |> 
+  ggplot(aes(y = cure_rate, x = mast_cat1)) +
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+ici on observe le phénomène inverse ce qui est conforme à ce qu'on a pu observer précédemment. 
+
+
 
 ```{r}
 lac_ctr <- lac |> 
-  filter(year == "2022", !is.na(calv_date_prev))
-```
+  mutate(mast_cat2 = case_when(mast_cat1 == "primi_healthy" ~ "primi_healthy",
+                  mast_cat1 == "primi_env" ~ "primi_env",
+                  mast_cat1 == "primi_cont" ~ "primi_healthy",
+                  mast_cat1 == "dpLow_healthy" ~ "dpLow_healthy",
+                  mast_cat1 == "dpLow_env" ~ "dpLow_env",
+                  mast_cat1 == "dpLow_cont" ~ "dpLow_healthy",
+                  mast_cat1 == "dpHigh_healthy" ~ "dpHigh_healthy",
+                  mast_cat1 == "dpHigh_env" ~ "dpHigh_env",
+                  mast_cat1 == "dpHigh_cont" ~ "dpHigh_healthy"))
 
-On prend ensuite toutes les dates des précédents vêlages, ce qui nous permet de sélectionner un échantillon plus grand d'animaux. Dont les génisses mises à la reproduction pour la première fois et les vaches qui n'ont pas revêlé.
-
-```{r}
-right_calv <- max(lac_ctr$calv_date_prev)
-left_calv <- min(lac_ctr$calv_date_prev)
-```
-
-```{r}
-lac_exp <- lac |> 
-  filter(  calv_date <= right_calv & calv_date >= left_calv)
-```
-
-# Mise en place de l'issue contrefactuelle
-
-```{r}
-lac_exp <- lac_exp |> 
-  mutate(repro_ctr = ifelse(mast_cat1 != "primi_healthy" & mast_cat1 != "dpLow_healthy" & mast_cat1 != "primi_env" & mast_cat1 != "dpHigh_healthy" & mast_cat1 != "dpHigh_env" & mast_cat1 != "dpLow_env", 0, 1))
+lac_ctr <- lac_ctr |> 
+  mutate(mast_cat2 = factor(mast_cat2))
 ```
 
 ```{r}
-
-p<-ggplot(lac_exp |> 
-            filter(n_ctrl_early > 0 & dp_mis == 0)) +
-aes(x = repro_ctr, fill = mast_cat1) +
-geom_bar(position="fill") +
-xlab("mise à la reproduction") +
-ylab("Effectifs") +
-labs(fill = "catégories") +
-scale_fill_brewer(palette = "PRGn") 
-p+theme_bw()
-## x = Nbre de groupe sur l'axe x
-## fill = Nbre de barres par groupe
-## position="fill" = rend le graphique proportionnel et empile les barres
+table(lac_ctr$mast_cat2)
 ```
 
 ```{r}
-lac_exp <- lac_exp |> 
-  arrange(anim_id) |>
-  mutate(lac_id = 1:nrow(lac_exp))
+lac_ctr <- lac_ctr |> 
+  rename(mast_cat_real = mast_cat1,
+         mast_cat1 = mast_cat2)
 ```
 
 ```{r}
-lac_exp <- lac_exp |> 
-  group_by(anim_id) |> 
-  mutate(delete = ifelse(lag(repro) != lag(repro_ctr), 1, 0))
+lac_ctr <- lac_ctr |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0) |> 
+  select(anim_id, herd_id, parKat, race, milk_early_max_scaled_p1, milk_early_max_scaled_p2, 
+    milk_early_max_scaled_p3, milk_early_max_scaled_p4, mast_cat1)
 ```
+
+## Probabilité de mise à la reproduction
+
+On va commencer par calculer le taux de mise à la reproduction et le comparer au jeu de donnée initial 
 
 ```{r}
-lac_exp <- lac_exp |> 
-  filter(dp_mis == 0)
-
-lac_exp <- lac_exp |> 
-  drop_na(mast_cat1)
-```
-
-```{r}
-table(lac_exp_deleted$mast_cat1)
-```
-
-Autre tentative
-
-```{r, eval = FALSE}
-lac_essai <- lac_exp |>
-  group_by(anim_id) |> 
-  filter(parity == max(parity) & dp_mis == 0)
-```
-
-```{r}
-lac_essai_1 <- lac_exp|> 
-  mutate(mast_cat1 = case_when(parKat == 1 & mast_cat1 == "primi_healthy" ~ "primi_healthy",
-                               parKat == 1 & mast_cat1 == "primi_env" ~ "primi_env",
-                               parKat == 1 & mast_cat1 != "primi_healthy" & mast_cat1 != "primi_env" ~ "primi_healthy",
-                               parKat != 1 & mast_cat1 == "dpLow_healthy" ~ "dpLow_healthy",
-                               parKat != 1 & mast_cat1 == "dpHigh_healthy" ~ "dpHigh_healthy",
-                               parKat != 1 & mast_cat1 == "dpLow_env" ~ "dpLow_env",
-                               parKat != 1 & mast_cat1 == "dpHigh_env" ~ "dpHigh_env",
-                               parKat != 1 & mast_cat1 != "dpLow_healthy" & mast_cat1 != "dpHigh_healthy" & mast_cat1 != "dpHigh_env" & mast_cat1 != "dpLow_env" ~ "dpLow_healthy"))
-```
-
- 
-```{r}
-levels(lac_essai_1$mast_cat1)
+repro_full1 <- readRDS("generated_datasets/repro_full1.RData")
 ```
 
 
 ```{r}
-table(lac_exp$mast_cat1)
-```
-
-```{r}
-table(lac_essai_1$mast_cat1)
-```
-
-
-# Prédictions
-
-```{r}
-lac_exp <- lac_exp |> 
-  mutate(race = as.factor(race),
-         mast_cat1 = as.factor(mast_cat1),
-         parKat = as.factor(parKat))
+proba = predict(object = repro_full1,
+                              newdata = lac_ctr,
+                              re.form = NULL,
+                              type = "response")
 ```
 
 
-```{r}
-lac_essai_1 <- lac_essai_1 |> 
-  mutate(race = as.factor(race),
-         mast_cat1 = as.factor(mast_cat1),
-         parKat = as.factor(parKat))
+```{r} 
+lac_ctr <- lac_ctr |> 
+  mutate(prob_ctr = predict(object = repro_full1,
+                            re.form = NULL,
+                            type = "response"))
+lac_ctr <- lac_ctr |> 
+  rowwise() |> 
+  mutate(repro = rbinom(1, 1, prob_ctr)) |> 
+  ungroup()
 ```
 
+## probabilité de succès à la première IA
 
+```{r} 
+success_ia_full1 <- readRDS("generated_datasets/success_ia_full1.RData")
+```
 
 ```{r}
-prd <- predictions(model = scc_high_dp_model,
-                   newdata = lac_exp,
-                   re.form = NA, type = "response")
-
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
-  geom_point() +
-  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("Statut mammite")+
-  ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+lac_ctr_repro <- lac_ctr |> 
+  filter(repro == 1)
 ```
 
 
 ```{r}
-prd <- predictions(model = scc_high_dp_model,
-                   newdata = lac_essai_1,
-                   re.form = NA, type = "response")
-
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
-  geom_point() +
-  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("Statut mammite")+
-  ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+proba = predict(object = success_ia_full1,
+                newdata = lac_ctr_repro,
+                re.form = NULL,
+                type = "response")
 ```
 
 ```{r}
-prd1 <- predictions(model = cure_dp_model,
-                   newdata = lac_exp,
-                   re.form = NA, type = "response")
+lac_ctr_repro <- lac_ctr_repro |> 
+  mutate(prob_ia1_ctr = predict(object = success_ia_full1,
+                                newdata = lac_ctr_repro,
+                                re.form = NULL,
+                                type = "response"))
 
-ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
-  geom_point() +
-  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("statut mammite")+
-  ylab("probabilité d'une guérison pendant le tarissement")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-```
-
-```{r}
-prd1 <- predictions(model = cure_dp_model,
-                   newdata = lac_essai_1,
-                   re.form = NA, type = "response")
-
-ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
-  geom_point() +
-  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("statut mammite")+
-  ylab("probabilité d'une guérison pendant le tarissement")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-```
-
-
-```{r}
-prd2 <- predictions(model = new_inf_model,
-                   newdata = lac_exp,
-                   re.form = NA, type = "response")
-
-ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
-  geom_point() +
-  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("statut mammite")+
-  ylab("probabilité d'une nouvelle infection pendant le tarissement")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-```
-
-```{r}
-prd2 <- predictions(model = new_inf_model,
-                   newdata = lac_essai_1,
-                   re.form = NA, type = "response")
-
-ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
-  geom_point() +
-  geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
-  xlab("statut mammite")+
-  ylab("probabilité d'une nouvelle infection pendant le tarissement")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+lac_ctr_repro <- lac_ctr_repro |> 
+  rowwise() |> 
+  mutate(success_ia1 = rbinom(1, 1, prob_ia1_ctr)) |> 
+  ungroup()
 ```
 
 
 
-**Le problème avec cette approche c'est que les modèles prédictifs sont entraînés sur des données réelles et si on applique simplement ces modèles aux données où l'issue a été modifiée de manière contrefactuelle, les prédictions seront biaisées car elles sont influencées par les caractéristiques observées. Cela explique-t-il la grande variabilité des résultats ?**
-
-On va commencer par calculer le nombre d'animaux réformés pour chaque troupeau.
+## Probabilité de recevoir plusieurs inséminations 
 
 ```{r}
-lac_exp_deleted <- lac_exp_deleted |> 
-  group_by(herd_id) |> 
-   mutate(culling = )
+lac_ctr_ai <- lac_ctr_repro |> 
+  filter(success_ia1 == 0)
+```
+
+
+```{r}
+ai_number_full1 <- readRDS("generated_datasets/ai_number_full1.RData")
+```
+
+
+```{r}
+proba = predict(object = ai_number_full1,
+                newdata = lac_ctr_ai,
+                re.form = NULL,
+                type = "response")
+
+```
+
+
+```{r}
+lac_ctr_ai <- lac_ctr_ai |> 
+  mutate(nia_ctr = predict(object = ai_number_full1,
+                           newdata = lac_ctr_ai,
+                           re.form = NULL,
+                           type = "response"))
+
+```
+
+```{r}
+lac_ctr_ai <- lac_ctr_ai |> 
+  mutate(n_ai = round(nia_ctr))
+```
+
+```{r}
+lac_ctr_repro <- left_join(lac_ctr_repro,
+                           lac_ctr_ai)
+```
+```{r}
+lac_ctr_repro <- lac_ctr_repro |> 
+  mutate(n_ai = as.numeric(ifelse(is.na(n_ai), 1, n_ai)))
+```
+
+
+## Probabilité de revêler 
+
+```{r}
+repro_revel_mast1 <- readRDS("generated_datasets/repro_revel_mast1.RData")
+```
+
+```{r}
+lac_ctr_repro <- lac_ctr_repro |> 
+  mutate(prob_revel = predict(object = repro_revel_mast1,
+                              newdata = lac_ctr_repro,
+                              re.form = NULL,
+                              type = "response"))
+
+lac_ctr_repro <- lac_ctr_repro |> 
+  rowwise() |> 
+  mutate(revel = rbinom(1, 1, prob_revel)) |> 
+  ungroup()
+```
+
+
+```{r}
+prdd <- predict(object = repro_full1,
+                newdata = lac_test,
+                re.form = NULL,
+                type = "response")
+```
+
+
+```{r}
+prd <- tibble(
+  proba = prdd,
+  repro = NA
+) |> 
+  rowwise() |> 
+  mutate(repro = rbinom(1, 1, proba))
+```
+
+
+```{r taux de mise à la reproduction en fonction du statut mammite en début de lactation agrégé à l'échelle élevage année dans le scénario réel}
+hd_yr1 |> 
+  filter(mast_cat1 %in% level_order) |> 
+  ggplot(aes(y = prd_prob, x = mast_cat1)) +
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+
+```{r}
+hd_yr_ctr <- hd_year_ctr |> 
+  group_by(herd_id, mast_cat1, year) |> 
+  summarize(ai_rate = mean(prd_prob))
+```
+
+```{r taux de mise à la reproduction en fonction du statut mammite en début de lactation agrégé à l'échelle élevage année dans le scénario contrfactuel}
+hd_yr1 |> 
+  filter(mast_cat1 %in% level_order) |> 
+  ggplot(aes(y = prd_prob, x = mast_cat1)) +
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
