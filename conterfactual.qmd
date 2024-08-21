@@ -188,7 +188,7 @@ hd_yr1 |>
 
 ici on observe le phénomène inverse ce qui est conforme à ce qu'on a pu observer précédemment. 
 
-# Création des contrefactuels 
+# Création des contrefactuels : prévention des mammites contagieuses 
 
 ```{r}
 lac_ctr <- lac |> 
@@ -546,12 +546,28 @@ hd_yr_ctr <- lac_ctr |>
   group_by(herd_id, year) |> 
   summarise(n_cows = length(unique(anim_id)), #nombre de vaches qui vêle par troupeau par an
             n_lacs = length(unique(lac_id)), #nombre de lactations
-            #n_rectrl = length(scc_first_nxt_lac[!is.na(scc_first_nxt_lac)]), #nombre de vaches recontrôlées pour la lactation suivante
+            n_rectrl = length(revel[!is.na(revel)]), #nombre de vaches recontrôlées pour la lactation suivante
             n_low_end_lac = length(ninf[!is.na(ninf)]), 
             n_high_end_lac = length(cure[!is.na(cure)]),
-            #p_rectrl = round(n_rectrl / n_lacs, 3), #proportion de recontrôles
+            p_rectrl = round(n_rectrl / n_lacs, 3), #proportion de recontrôles
             ninf_rate = round(length(ninf[!is.na(ninf) & ninf == 1]) / length(ninf[!is.na(ninf)]), 3), #proportion de nouvelles infections
             cure_rate = round(length(cure[!is.na(cure) & cure == 1]) / length(cure[!is.na(cure)]), 3)) #proportion de guérisons
+```
+```{r proportion de lactation avec au moins un recontrôle}
+hd_yr_ctr |> 
+  filter(n_rectrl > 30) |> 
+  ggplot(aes(x = p_rectrl)) +
+  geom_histogram() +
+  xlab("Proportion de lactations avec au moins un contrôle lors de la lactation suivante.")
+```
+
+```{r sélection élevages-années}
+hd_yr_ctr <- hd_yr_ctr |> 
+  filter(n_rectrl > 30 & p_rectrl > .5)
+
+nrow(hd_yr_ctr)
+
+length(unique(hd_yr_ctr$herd_id))
 ```
 
 ```{r}
@@ -610,4 +626,419 @@ ggplot(rec_hd_yr_combine, aes(x = dim, y = mean_milk, color = type)) +
        color = "Type") +
   theme_minimal()
 ```
+
+# Autre tentative pour montrer la modification sur la PL 
+
+```{r}
+lac <- lac |> 
+  mutate(dim = 15)
+
+lac_ctr <- lac_ctr |> 
+  mutate(dim = 15)
+```
+
+```{r}
+lac <- lac |> 
+  filter(dp_mis == 0)
+
+lac <- lac |> 
+  mutate(pl = predict(object = lac_start_model_full2,
+                      newdata = lac,
+                      re.form = NULL,
+                      type = "response"))
+```
+
+```{r}
+lac_ctr <- lac_ctr |> 
+  mutate(pl = predict(object = lac_start_model_full2,
+                      newdata = lac_ctr,
+                      re.form = NULL,
+                      type = "response"))
+```
+
+on va essayer de réaliser un box plot afin de comparer les deux jeux de données 
+
+
+
+```{r}
+hd_milk <- lac |> 
+  group_by(herd_id, year) |>
+  summarize(n_cows = length(unique(anim_id)),
+            mean_milk = mean(pl))
+```
+
+```{r}
+hd_milk_ctr <- lac_ctr |> 
+  group_by(herd_id, year) |>
+  summarize(n_cows = length(unique(anim_id)),
+            mean_milk = mean(pl))
+```
+
+
+```{r}
+hd_milk <- hd_milk |> 
+  mutate(type = "factual")
+
+hd_milk_ctr <- hd_milk_ctr |> 
+  mutate(type = "counterfactual")
+```
+
+```{r}
+hd_milk_combine <- bind_rows(hd_milk, hd_milk_ctr)
+```
+
+```{r}
+ggplot(hd_milk_combine, aes(x = type, y = mean_milk, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison de la production laitière à DIM = 15 jours",
+       x = "Type de données",
+       y = "Production laitière (kg)") +
+  theme_minimal()
+```
+
+
+#Création des contrefactuels : Réforme des vaches contagieuses 
+
+Cette fois-ci au lieu de modifier le statut des animaux je vais simplement réformer les animaux contagieux. 
+
+```{r}
+lac_ref <- lac |> 
+  mutate(cull_need = ifelse(mast_cat1 == "primi_cont" | mast_cat1 == "dpLow_cont" | mast_cat1 == "dpHigh_cont", 1,0))
+```
+
+```{r}
+lac_ref <- lac_ref |> 
+  group_by(anim_id) |> 
+  mutate(cull = ifelse((cull_need == 1 & lag(cull_need, default = 0) == 0) | 
+                       (cull_need == 1 & lag(cull_need, default = 0) == 1), 1, 0)) |> 
+  ungroup()
+  
+```
+
+```{r}
+lac_cull <- lac_ref |> 
+  filter(cull == 0)
+```
+
+```{r}
+lac_cull <- lac_cull |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0) |> 
+  select(herd_id, anim_id, calv_date, parKat, milk_early_max_scaled, milk_early_max_scaled_p1, milk_early_max_scaled_p2, milk_early_max_scaled_p3, milk_early_max_scaled_p4, mast_cat1, race)
+```
+
+## probabilité de reproduction 
+
+
+```{r} 
+lac_cull <- lac_cull |> 
+  mutate(prob_ctr = predict(object = repro_full1,
+                            newdata = lac_cull,
+                            re.form = NULL,
+                            type = "response"))
+lac_cull <- lac_cull |> 
+  rowwise() |> 
+  mutate(repro = rbinom(1, 1, prob_ctr)) |> 
+  ungroup()
+```
+
+```{r}
+lac_cull_repro <- lac_cull |> 
+  filter(repro == 1)
+```
+
+A ce stade lac_cull comptabilise 110 817 obs 
+
+## probabilité de réussite à la première IA
+
+
+```{r}
+lac_cull_repro <- lac_cull_repro |> 
+  mutate(prob_ia1_ctr = predict(object = success_ia_full1,
+                                newdata = lac_cull_repro,
+                                re.form = NULL,
+                                type = "response"))
+
+lac_cull_repro <- lac_cull_repro |> 
+  rowwise() |> 
+  mutate(success_ia1 = rbinom(1, 1, prob_ia1_ctr)) |> 
+  ungroup()
+```
+
+
+
+```{r}
+lac_cull <- left_join(lac_cull, lac_cull_repro)
+```
+## Probabilité d'être réinséminée 
+
+
+```{r}
+lac_cull_ai <- lac_cull_repro |> 
+  filter(success_ia1 == 0)
+```
+
+
+```{r}
+lac_cull_ai <- lac_cull_ai |> 
+  mutate(nia_ctr = predict(object = ai_number_full1,
+                           newdata = lac_cull_ai,
+                           re.form = NULL,
+                           type = "response"))
+
+```
+
+```{r}
+lac_cull_ai <- lac_cull_ai |> 
+  mutate(n_ai = round(nia_ctr))
+```
+
+```{r}
+lac_cull_repro <- left_join(lac_cull_repro,
+                           lac_cull_ai)
+```
+
+```{r}
+lac_cull_repro <- lac_cull_repro |> 
+  mutate(n_ai = as.numeric(ifelse(is.na(n_ai), 1, n_ai)))
+```
+
+
+```{r}
+lac_cull <- left_join(lac_cull, lac_cull_repro)
+```
+##Probabilité de revêler 
+
+
+```{r}
+lac_cull_repro <- lac_cull_repro |> 
+  mutate(prob_revel = predict(object = repro_revel_mast1,
+                              newdata = lac_cull_repro,
+                              re.form = NULL,
+                              type = "response"))
+
+lac_cull_repro <- lac_cull_repro |> 
+  rowwise() |> 
+  mutate(revel = rbinom(1, 1, prob_revel)) |> 
+  ungroup()
+```
+
+
+```{r}
+lac_cull <- left_join(lac_cull, lac_cull_repro)
+```
+
+##Probabilité de mort 
+
+
+```{r}
+lac_cull <- lac_cull |> 
+  mutate(death_risk = predict(object = cox_model_essai2,
+                      newdata = lac_cull,
+                      re.form = NULL,
+                      type = "risk"))
+
+lac_cull <- lac_cull |> 
+  mutate(death_risk_prob = 1 / (1 + exp(-scale(death_risk))))  # Utiliser scale pour centrer les scores
+
+lac_cull <- lac_cull |> 
+  rowwise() |> 
+  mutate(dth = rbinom(1, 1, death_risk_prob)) |> 
+  ungroup()
+```
+
+## Probabilité d'un dernier contrôle élevé 
+
+
+```{r}
+lac_cull_dynamo <- lac_cull |> 
+  filter(repro == 1 & dth == 0)
+```
+
+```{r}
+lac_cull_dynamo <- lac_cull_dynamo |> 
+  mutate(dpHigh_prob = predict(object = scc_high_dp_model,
+                               newdata = lac_cull_dynamo,
+                               re.form = NULL,
+                               type = "response",
+                               allow.new.levels = TRUE))
+
+lac_cull_dynamo <- lac_cull_dynamo |> 
+  rowwise() |> 
+  mutate(dpHigh = rbinom(1, 1, dpHigh_prob)) |> 
+  ungroup()
+```
+
+
+```{r}
+lac_cull <- left_join(lac_cull, lac_cull_dynamo)
+```
+
+## Probabilité de guérison 
+
+On doit prendre les vaches qui ont revêler. 
+
+```{r}
+lac_cull_revel <- lac_cull_dynamo |> 
+  filter(revel == 1)
+```
+
+```{r}
+lac_cull_dpHigh <- lac_cull_revel |> 
+  filter(dpHigh == 1)
+
+lac_cull_dpLow <- lac_cull_revel |> 
+  filter(dpHigh == 0)
+```
+
+
+
+
+```{r}
+lac_cull_dpHigh <- lac_cull_dpHigh |> 
+  mutate(cure_prob = predict(object = cure_dp_model,
+                               newdata = lac_cull_dpHigh,
+                               re.form = NULL,
+                               type = "response",
+                               allow.new.levels = TRUE
+                             ))
+
+lac_cull_dpHigh <- lac_cull_dpHigh |> 
+  rowwise() |> 
+  mutate(cure = rbinom(1, 1, cure_prob)) |> 
+  ungroup()
+```
+
+
+```{r}
+lac_cull <- left_join(lac_cull, lac_cull_dpHigh)
+```
+## Probabilité de nouvelle infection 
+
+
+```{r}
+lac_cull_dpLow <- lac_cull_dpLow |> 
+  mutate(ninf_prob = predict(object = new_inf_model,
+                               newdata = lac_cull_dpLow,
+                               re.form = NULL,
+                               type = "response",
+                               allow.new.levels = TRUE
+                             ))
+
+lac_cull_dpLow <- lac_cull_dpLow |> 
+   rowwise() |> 
+  mutate(ninf = rbinom(1, 1, ninf_prob)) |> 
+  ungroup()
+```
+
+```{r}
+lac_cull <- left_join(lac_cull, lac_cull_dpLow)
+```
+
+# Visualisation 
+
+```{r}
+lac_cull <- lac_cull |> 
+  mutate(year = format(calv_date, "%Y"))
+```
+
+
+```{r création du jeu de donnees elevage annee de velage}
+hd_yr_cull <- lac_cull |> 
+  mutate(lac_id = 1:n()) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_cows = length(unique(anim_id)), #nombre de vaches qui vêle par troupeau par an
+            n_lacs = length(unique(lac_id)), #nombre de lactations
+            n_rectrl = length(revel[!is.na(revel)]), #nombre de vaches recontrôlées pour la lactation suivante
+            n_low_end_lac = length(ninf[!is.na(ninf)]), 
+            n_high_end_lac = length(cure[!is.na(cure)]),
+            p_rectrl = round(n_rectrl / n_lacs, 3), #proportion de recontrôles
+            ninf_rate = round(length(ninf[!is.na(ninf) & ninf == 1]) / length(ninf[!is.na(ninf)]), 3), #proportion de nouvelles infections
+            cure_rate = round(length(cure[!is.na(cure) & cure == 1]) / length(cure[!is.na(cure)]), 3)) #proportion de guérisons
+```
+
+```{r proportion de lactation avec au moins un recontrôle}
+hd_yr_cull |> 
+  filter(n_rectrl > 30) |> 
+  ggplot(aes(x = p_rectrl)) +
+  geom_histogram() +
+  xlab("Proportion de lactations avec au moins un contrôle lors de la lactation suivante.")
+```
+
+
+```{r sélection élevages-années}
+hd_yr_cull <- hd_yr_cull |> 
+  filter(n_rectrl > 30 & p_rectrl > .5)
+
+nrow(hd_yr_cull)
+
+length(unique(hd_yr_cull$herd_id))
+```
+
+```{r}
+hist(hd_yr_cull$ninf_rate,
+     main = "Distribution contrefactuelle des proportions de nouvelles infections\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
+     xlab = "Proportion de nouvelles infections contrefactuelles")
+```
+
+```{r}
+hist(hd_yr_cull$cure_rate,
+     main = "Distribution contrefactuelle des proportions de guérisons\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
+     xlab = "Proportion de guérisons contrefactuelles")
+```
+
+
+
+```{r}
+lac_cull <- lac_cull |> 
+  mutate(dim = 15)
+```
+
+
+```{r}
+lac_cull <- lac_cull |> 
+  mutate(pl = predict(object = lac_start_model_full2,
+                      newdata = lac_cull,
+                      re.form = NULL,
+                      type = "response"))
+```
+
+on va essayer de réaliser un box plot afin de comparer les deux jeux de données 
+
+
+
+```{r}
+hd_milk_cull <- lac_cull |> 
+  group_by(herd_id, year) |>
+  summarize(n_cows = length(unique(anim_id)),
+            mean_milk = mean(pl))
+```
+
+
+```{r}
+
+hd_milk_cull <- hd_milk_cull |> 
+  mutate(type = "counterfactual")
+```
+
+```{r}
+hd_milk_combine2 <- bind_rows(hd_milk, hd_milk_cull)
+```
+
+```{r}
+ggplot(hd_milk_combine2, aes(x = type, y = mean_milk, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison de la production laitière à DIM = 15 jours",
+       x = "Type de données",
+       y = "Production laitière (kg)") +
+  theme_minimal()
+```
+
+
+
+
+
+
+
+
+
 
