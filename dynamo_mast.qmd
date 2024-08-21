@@ -35,7 +35,7 @@ scc_high_cutoff <- 200
 # Chargement des données utiles
 
 ```{r}
-lac <- read.csv2("generated_datasets/lac.csv")
+lac <- read.csv2("generated_datasets/idele_lac_final.csv")
 mast_pred <- read.csv2("generated_datasets/mast_pred.csv")
 parit_pred <- read.csv2("generated_datasets/parity_pred.csv")
 milk_pred <- read.csv2("generated_datasets/milk_pred.csv")
@@ -57,10 +57,20 @@ lac <- lac |>
 ```
 
 
+```{r}
+lac <- lac |> 
+  mutate(calv_date = as.Date(calv_date, "%Y-%m-%d"))
+```
+
+```{r}
+lac <- lac |> 
+  mutate(
+    repro = ifelse(!is.na(n_ai), 1, 0))
+```
+
 # Probabilité d'un SCC élevé au dernier contrôle avant tarissement
 
 ## modélisation
-
 
 ```{r}
 scc_high_dp_model <- glmer(infct_end_lac ~ parKat +
