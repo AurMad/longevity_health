@@ -74,14 +74,12 @@ lac_list <- unique(lac$herd_id)
 
 On sélectionne un échantillon de 10 élevages au hasard.
 
-
 ```{r Selection echantillon de 10 elevages, eval = FALSE}
 set.seed(26) #On garde la même graine si on veut conserver le même échantillon
 lac_random_sample <- sample(lac_list, 10, replace = FALSE)
 lac <- lac |> 
   filter(herd_id %in% lac_random_sample)
 ```
-
 
 La première donnée nécessaire pour réaliser une régression de cox est une donnée de temps.
 
@@ -338,14 +336,25 @@ summary(cox_model_essai)
 
 start_values <- coef(cox_model_essai)
 ```
+```{r}
+cox_model_essai1 <- coxph(Surv(time, death) ~ parKat + mast_cat1 , data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
+
+summary(cox_model_essai1)
+
+```
 
 ```{r}
-cox_model_essai2 <- coxph(Surv(time, death) ~ parKat + mast_cat1, data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
+cox_model_essai2 <- coxph(Surv(time, death) ~ parKat + mast_cat1 + frailty(herd_id), data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
 
 summary(cox_model_essai2)
 
 
 ```
+
+```{r}
+saveRDS(cox_model_essai2, "generated_datasets/cox_model_essai2.RData")
+```
+
 
 ```{r}
 table(lac$parKat)
@@ -359,7 +368,6 @@ str(lac)
 lac_mod <- lac |> 
   filter(!(mast_cat1 %in% c("NA_healthy", "NA_env", "NA_cont")))
 ```
-
 
 ```{r}
 levels(lac$mast_cat1) <- list("dpHigh_cont" = "dpHigh_cont",
@@ -382,11 +390,11 @@ table(lac$mast_cat1)
 model_mast_cat1 <- coxme(Surv(time, death) ~ mast_cat1 + parity + (1 | herd_id), data = lac) 
 summary(model_mast_cat1)
 ```
-, subset = n_ctrl_early > 0 & dp_mis == 0
 
+, subset = n_ctrl_early \> 0 & dp_mis == 0
 
 ```{r}
-model_mast_cat1 |> 
+cox_model_essai2 |> 
   tbl_regression(exponentiate = TRUE)
 ```
 
@@ -419,7 +427,7 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
 ```
 
 ```{r}
-prd <- predictions(model = cox_model_essai2, 
+prd <- predictions(model = cox_model_essai1, 
                    newdata = mast_pred2,
                    re.form = NA, type = "risk")
 
@@ -430,9 +438,3 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab( "score de risque de mort") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
-
-
-
-
-
-
