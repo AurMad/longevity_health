@@ -49,9 +49,17 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
 
 ```
 
+```{r}
+lac <- lac |> 
+  mutate(mast_cat1 = relevel(factor(mast_cat1), ref = "primi_healthy"),
+         parKat = relevel(factor(parKat), ref = 3),
+         race = relevel(factor(race), ref = "PH"))
+```
+
+
 # Probabilité d'un SCC élevé au dernier contrôle avant tarissement
 
-## modélisation 
+## modélisation
 
 
 ```{r}
@@ -75,8 +83,7 @@ summary(scc_high_dp_model)
 save(scc_high_dp_model, file = "generated_datasets/scc_high_dp_model.RData")
 ```
 
-
-## Prédictions 
+## Prédictions
 
 ```{r}
 mast_pred <- mast_pred |> 
@@ -84,7 +91,6 @@ mast_pred <- mast_pred |>
          parKat = as.factor(parKat),
          mast_cat1 = as.factor(mast_cat1))
 ```
-
 
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
@@ -98,13 +104,13 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
 ```{r}
 parit_pred <- parit_pred |> 
   mutate(race = as.factor(race),
          parKat = as.factor(parKat),
          mast_cat1 = as.factor(mast_cat1))
 ```
-
 
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
@@ -118,13 +124,13 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
 ```{r}
 race_pred <- race_pred |> 
   mutate(race = as.factor(race),
          parKat = as.factor(parKat),
          mast_cat1 = as.factor(mast_cat1))
 ```
-
 
 ```{r}
 prd <- predictions(model = scc_high_dp_model,
@@ -138,6 +144,7 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+
 ```{r}
 milk_pred <- milk_pred |> 
   mutate(race = as.factor(race),
@@ -154,9 +161,9 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
 ```
 
-# Probabilité de guérison au tarissement 
+# Probabilité de guérison au tarissement
 
-## modélisation 
+## modélisation
 
 ```{r}
 cure_dp_model <- glmer(nxt_cure ~ parKat +
@@ -179,7 +186,6 @@ summary(cure_dp_model)
 save(cure_dp_model, file = "generated_datasets/cure_dp_model.RData")
 ```
 
-
 ## Prédictions
 
 ```{r}
@@ -194,7 +200,6 @@ ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("probabilité d'une guérison pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
-
 
 ```{r}
 prd <- predictions(model = cure_dp_model,
@@ -222,7 +227,6 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
-
 ```{r}
 prd <- predictions(model = cure_dp_model, 
                    newdata = milk_pred, 
@@ -234,7 +238,7 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
 
 # Probabilité d'une nouvelle infection après tarissement
 
-## modélisation 
+## modélisation
 
 ```{r}
 new_inf_model <- glmer(nxt_ninf ~ parKat +
@@ -257,8 +261,7 @@ summary(new_inf_model)
 save(new_inf_model, file = "generated_datasets/new_inf_model.RData")
 ```
 
-
-## Prédictions 
+## Prédictions
 
 ```{r}
 prd2 <- predictions(model = new_inf_model,
@@ -272,7 +275,6 @@ ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   ylab("probabilité d'une nouvelle infection pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
-
 
 ```{r}
 prd <- predictions(model = new_inf_model,
@@ -299,7 +301,6 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
   ylab("probabilité d'une nouvelle infection pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
-
 
 ```{r}
 prd <- predictions(model = new_inf_model, 
