@@ -146,11 +146,17 @@ lac <- lac |>
 ```
 
 ```{r}
-rec_lac <- left_join(rec,
-          lac |> 
-            select(mast_cat1, anim_id, parity, dp_mis, parKat, race),
-          join_by(anim_id, parity))
+rec_lac <- left_join(lac |> 
+            select(herd_id, mast_cat1, anim_id, parity, dp_mis, parKat, race, calv_date),
+            rec |> 
+              select(herd_id,anim_id, calv_date, parity, dim, milk),
+          join_by(herd_id, anim_id, parity, calv_date))
 ```
+
+```{r}
+diff <- anti_join(lac, rec_lac)
+```
+
 
 le tableau lac ne prend que des données qui débutent à partir de 2009 donc on procède au même tri ici. On essaye de garder la première phase de la courbe afin de pouvoir l'apparenter à la phase linéaire de la courbe.
 
@@ -195,6 +201,11 @@ lac_start_model_full2 <- lmer(milk ~ dim + mast_cat1 + dim*mast_cat1 + parKat + 
 summary(lac_start_model_full2)
 ```
 
+```{r}
+saveRDS(lac_start_model_full2, "generated_datasets/lac_start_model_full2")
+```
+
+
 # Prédictions
 
 ```{r}
@@ -215,7 +226,15 @@ lac_mast_pred <- tibble(
   mast_cat1 = factor(c(mast_p1, mast_p2)),
    parKat = factor(c(rep(1, length(mast_p1)),
                     rep(2, length(mast_p2)))),
-  dim = 0,
+  dim = 7,
+  race = factor(c(rep("PH",length(mast_cat1))))
+)
+
+lac_mast_pred2 <- tibble(
+  mast_cat1 = factor(c(mast_p1, mast_p2)),
+   parKat = factor(c(rep(1, length(mast_p1)),
+                    rep(2, length(mast_p2)))),
+  dim = 35,
   race = factor(c(rep("PH",length(mast_cat1))))
 )
 
@@ -223,7 +242,6 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
                  "dpLow_healthy", "dpLow_env", "dpLow_cont",
                  "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
 ```
-
 
 ```{r}
 prd <- predictions(model = lac_start_model_full2, 
@@ -238,6 +256,18 @@ ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
+```{r}
+prd <- predictions(model = lac_start_model_full2, 
+                             newdata = lac_mast_pred2, 
+                           re.form = NA, type = "response")
+
+ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("production laitière") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
 
 ```{r}
 lac_dim_pred <- expand_grid(
@@ -282,13 +312,19 @@ ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   ylab("Production laitière") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
+
 ```{r}
 lac_race_pred <- expand_grid(
-  race = factor(c("PH", "Normande", "croisée", "Montbeliarde", "other")),
-  dim = 0) |> 
+  race = factor(c("PH", "Normande", "Croisée", "Montbéliarde", "Autre")),
+  dim = 7) |> 
   mutate(parKat = factor(c(rep(3, length(race)))), # Ajustez cette ligne selon les niveaux de la variable 'race'
   mast_cat1 = factor(c(rep("dpLow_healthy", length(race)))))
 ```
+
+```{r}
+str(lac_race_pred)
+```
+
 
 ```{r}
 prd <- predictions(model = lac_start_model_full2, 
@@ -299,17 +335,17 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
   xlab("race") + 
-  ylab("Probabilité de mise à la reproduction") +
+  ylab("Production laitière") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-# Enregistrements 
+# Enregistrements
 
 ```{r}
 write_csv2(rec_lac, "generated_datasets/rec_lac.csv")
 write_csv2(lac_mast_pred, "generated_datasets/lac_mast_pred.csv")
+write_csv2(lac_mast_pred2, "generated_datasets/lac_mast_pred2.csv")
 write_csv2(lac_dim_pred, "generated_datasets/lac_dim_pred.csv")
 write_csv2(lac_race_pred, "generated_datasets/lac_race_pred.csv")
 write_csv2(lac_parit_pred, "generated_datasets/lac_parit_pred.csv")
 ```
-
