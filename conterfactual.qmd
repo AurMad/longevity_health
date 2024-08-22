@@ -351,6 +351,7 @@ lac_ctr <- left_join(lac_ctr, lac_ctr_repro)
 
 ```{r}
 repro_revel_mast1 <- readRDS("generated_datasets/repro_revel_mast1.RData")
+repro_revel_mast_final <- readRDS("generated_datasets/repro_revel_mast_final.RData")
 ```
 
 ```{r}
@@ -677,7 +678,8 @@ hd_milk_ctr <- lac_ctr |>
 
 ```{r}
 hd_milk <- hd_milk |> 
-  mutate(type = "factual")
+  mutate(type = "factual") |> 
+  mutate(year = as.character(year))
 
 hd_milk_ctr <- hd_milk_ctr |> 
   mutate(type = "counterfactual")

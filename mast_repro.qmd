@@ -46,6 +46,14 @@ Chargement du jeu de données lactations généré par le script `data_prep/make
 lac <- read_csv2("generated_datasets/idele_lac_final.csv")
 ```
 
+```{r}
+milk_early_max_mean <- with(lac[lac$n_ctrl_early > 0,], 
+                            mean(milk_early_max))
+
+milk_early_max_sd   <- with(lac[lac$n_ctrl_early > 0,], 
+                            sd(milk_early_max))
+```
+
 # Création de jeux de données pour les prédictions
 
 L'objectif de ces jeux de données est de pouvoir visualiser les effets estimés par les modèles. Dans chaque jeux de données on ne fait varier qu'une variable d'intérêt, les autres sont maintenues à un niveau *moyen*, pour la comparaison.
@@ -272,7 +280,7 @@ Variables facteurs recodées. Je ne pense pas que ce chunk soit utile.
 lac <- lac |> 
   mutate(parKat = relevel(as.factor(ifelse(parity > 3, 4, parity)), ref = "3"),
          mast_cat1 = relevel(factor(paste(dp_status, mast_cat, sep = "_")), ref = "primi_healthy"),
-         code_race = relevel(as.factor(code_race), ref = "66"))
+         race = relevel(as.factor(race), ref = "PH"))
 ```
 
 ## Modèle de référence
@@ -402,8 +410,13 @@ Pour l'instant c'est repro_full1 qui donne la meilleure approximation car il pos
 
 ```{r}
 t_repro <- tbl_regression(repro_full1, exponentiate = TRUE)
-# print(t_repro)
+print(t_repro)
 ```
+
+```{r}
+saveRDS(t_repro, "generated_datasets/t_repro.RData")
+```
+
 
 On va donc maintenant vérifier sa pertinence.
 
@@ -421,6 +434,10 @@ terms(repro_full1)
 
 tous les VIF sont inférieurs à 5 donc les variables sont suffisamment indépendantes.
 
+```{r enregistrement}
+saveRDS(repro_full1, file = "repro_full1.RData")
+```
+
 ## Calcul des effets marginaux
 
 ```{r}
@@ -430,16 +447,21 @@ str(mast_pred)
 ## Probabilité de mise à la reproduction selon le statut de l'animal
 
 ```{r}
-prd <- predictions(model = repro_full1, 
+prd_repro_full1 <- predictions(model = repro_full1, 
                              newdata = mast_pred,
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order_mast), y = estimate)) +
+repro_mast <- ggplot(prd_repro_full1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  ylim(limy) +
   xlab("") + 
   ylab("Probabilité de mise à la reproduction") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+saveRDS(repro_mast, "generated_datasets/repro_mast.RData")
 ```
 
 ```{r}
@@ -447,11 +469,18 @@ prd <- predictions(model = repro_full1,
                    newdata = parit_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+repro_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  ylim(limy) +
   xlab("Parité") + 
   ylab("Probabilité de mise à la reproduction")
+
+repro_parit
+```
+
+```{r}
+saveRDS(repro_parit, "generated_datasets/repro_parit.RData")
 ```
 
 ```{r}
@@ -459,21 +488,37 @@ prd <- predictions(model = repro_full1,
                    newdata = race_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(race), y = estimate)) +
+repro_race <- ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  ylim(limy) +
   xlab("Race") + 
   ylab("Probabilité de mise à la reproduction") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+repro_race
 ```
+
+
+```{r}
+saveRDS(repro_race, "generated_datasets/repro_race.RData")
+```
+
 
 ```{r}
 prd <- predictions(model = repro_full1, 
                    newdata = milk_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+repro_milk <- ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
+
+repro_milk 
+```
+
+
+```{r}
+saveRDS(repro_milk, "generated_datasets/repro_milk.RData")
 ```
 
 ## Modèle final Aurélien
@@ -662,6 +707,10 @@ summary(repro_revel_mast1)
 
 Le modèle que je retiens est "repro_revel_mast1", pour l'instant c'est celui qui nous convient le mieux.
 
+```{r}
+saveRDS(repro_revel_mast1, file = "repro_revel_mast1.RData")
+```
+
 ### Vérification du modèle
 
 #### vérification de l'absence de multicolinéarité des variables explicatives
@@ -673,16 +722,20 @@ vif(repro_revel_mast1)
 ## Probabilité de revêlage suite à la mise à la reproduction selon la parité
 
 ```{r}
-prd <- marginaleffects::predictions(model = repro_revel_mast1,
+prd_revel_mast1 <- marginaleffects::predictions(model = repro_revel_mast1,
                              newdata = mast_pred1,
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat1), y = estimate)) +
+ggplot(prd_revel_mast1, aes(x = factor(mast_cat1), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
   xlab("") + 
   ylab("Probabilté de revêlage") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+saveRDS(prd_revel_mast1, "prd_revel_mast1.RData")
 ```
 
 ```{r}
@@ -753,6 +806,13 @@ repro_revel_mast_final <- glmer(repro_revel ~  parKat +
 summary(repro_revel_mast_final)
 ```
 
+```{r}
+t_revel <- tbl_regression(repro_revel_mast_final, exponentiate = TRUE)
+print(t_revel)
+saveRDS(t_revel, "generated_datasets/t_revel.RData")
+```
+
+
 ### Effets prédits par le modèle
 
 ```{r mise à la repro ylim}
@@ -766,33 +826,43 @@ prd <- predictions(model = repro_revel_mast_final,
                    newdata = parit_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+revel_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
   ylim(limy) +
   xlab("Parité") + 
   ylab("Probabilité de revêlage pour les\nvaches mises à la reproduction")
+
+revel_parit
 ```
+```{r}
+saveRDS(revel_parit, "generated_datasets/revel_parit.RData")
+```
+
 
 -   race
 
 ```{r mise à la repro prédiction effet race}
-race_pred <- race_pred |> 
-  mutate(race = fct_relevel(race, level_order_breed))
+#race_pred <- race_pred |> 
+  #mutate(race = fct_relevel(race, level_order_breed))
 
 prd <- predictions(model = repro_revel_mast_final, 
                    newdata = race_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(race), y = estimate)) +
+revel_race <- ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
   ylim(limy) +
   xlab("Race") + 
   ylab("Probabilité de revêlage pour les\nvaches mises à la reproduction") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-```
 
+revel_race
+```
+```{r}
+saveRDS(revel_race, "generated_datasets/revel_race.RData")
+```
 -   production laitière
 
 ```{r mise à la repro - effet production laitière}
@@ -800,11 +870,16 @@ prd <- predictions(model = repro_revel_mast_final,
                    newdata = milk_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+revel_milk <- ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() +
   ylim(limy) +
   ylab("Probabilité de revêlage pour les\nvaches mises à la reproduction") +
   xlab("Production laitière maximale entre le vêlage et 90 jours de lactation (kg)")
+
+revel_milk
+```
+```{r}
+saveRDS(revel_milk, "generated_datasets/revel_milk.RData")
 ```
 
 -   Statut mammites
@@ -814,13 +889,19 @@ prd <- predictions(model = repro_revel_mast_final,
                              newdata = mast_pred,
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+revel_mam <- ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
   ylim(limy) +
   xlab("") + 
   ylab("Probabilité de revêlage pour les\nvaches mises à la reproduction") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+revel_mam
+```
+
+```{r}
+saveRDS(revel_mam, "generated_datasets/revel_mam.RData")
 ```
 
 # Probabilité d'être gestante après la première iA
@@ -912,6 +993,10 @@ summary(success_ia_full1)
 ```
 
 ```{r}
+saveRDS(success_ia_full1, "success_ia_full1.RData")
+```
+
+```{r}
 success_ia_full2 <- glmer(success_ai1 ~ parKat + 
                               milk_early_max_scaled_p1 + 
                               milk_early_max_scaled_p2 + 
@@ -926,19 +1011,41 @@ success_ia_full2 <- glmer(success_ai1 ~ parKat +
 summary(success_ia_full2)
 ```
 
+
+```{r}
+t_ia1 <- tbl_regression(success_ia_full1, exponentiate = TRUE)
+print(t_ia1)
+```
+
+```{r}
+saveRDS(t_ia1, "generated_datasets/t_ia1.RData")
+```
+
+
 ### Prédictions de la réussite à la première insémination selon le type de mammite
 
 ```{r}
-prd <- marginaleffects::predictions(model = success_ia_full1, 
+prd_success_ia1 <- marginaleffects::predictions(model = success_ia_full1, 
                              newdata = mast_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+ia1_mam <- ggplot(prd_success_ia1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  ylim(c(.1, .35))+
   xlab("") + 
   ylab("Probabilité de succès à la première insémination") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+ia1_mam 
+```
+```{r}
+saveRDS(ia1_mam, "generated_datasets/ia1_mam.RData")
+```
+
+
+```{r}
+saveRDS(prd_success_ia1, "prd_success_ia1?RData")
 ```
 
 ```{r}
@@ -946,12 +1053,18 @@ prd <- marginaleffects::predictions(model = success_ia_full1,
                              newdata = parit_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+ia1_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  ylim(c(.1, .35))+
   xlab("parité") + 
   ylab("Probabilité de succès à la première insémination") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+ia1_parit
+```
+```{r}
+saveRDS(ia1_parit, "generated_datasets/ia1_parit.RData")
 ```
 
 ```{r}
@@ -959,22 +1072,39 @@ prd <- marginaleffects::predictions(model = success_ia_full1,
                              newdata = race_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(race), y = estimate)) +
+ia1_race <- ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  ylim(c(.1, .5))+
   xlab("race") + 
   ylab("Probabilité de succès à la première insémination") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+ia1_race
 ```
+
+```{r}
+saveRDS(ia1_race, "generated_datasets/ia1_race.RData")
+```
+
 
 ```{r}
 prd <- predictions(model = success_ia_full1, 
                              newdata = milk_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+ia1_milk <- ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+  ylim(c(.1, .5))+
   geom_line() 
+
+ia1_milk
 ```
+
+
+```{r}
+saveRDS(ia1_milk, "generated_datasets/ia1_milk.RData")
+```
+
 
 # Nombre d'inséminations
 
@@ -1050,24 +1180,43 @@ summary(ai_number_full1)
 ```
 
 ```{r}
+saveRDS(ai_number_full1, "ai_number_full1.RData")
+```
+
+```{r}
 vif(ai_number_full)
 ```
 
 Le nombre d'ia ne semble pas pouvoir être expliqué par la présence ou non de mammite. Il semblerait que la seule variable explicative intéressante pour le modèle soit la parité.
 
+
+```{r}
+t_nai <- tbl_regression(ai_number_full1, exponentiate = TRUE)
+print(t_nai)
+saveRDS(t_nai, "generated_datasets/t_nai.RData")
+```
+
+
 ### Prédictions d'être réinséminé selon le type de mammite
 
 ```{r}
-prd <- marginaleffects::predictions(model = ai_number_full1, 
+prd_ai_number_full1 <- marginaleffects::predictions(model = ai_number_full1, 
                              newdata = mast_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+nai_mam <- ggplot(prd_ai_number_full1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  ylim(c(1, 5))+
   xlab("") + 
-  ylab("Probabilité d'être réinséminée") +
+  ylab("nombre moyen d'insémination") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+nai_mam
+```
+
+```{r}
+saveRDS(nai_mam, "generated_datasets/nai_mam.RData")
 ```
 
 ```{r}
@@ -1075,12 +1224,18 @@ prd <- marginaleffects::predictions(model = ai_number_full1,
                              newdata = parit_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+nai_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  ylim(c(1, 5))+
   xlab("parité") + 
   ylab("Probabilité d'être réinséminé") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+nai_parit
+```
+```{r}
+saveRDS(nai_parit, "generated_datasets/nai_parit.RData")
 ```
 
 ```{r}
@@ -1088,12 +1243,19 @@ prd <- marginaleffects::predictions(model = ai_number_full1,
                              newdata = race_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(race), y = estimate)) +
+nai_race <- ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  ylim(c(1, 5))+
   xlab("race") + 
   ylab("Probabilité d'être réinséminé") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+nai_race
+```
+
+```{r}
+saveRDS(nai_race, "generated_datasets/nai_race.RData")
 ```
 
 ```{r}
@@ -1101,8 +1263,15 @@ ggplot(prd, aes(x = factor(race), y = estimate)) +
                              newdata = milk_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+nai_milk <- ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
+
+nai_milk
+```
+
+
+```{r}
+saveRDS(nai_milk, "generated_datasets/nai_milk.RData")
 ```
 
 ## Modèle final Aurélien
@@ -1111,7 +1280,7 @@ ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
 
 write_csv2(lac, "generated_datasets/lac.csv")
 
-ai_number_full1 <- glmer(n_ai ~ parKat + 
+ai_number_full2 <- glmer(n_ai ~ parKat + 
                               race*milk_early_max_scaled_p1 + 
                               race*milk_early_max_scaled_p2 + 
                               race*milk_early_max_scaled_p3 + 
@@ -1124,4 +1293,25 @@ ai_number_full1 <- glmer(n_ai ~ parKat +
                     family = poisson)
 
 summary(ai_number_full1)
+```
+
+```{r}
+saveRDS(ai_number_full2, "ai_number_full2.RData")
+```
+
+```{r}
+prd_ai_number_full2 <- marginaleffects::predictions(model = ai_number_full2, 
+                             newdata = mast_pred, 
+                           re.form = NA, type = "response")
+
+ggplot(prd_ai_number_full2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  xlab("") + 
+  ylab("Probabilité d'être réinséminée") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+```
+
+```{r}
+saveRDS(prd_ai_number_full2, "prd_ai_number_full2.RData")
 ```

@@ -18,6 +18,8 @@ library(ggdag)
 library(RefManageR)
 library(knitr)
 library(kableExtra)
+library(rpart)
+library(rpart.plot)
 ```
 
 # Introduction
@@ -78,7 +80,7 @@ On distingue classiquement deux catégories de réformes. Une réforme volontair
 
 Il existe également une différence de l'influence du type de production. Si l'on observe les résultats d'une étude menée en Suède, les principales causes de réforme des élevages biologiques sont les infections intramammaires (26,7%), les troubles de fertilité (23,6%) et viennent ensuite les troubles locomoteurs (5,0%). Alors que pour les élevages conventionnels les principales causes sont les troubles de fertilité en premier (25,9%), les infections intramammaires (20,6%) et ensuite les troubles locomoteurs (5,9%). L'étude à cependant également montré qu'en première lactation la grande majorité des réformes est provoquée par un trouble de la fertilité que ce soit en élevage biologique ou en élevage conventionnel [@ahlman_culling_2011].
 
-En élevage biologique au Canada, [@rozzi_total_2007] ont montré que les troubles de fertilité sont la principale cause de réforme, suivis par les mammites et les boiteries. La hiérarchie entre causes est donc relativement variable d'une étude à l'autre, cependant, toutes s'accordent sur les principales causes. En France également, les troubles de reproduction, les mammites et les boiteries ressortent comme étant les principales causes de réforme [@beaudeau1994], surtout les troubles survenant durant les premiers mois de la première lactation.
+En élevage biologique au Canada, [@rozzi_total_2007] ont montré que les troubles de fertilité sont la principale cause de réforme, suivis par les mammites et les boiteries. La hiérarchie entre causes est donc relativement variable d'une étude à l'autre, cependant, toutes s'accordent sur les principales causes. En France également, les troubles de reproduction, les mammites et les boiteries ressortent comme étant les principales causes de réforme [@beaudeau_associations_1993], surtout les troubles survenant durant les premiers mois de la première lactation.
 
 ### Longévité
 
@@ -399,7 +401,7 @@ ggdag(dag_collision) + theme_dag()
 
 <!-- Je dirais que lundberg2021 propose une manière d'aborder le problème avec les estimands théorique et empirique. -->
 
-L"estimand", c'est le sujet de l'enquête, c'est la quantité que l'on cherche à évaluer qui représente l'effet causal que l'on souhaite mesurer. Il joue un rôle central car il permet de clarifier la question de recherche, choisir la méthodologie adéquate et donner une signification claire et rigoureuse aux résultats obtenus. Il existe plusieurs types d'estimand. Le papier de [@lundberg2021], propose d'étudier le problème en utilisant deux estimands. Le premier est l'estimand théorique. C'est l'objectif que l'on cherche réellement à atteindre dans l'étude, en dehors du modèle statistique. Il comporte deux éléments :
+L"estimand", c'est le sujet de l'enquête, c'est la quantité que l'on cherche à évaluer qui représente l'effet causal que l'on souhaite mesurer. Il joue un rôle central car il permet de clarifier la question de recherche, choisir la méthodologie adéquate et donner une signification claire et rigoureuse aux résultats obtenus. Il existe plusieurs types d'estimand. Le papier de [@lundberg_i_what_2021], propose d'étudier le problème en utilisant deux estimands. Le premier est l'estimand théorique. C'est l'objectif que l'on cherche réellement à atteindre dans l'étude, en dehors du modèle statistique. Il comporte deux éléments :
 
 <!-- On ne sait pas ce que sont les résultats potentiels. -->
 
@@ -503,33 +505,18 @@ Les données fournies pour cette étude sont essentiellement des données de con
 
 L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L'étude prend en compte des données de contrôle laitier collectées entre janvier 1989 et mars 2024, pour un total de 3 818 887 enregistrements. Les différentes données fournies sont disponibles en annexe 1.
 
-Dans les données de contrôle laitier fournies, on a un total de 144 311 vaches en lactation et 10 066 dates de contrôles allant d'octobre 1989 à mars 2024.Grâce aux données complémentaires fournies il nous a été possible de rajouter le numéro de cheptel à chaque vache pour chaque date de contrôle. En filtrant pour n'obtenir que les animaux dont les dates de contrôles sont comprises entre la date d'entrée dans le cheptel et la date de sortie si elle est indiquée, on obtient un total de 143 311 animaux pour 4769 trouoeaux. 
-La sélection suivante a été ensuite réalisée  
-- les dates de contrôles avec minimum 10 vaches étaient conservées. 
-- Il fallait un minimum de 11 contrôles et un maximum de 12 contrôles pour chaque combinaisons de troupeau/année. 
-Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parité 1 à la parité 14, et 6 202 dates de contrôle allant de janvier 2000 à décembre 2023. 
+Dans les données de contrôle laitier fournies, on a un total de 144 311 vaches en lactation et 10 066 dates de contrôles allant d'octobre 1989 à mars 2024.Grâce aux données complémentaires fournies il nous a été possible de rajouter le numéro de cheptel à chaque vache pour chaque date de contrôle. En filtrant pour n'obtenir que les animaux dont les dates de contrôles sont comprises entre la date d'entrée dans le cheptel et la date de sortie si elle est indiquée, on obtient un total de 143 311 animaux pour 4769 troupeaux. La sélection suivante a été ensuite réalisée\
+- les dates de contrôles avec minimum 10 vaches étaient conservées. - Il fallait un minimum de 11 contrôles et un maximum de 12 contrôles pour chaque combinaisons de troupeau/année, afin de s'assurer de la comparabilité des troupeaux et d'écarter les effectifs jugés insuffisants.\
+Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parité 1 à la parité 14, et 6 202 dates de contrôle allant de janvier 2000 à décembre 2023.
 
-Un nouveau data frame a permis ensuite de combiner les données obtenues en les regroupant par lactation. Un premier tri retire tous les animaux dont les données de PL et de SCC ne sont pas assez exhaustives, cette première transformation donne un total de 217 577 lactations qui regroupe 83 991 animaux. Ensuite une dernière étape permet de ne sélectionner que les élevages avec une proportion suffisante de vêlages, c'est-à-dire au moins 70% de vêlages parmi les vaches inséminées dont au moins 15 à 50% de primipares. Il reste au total 127 541 lactations dont 58 579 animaux appartenant à 231 élevages. 
+Un nouveau data frame a permis ensuite de combiner les données obtenues en les regroupant par lactation. Un premier tri retire tous les animaux dont les données de PL et de SCC ne sont pas assez exhaustives, cette première transformation donne un total de 217 577 lactations qui regroupe 83 991 animaux. Ensuite une dernière étape permet de ne sélectionner que les élevages avec une proportion suffisante de vêlages, c'est-à-dire au moins 70% de vêlages parmi les vaches inséminées dont au moins 15 à 50% de primipares. Il reste au total 127 541 lactations dont 58 579 animaux appartenant à 231 élevages.
 
 ### Définition des mammites avec nos données
 
 <!-- Pour les définitions de différents types de mammites, envisage de faire un tableau. On doit voir les critères précis utilisés pour définir chaque type de mammite. -->
 
-```{r}
-df <- data.frame(
-  Colonne1 = c("A", "B", "C"),
-  Colonne2 = c(1, 2, 3),
-  Colonne3 = c(TRUE, FALSE, TRUE)
-)
-
-# Créer un tableau avec kable
-kable(df, caption = "Exemple de Tableau", booktabs = TRUE) |> 
-  kable_styling(bootstrap_options = c("responsive", "striped"), full_width = F) |> 
-  column_spec(1, color = "darkgrey", background = "white") |> 
-  column_spec(2, color = "darkgrey", background = "white") |> 
-  column_spec(3, color = "darkgrey", background = "white")
+```         
 ```
-
 
 Il a été décidé de décomposer les mammites par modèle épidémiologique selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules supérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*. On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*. Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaissait pas le statut avant tarissement, ont été retirés de l'étude.
 
@@ -975,13 +962,148 @@ Pour connaître la probabilité de nouvelle infection au tarissement selon le mo
 
 Pour les prédictions on a appliqué le même modèle que précédemment.
 
+### Modélisation des dynamiques d'infections
+
 ### Etude des contrefactuels
 
-#### choix des données utilisées
-
-#### Modélisation des dynamiques d'infections
+#### Présentation des scénarios
 
 ## Résultats
+
+### Résultats des modélisations
+
+#### Modélisation de l'impact des mammites sur la décision de mise à la reproduction
+
+```{r}
+#| label: tbl-regression-repro
+#| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la décision de mise à la reproduction. 
+readRDS("generated_datasets/t_repro.RData")
+```
+```{r}
+#| label: fig-predict-repro-mam
+#| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon le statut mammite  
+readRDS("generated_datasets/repro_mast.RData")
+```
+```{r}
+#| label: fig-predict-repro-parit
+#| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la parité  
+readRDS("generated_datasets/repro_parit.RData")
+```
+```{r}
+#| label: fig-predict-repro-race
+#| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la race 
+readRDS("generated_datasets/repro_race.RData")
+```
+```{r}
+#| label: fig-predict-repro-milk
+#| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la PL 
+readRDS("generated_datasets/repro_milk.RData")
+```
+
+#### Modélisation de l'impact des mammites sur la probabilité de réussite à la première insémination
+
+
+```{r}
+#| label: tbl-regression-ia1
+#| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur le succès à la première insémination. 
+readRDS("generated_datasets/t_ia1.RData")
+```
+
+```{r}
+#| label: fig-predict-ia1-mam
+#| fig-cap: graphique montrant les prédictions sur la probabilité de succès à la première IA selon le statut mammite  
+readRDS("generated_datasets/ia1_mam.RData")
+```
+
+```{r}
+#| label: fig-predict-ia1-parit
+#| fig-cap: graphique montrant les prédictions sur la probabilité de succès à la première IA selon la parité  
+readRDS("generated_datasets/ia1_parit.RData")
+```
+
+```{r}
+#| label: fig-predict-ia1-race
+#| fig-cap: graphique montrant les prédictions sur la probabilité de succès à la première IA selon la race 
+readRDS("generated_datasets/ia1_race.RData")
+```
+
+```{r}
+#| label: fig-predict-ia1-milk
+#| fig-cap: graphique montrant les prédictions sur la probabilité de succès à la première IA selon la PL 
+readRDS("generated_datasets/ia1_milk.RData")
+```
+
+
+#### Modélisation de l'impact des mammites sur le nombre moyen d'inséminations tentées
+
+
+```{r}
+#| label: tbl-regression-nai
+#| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur le nombre d'inséminations tentées. 
+readRDS("generated_datasets/t_nai.RData")
+```
+
+```{r}
+#| label: fig-predict-nai-mam
+#| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon le statut mammite  
+readRDS("generated_datasets/nai_mam.RData")
+```
+
+```{r}
+#| label: fig-predict-nai-parit
+#| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon la parité   
+readRDS("generated_datasets/nai_parit.RData")
+```
+
+```{r}
+#| label: fig-predict-nai-race
+#| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon la race   
+readRDS("generated_datasets/nai_race.RData")
+```
+```{r}
+#| label: fig-predict-nai-milk
+#| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon la PL  
+readRDS("generated_datasets/nai_milk.RData")
+```
+
+#### Modélisation de l'impact des mammites sur la probabilité de revêlage
+
+
+```{r}
+#| label: tbl-regression-revel
+#| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la probabilité de revêler. 
+readRDS("generated_datasets/t_revel.RData")
+```
+
+```{r}
+#| label: fig-predict-revel-mam
+#| fig-cap: graphique montrant les prédictions sur la probabilité de revêler selon le statut mammite  
+readRDS("generated_datasets/revel_mam.RData")
+```
+
+```{r}
+#| label: fig-predict-revel-parit
+#| fig-cap: graphique montrant les prédictions sur la probabilité de revêler selon la parité   
+readRDS("generated_datasets/revel_parit.RData")
+```
+
+```{r}
+#| label: fig-predict-revel-race
+#| fig-cap: graphique montrant les prédictions sur la probabilité de revêler selon la race   
+readRDS("generated_datasets/revel_race.RData")
+```
+
+```{r}
+#| label: fig-predict-revel-milk
+#| fig-cap: graphique montrant les prédictions sur la probabilité de revêler selon la PL   
+readRDS("generated_datasets/revel_milk.RData")
+```
+
+#### Modélisation de l'impact des mammites sur la production laitière en début de lactation
+
+#### Modélisation de l'impact des mammites sur la probabilité de mort
+
+#### Modélisation de l'impact des mammites sur les dynamiques de cellules
 
 ## Discussion
 
