@@ -22,6 +22,13 @@ library(rpart)
 library(rpart.plot)
 ```
 
+```{r}
+level_order <- c("primi_healthy", "primi_env", "primi_cont",
+                 "dpLow_healthy", "dpLow_env", "dpLow_cont",
+                 "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
+
+```
+
 # Introduction
 
 La longévité se définit couramment comme la durée de vie, d'un individu ou d'un groupe d'individus. Elle s'obtient en général, en prenant la durée entre la naissance d'un individu et sa mort [@dallago_keeping_2021] .
@@ -511,15 +518,6 @@ Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parit�
 
 Un nouveau data frame a permis ensuite de combiner les données obtenues en les regroupant par lactation. Un premier tri retire tous les animaux dont les données de PL et de SCC ne sont pas assez exhaustives, cette première transformation donne un total de 217 577 lactations qui regroupe 83 991 animaux. Ensuite une dernière étape permet de ne sélectionner que les élevages avec une proportion suffisante de vêlages, c'est-à-dire au moins 70% de vêlages parmi les vaches inséminées dont au moins 15 à 50% de primipares. Il reste au total 127 541 lactations dont 58 579 animaux appartenant à 231 élevages.
 
-### Définition des mammites avec nos données
-
-<!-- Pour les définitions de différents types de mammites, envisage de faire un tableau. On doit voir les critères précis utilisés pour définir chaque type de mammite. -->
-
-```         
-```
-
-Il a été décidé de décomposer les mammites par modèle épidémiologique selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules supérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*. On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*. Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaissait pas le statut avant tarissement, ont été retirés de l'étude.
-
 ### Processus de décision de mise à la réforme
 
 <!-- Ce n'est pas de la décision de réforme dont tu parles ici, mais de la réforme. C'est différent. -->
@@ -533,6 +531,26 @@ Pour ce que est de la décision de mise à la réforme, pour chaque animal sorti
 <!-- A-t-on besoin de connaître le nom du tableau lac dans le texte? -->
 
 Les données nous ont été fournies sous forme de plusieurs tableaux par l'IDELE. La première étape a donc été d'ordonner les données d'intérêt. Comme l'unité statistique de l'étude est la lactation on a créé un tableau nommé « lac » disponible en annexe 2. Ce tableau est créé à partir de données du contrôle laitier. Chaque lactation est traitée individuellement.
+
+#### Le statut mammite
+
+<!-- On n'a pas besoin de savoir que la cause boucherie était codée avec un B. Ça n'aide pas à la compréhension. Penser au lecteur. Le code peut être utile dans le tableau en annexe mais pas ici. -->
+
+![Organigramme décisionnel pour l'affectation du statut mammite](organigramme.png)
+
+Il a été décidé de décomposer les mammites par modèle épidémiologique selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules supérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*. On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*. Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaissait pas le statut avant tarissement, ont été retirés de l'étude.
+
+#### La parité
+
+Pour simplifier l'étude des données il a été décidé de catégoriser les vaches selon quatre parités en attribuant la parité 4 a tous les animaux de parité 4 et plus. Pour l'étude statistique la variable a été convertie en facteur de quatre niveaux différents dont la référence est la parité 3. Cette parité à été choisit car elle est souvent décrite comme la parité où la vache devient rentable pour l'éleveur.
+
+#### La race
+
+L'étude comporte des vaches de nombreuses races dont des Prim'holsteins (PH) en majorité, des vaches de race Montbéliarde, de race Normande, des Croisées ainsi que des Simmentales et des Jersiaises en minorité. Pour diminuer le nombre de catégories et simplifier le nombre de niveaux de facteurs pour les modélisation statistiques, cinq catégories ont été créées pour les attribuer aux vaches : les catégories PH, Normande, Montbéliarde, Croisées et Autres ont été créées. La dernière catégorie regroupe à la fois les Jersiaises et les simmentales.
+
+#### La production laitière
+
+La valeur du maximum de production enregistrée au cours d'un contrôle les 90 premiers jours de lactation a été prise pour chaque lactation. Cette valeur a ensuite été centrée puis réduite afin d'en faire une variable comparable pour chaque lactation.
 
 ### Construction des modèles statistiques
 
@@ -966,7 +984,19 @@ Pour les prédictions on a appliqué le même modèle que précédemment.
 
 ### Etude des contrefactuels
 
+Afin de compléter cette étude, il a été décidé d'étudier trois scénarios contrefactuels virtuels afin d'identifier d'éventuels changements dans les dynamiques de CCS ainsi que pour le niveau de production laitière moyenne du troupeau en début de lactation. Le but final étant de lancer une piste de réflexion sur sur les choix les plus pertinents dans la lutte contre les mammites contagieuses et les pertes qu'elles induisent.
+
+Les scénarios ont été générés à partir des données fournies et utilisées pour entraîner les différents modèles statistiques. Seules certaines caractéristiques ou variables ont été modifiées afin de correspondre aux changements contrefactuels.
+
 #### Présentation des scénarios
+
+Trois scénarios ont été testés :
+
+-   Le premier scénario modélise le cas ou l'éleveur fait le choix de prévenir toutes les mammites contagieuses. Le statut des vaches considérées contagieuses a été modifié et il ne reste plus que des vaches saine ou a mammite environnementale dans le troupeau.
+
+-   Le second scénario modélise le cas ou l'éleveur ne réforme que les vaches à mammite contagieuse sans tenir cas du reste des réforme. C'est le changement le plus simple et qui s'éloigne le plus de la réalité. En effet, dans la réalité un éleveur est amené à réformer des animaux pour diverses raisons qui ne sont pas toujours prévisibles ou évitables. Il semblait cependant intéressant de tester ce scénario sur la base de données afin de pouvoir le comparer aux deux autres scénarios.
+
+-   Le troisième scénario modélise le cas ou l'éleveur réforme toutes les vaches contagieuses en plus des vaches initialement envoyées à la réforme. C'est le scénario qui semblait le plus réalisable sur le terrain. Cependant il a été important de vérifier que cela n'entraîner pas une trop grosse perte d'effectif au niveau des troupeaux, ce qui aurait entraîner un non intérêt du modèle.
 
 ## Résultats
 
@@ -979,21 +1009,25 @@ Pour les prédictions on a appliqué le même modèle que précédemment.
 #| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la décision de mise à la reproduction. 
 readRDS("generated_datasets/t_repro.RData")
 ```
+
 ```{r}
 #| label: fig-predict-repro-mam
 #| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon le statut mammite  
 readRDS("generated_datasets/repro_mast.RData")
 ```
+
 ```{r}
 #| label: fig-predict-repro-parit
 #| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la parité  
 readRDS("generated_datasets/repro_parit.RData")
 ```
+
 ```{r}
 #| label: fig-predict-repro-race
 #| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la race 
 readRDS("generated_datasets/repro_race.RData")
 ```
+
 ```{r}
 #| label: fig-predict-repro-milk
 #| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la PL 
@@ -1001,7 +1035,6 @@ readRDS("generated_datasets/repro_milk.RData")
 ```
 
 #### Modélisation de l'impact des mammites sur la probabilité de réussite à la première insémination
-
 
 ```{r}
 #| label: tbl-regression-ia1
@@ -1033,9 +1066,7 @@ readRDS("generated_datasets/ia1_race.RData")
 readRDS("generated_datasets/ia1_milk.RData")
 ```
 
-
 #### Modélisation de l'impact des mammites sur le nombre moyen d'inséminations tentées
-
 
 ```{r}
 #| label: tbl-regression-nai
@@ -1060,6 +1091,7 @@ readRDS("generated_datasets/nai_parit.RData")
 #| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon la race   
 readRDS("generated_datasets/nai_race.RData")
 ```
+
 ```{r}
 #| label: fig-predict-nai-milk
 #| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon la PL  
@@ -1067,7 +1099,6 @@ readRDS("generated_datasets/nai_milk.RData")
 ```
 
 #### Modélisation de l'impact des mammites sur la probabilité de revêlage
-
 
 ```{r}
 #| label: tbl-regression-revel
@@ -1101,7 +1132,61 @@ readRDS("generated_datasets/revel_milk.RData")
 
 #### Modélisation de l'impact des mammites sur la production laitière en début de lactation
 
-#### Modélisation de l'impact des mammites sur la probabilité de mort
+```{r}
+#| label: tbl-regression-lac
+#| fig-cap: Résultat de la régression linéaire visant à montrer l'impact des mammites sur la PL en début de lactation (les 40 premiers jours). 
+readRDS("generated_datasets/t_lac.RData")
+```
+
+```{r}
+#| label: fig-predict-lac-mam
+#| fig-cap: graphique montrant les prédictions sur la PL à J7 selon le statut mammite  
+readRDS("generated_datasets/lac_mam7.RData")
+```
+
+```{r}
+#| label: fig-predict-lac-mam
+#| fig-cap: graphique montrant les prédictions sur la PL à J15 selon le statut mammite  
+readRDS("generated_datasets/lac_mam15.RData")
+```
+
+```{r}
+#| label: fig-predict-lac-dim
+#| fig-cap: graphique montrant les prédictions sur la PL en début de lactation selon le jour en lait   
+readRDS("generated_datasets/lac_dim.RData")
+```
+
+```{r}
+#| label: fig-predict-lac-parit
+#| fig-cap: graphique montrant les prédictions sur la PL en début de lactation selon la parité   
+readRDS("generated_datasets/lac_parit.RData")
+```
+
+```{r}
+#| label: fig-predict-lac-race
+#| fig-cap: graphique montrant les prédictions sur la PL en début de lactation selon la race   
+readRDS("generated_datasets/lac_race.RData")
+```
+
+#### Modélisation de l'impact des mammites sur le risque de mort
+
+```{r}
+#| label: tbl-regression-cox
+#| fig-cap: Résultat de la régression de Cox visant à montrer l'impact des mammites sur le risque de mort imminente. 
+readRDS("generated_datasets/t_cox.RData")
+```
+
+```{r}
+#| label: fig-predict-cox-mam
+#| fig-cap: graphique montrant les prédictions sur le risque de mort selon le statut mammite 
+readRDS("generated_datasets/cox_mam.RData")
+```
+
+```{r}
+#| label: fig-predict-cox-parit
+#| fig-cap: graphique montrant les prédictions sur le risque de mort selon la parité 
+readRDS("generated_datasets/cox_parit.RData")
+```
 
 #### Modélisation de l'impact des mammites sur les dynamiques de cellules
 
