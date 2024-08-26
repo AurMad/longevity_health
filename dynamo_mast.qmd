@@ -20,6 +20,7 @@ library(GGally)
 library(effects)
 library(ggpubr)
 library(RColorBrewer)
+library(gtsummary)
 ```
 
 ```{r seuil utilisés}
@@ -55,7 +56,6 @@ lac <- lac |>
          parKat = relevel(factor(parKat), ref = 3),
          race = relevel(factor(race), ref = "PH"))
 ```
-
 
 ```{r}
 lac <- lac |> 
@@ -93,6 +93,17 @@ summary(scc_high_dp_model)
 save(scc_high_dp_model, file = "generated_datasets/scc_high_dp_model.RData")
 ```
 
+
+```{r}
+t_scc_high <- tbl_regression(scc_high_dp_model, exponentiate = TRUE)
+print(t_scc_high)
+```
+
+```{r}
+saveRDS(t_scc_high, "generated_datasets/t_scc_high.RData")
+```
+
+
 ## Prédictions
 
 ```{r}
@@ -107,12 +118,17 @@ prd <- predictions(model = scc_high_dp_model,
                    newdata = mast_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+scc_mam <- ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
   xlab("Statut mammite")+
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+scc_mam
+```
+```{r}
+saveRDS(scc_mam, "generated_datasets/scc_mam.RData")
 ```
 
 ```{r}
@@ -127,12 +143,18 @@ prd <- predictions(model = scc_high_dp_model,
                    newdata = parit_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+scc_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y=conf.low, xend = parKat, yend = conf.high))+
+  ylim(0.15, 0.6) +
   xlab("parité")+
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+scc_parit
+```
+```{r}
+saveRDS(scc_parit, "generated_datasets/scc_parit.RData")
 ```
 
 ```{r}
@@ -147,13 +169,21 @@ prd <- predictions(model = scc_high_dp_model,
                    newdata = race_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(race), y = estimate)) +
+scc_race <- ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y=conf.low, xend = race, yend = conf.high))+
+  ylim(0.15, 0.6) +
   xlab("race")+
   ylab("probabilité d'un SCC élevé au dernier contrôle avant tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+scc_race
 ```
+
+```{r}
+saveRDS(scc_race, "generated_datasets/scc_race.RData")
+```
+
 
 ```{r}
 milk_pred <- milk_pred |> 
@@ -167,9 +197,16 @@ prd <- predictions(model = scc_high_dp_model,
                    newdata = milk_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+scc_milk <- ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
+
+scc_milk
 ```
+
+```{r}
+saveRDS(scc_milk, "generated_datasets/scc_milk.RData")
+```
+
 
 # Probabilité de guérison au tarissement
 
@@ -196,6 +233,17 @@ summary(cure_dp_model)
 save(cure_dp_model, file = "generated_datasets/cure_dp_model.RData")
 ```
 
+```{r}
+t_cure <- tbl_regression(cure_dp_model, exponentiate = TRUE)
+print(t_cure)
+```
+
+
+```{r}
+saveRDS(t_cure, "generated_datasets/t_cure.RData")
+```
+
+
 ## Prédictions
 
 ```{r}
@@ -203,12 +251,18 @@ prd1 <- predictions(model = cure_dp_model,
                    newdata = mast_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+cure_mam <- ggplot(prd1, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
   xlab("statut mammite")+
   ylab("probabilité d'une guérison pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+cure_mam
+```
+
+```{r}
+saveRDS(cure_mam, "generated_datasets/cure_mam.RData")
 ```
 
 ```{r}
@@ -216,12 +270,19 @@ prd <- predictions(model = cure_dp_model,
                    newdata = parit_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+cure_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y=conf.low, xend = parKat, yend = conf.high))+
+  ylim(0.1, 1)+
   xlab("parité")+
   ylab("probabilité d'une guérison pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+cure_parit
+```
+
+```{r}
+saveRDS(cure_parit, "generated_datasets/cure_parit.RData")
 ```
 
 ```{r}
@@ -229,12 +290,20 @@ prd <- predictions(model = cure_dp_model,
                    newdata = race_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(race), y = estimate)) +
+cure_race <- ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y=conf.low, xend = race, yend = conf.high))+
+  ylim(0.1, 1)+
   xlab("race")+
   ylab("probabilité d'une guérison pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+cure_race
+
+```
+
+```{r}
+saveRDS(cure_race, "generated_datasets/cure_race.RData")
 ```
 
 ```{r}
@@ -242,8 +311,15 @@ prd <- predictions(model = cure_dp_model,
                    newdata = milk_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+cure_milk <- ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
+
+cure_milk
+```
+
+
+```{r}
+saveRDS(cure_milk, "generated_datasets/cure_milk.RData")
 ```
 
 # Probabilité d'une nouvelle infection après tarissement
@@ -271,6 +347,16 @@ summary(new_inf_model)
 save(new_inf_model, file = "generated_datasets/new_inf_model.RData")
 ```
 
+```{r}
+t_ninf <- tbl_regression(new_inf_model, exponentiate = TRUE)
+print(t_ninf)
+```
+
+```{r}
+saveRDS(t_ninf, "generated_datasets/t_ninf.RData")
+```
+
+
 ## Prédictions
 
 ```{r}
@@ -278,25 +364,39 @@ prd2 <- predictions(model = new_inf_model,
                    newdata = mast_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+inf_mam <- ggplot(prd2, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y=conf.low, xend = mast_cat1, yend = conf.high))+
+  ylim(0.1, 0.5)+
   xlab("statut mammite")+
   ylab("probabilité d'une nouvelle infection pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+inf_mam
 ```
+```{r}
+saveRDS(inf_mam, "generated_datasets/inf_mam.RData")
+```
+
+
 
 ```{r}
 prd <- predictions(model = new_inf_model,
                    newdata = parit_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+inf_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y=conf.low, xend = parKat, yend = conf.high))+
+  ylim(0.1, 0.3)+
   xlab("parité")+
   ylab("probabilité d'une nouvelle infection pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+inf_parit
+```
+```{r}
+saveRDS(inf_parit, "generated_datasets/inf_parit.RData")
 ```
 
 ```{r}
@@ -304,12 +404,18 @@ prd <- predictions(model = new_inf_model,
                    newdata = race_pred,
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(race), y = estimate)) +
+inf_race <- ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y=conf.low, xend = race, yend = conf.high))+
+  ylim(0.1, 0.3)+
   xlab("race")+
   ylab("probabilité d'une nouvelle infection pendant le tarissement")+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+inf_race
+```
+```{r}
+saveRDS(inf_race, "generated_datasets/inf_race.RData")
 ```
 
 ```{r}
@@ -317,6 +423,12 @@ prd <- predictions(model = new_inf_model,
                    newdata = milk_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
+inf_milk <- ggplot(prd, aes(x = milk_early_max, y = estimate, col = parKat)) +
   geom_line() 
+
+inf_milk
 ```
+```{r}
+saveRDS(inf_milk, "generated_datasets/inf_milk.RData")
+```
+
