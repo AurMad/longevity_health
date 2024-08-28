@@ -508,7 +508,8 @@ Pour répondre ces questions, des données de contrôle laitier et de mammites c
 
 <!-- Les données de mammites cliniques ne mesurent pas la même chose que les données cellules. Il est justifié d'inclure les 2. -->
 
-Les données fournies pour cette étude sont essentiellement des données de contrôle laitier. Les données de mammites enregistrées par les éleveurs étant considérées seules comme peu exhaustives.
+Les données fournies pour cette étude sont essentiellement des données de contrôle laitier, récoltées directement par un prélèvements individuels dans les élevages. Les données de mammites enregistrées par les éleveurs étaient parfois également fournies mais étant considérées seules comme peu exhaustives.
+Il était également fourni, la généalogie de chaque vache ainsi que les mouvements effectués au cours de sa vie, et les données de reproduction pour chaque lactation. 
 
 L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L'étude prend en compte des données de contrôle laitier collectées entre janvier 1989 et mars 2024, pour un total de 3 818 887 enregistrements. Les différentes données fournies sont disponibles en annexe 1.
 
@@ -518,15 +519,7 @@ Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parit�
 
 Un nouveau data frame a permis ensuite de combiner les données obtenues en les regroupant par lactation. Un premier tri retire tous les animaux dont les données de PL et de SCC ne sont pas assez exhaustives, cette première transformation donne un total de 217 577 lactations qui regroupe 83 991 animaux. Ensuite une dernière étape permet de ne sélectionner que les élevages avec une proportion suffisante de vêlages, c'est-à-dire au moins 70% de vêlages parmi les vaches inséminées dont au moins 15 à 50% de primipares. Il reste au total 127 541 lactations dont 58 579 animaux appartenant à 231 élevages.
 
-### Processus de décision de mise à la réforme
-
-<!-- Ce n'est pas de la décision de réforme dont tu parles ici, mais de la réforme. C'est différent. -->
-
-<!-- On n'a pas besoin de savoir que la cause boucherie était codée avec un B. Ça n'aide pas à la compréhension. Penser au lecteur. Le code peut être utile dans le tableau en annexe mais pas ici. -->
-
-Pour ce que est de la décision de mise à la réforme, pour chaque animal sorti, une date de sortie et une cause de sortie a été fournie. Si ce n'est pas le cas alors l'animal n'a pas été pris en compte dans l'étude par manque d'information. Une vache était considérée comme réformée lorsque la cause de sortie indiquée pour elle est *"B"* pour *"boucherie"* (voir les causes de sorties fournies en annexe).
-
-### Choix des données et création du tableau de données utilisé pour l'étude statistique
+## Choix des données et création du tableau de données utilisé pour l'étude statistique
 
 <!-- A-t-on besoin de connaître le nom du tableau lac dans le texte? -->
 
@@ -574,7 +567,7 @@ A chaque lactation est associée les données récoltées utiles suivantes :
 
 A partir de ces données il a été possible de construire d'autres variables informatives utilisées pour les modélisations.
 
-#### Le statut mammite
+### Le statut mammite
 
 <!-- On n'a pas besoin de savoir que la cause boucherie était codée avec un B. Ça n'aide pas à la compréhension. Penser au lecteur. Le code peut être utile dans le tableau en annexe mais pas ici. -->
 
@@ -582,21 +575,21 @@ A partir de ces données il a été possible de construire d'autres variables in
 
 Il a été décidé de décomposer les mammites par modèle épidémiologique selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules supérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*. On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*. Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaissait pas le statut avant tarissement, ont été retirés de l'étude.
 
-#### La parité
+### La parité
 
 Pour simplifier l'étude des données il a été décidé de catégoriser les vaches selon quatre parités en attribuant la parité 4 a tous les animaux de parité 4 et plus. Pour l'étude statistique la variable a été convertie en facteur de quatre niveaux différents dont la référence est la parité 3. Cette parité à été choisit car elle est souvent décrite comme la parité où la vache devient rentable pour l'éleveur.
 
-#### La race
+### La race
 
 L'étude comporte des vaches de nombreuses races dont des Prim'holsteins (PH) en majorité, des vaches de race Montbéliarde, de race Normande, des Croisées ainsi que des Simmentales et des Jersiaises en minorité. Pour diminuer le nombre de catégories et simplifier le nombre de niveaux de facteurs pour les modélisation statistiques, cinq catégories ont été créées pour les attribuer aux vaches : les catégories PH, Normande, Montbéliarde, Croisées et Autres ont été créées. La dernière catégorie regroupe à la fois les Jersiaises et les simmentales.
 
-#### La production laitière
+### La production laitière
 
 La valeur du maximum de production enregistrée au cours d'un contrôle les 90 premiers jours de lactation a été prise pour chaque lactation. Cette valeur a ensuite été centrée puis réduite afin d'en faire une variable comparable pour chaque lactation.
 
 ### Construction des modèles statistiques
 
-La première question qui se pose c'est par quels moyens la survenue d'une mammite peut entraîner la mise à la réforme précoce ? La schématisation de cela par le biais d'un DAG peut aider à y voir plus clair et comprendre ces différentes voies (@fig-dag-mammites). En effet, lors de la survenue d'une mammite (**M**), celle-ci peut entraîner un épisode clinique que l'organisme ne saura pas combattre et ainsi entraîner la mort (**D** pour death en anglais). Bien évidemment les cas de mammites cliniques entraînant des conséquences sur l'état général de l'animal sont rares mais il est important de les prendre en considération. Cette mammite peut également entraîner une baisse de production laitière (**PL**). Qu'elle soit définitive par la perte d'un ou plusieurs quartiers, ou temporaire à cause de la forte inflammation ou même indirecte lorsque l'éleveur écarte le lait du tank pour respecter les temps d'attente d'un éventuel traitement. Si cette baisse de production laitière entraîne un manque de rentabilité de la vache, l'éleveur peut estimer que le remplacement de cette vache est nécessaire. Finalement, cette mammite la persistance d'un taux de cellules élevé chez une vache peut entraîner la décision ou non de mise à la reproduction (**R**) par l'éleveur qui ne veut pas garder cet animal à cause des pénalités financières appliquées sur un lait de tank haut en cellules. S'il décide tout de même de mettre cette vache à la reproduction il va l'inséminer (**IA**) une ou plusieurs fois. Si la vache possède des troubles de fertilité (**F**) il peut également décider à ce moment de la réformer. 
+La première question qui se pose c'est par quels moyens la survenue d'une mammite peut entraîner la mise à la réforme précoce ? La schématisation de cela par le biais d'un DAG peut aider à y voir plus clair et comprendre ces différentes voies (@fig-dag-mammites). En effet, lors de la survenue d'une mammite (**M**), celle-ci peut entraîner un épisode clinique que l'organisme ne saura pas combattre et ainsi entraîner la mort (**D** pour death en anglais). Bien évidemment les cas de mammites cliniques entraînant des conséquences sur l'état général de l'animal sont rares mais il est important de les prendre en considération. Cette mammite peut également entraîner une baisse de production laitière (**PL**). Qu'elle soit définitive par la perte d'un ou plusieurs quartiers, ou temporaire à cause de la forte inflammation ou même indirecte lorsque l'éleveur écarte le lait du tank pour respecter les temps d'attente d'un éventuel traitement. Si cette baisse de production laitière entraîne un manque de rentabilité de la vache, l'éleveur peut estimer que le remplacement de cette vache est nécessaire. Finalement, cette mammite la persistance d'un taux de cellules élevé chez une vache peut entraîner la décision ou non de mise à la reproduction (**R**) par l'éleveur qui ne veut pas garder cet animal à cause des pénalités financières appliquées sur un lait de tank haut en cellules. S'il décide tout de même de mettre cette vache à la reproduction il va l'inséminer (**IA**) une ou plusieurs fois. Si la vache possède des troubles de fertilité (**F**) il peut également décider à ce moment de la réformer.
 
 <!-- Expliquer les noms des nœuds. Une figure doit pouvoir se lire sans aller lire le texte. -->
 
@@ -643,7 +636,7 @@ Pour pouvoir amener une vache à produire à nouveau du lait en quantité import
 
 <!-- -   **Décision de mise à la reproduction** -->
 
-Toutes les modélisation ont été réalisée sur R version 4.3.0. 
+Toutes les modélisation ont été réalisée sur R version 4.3.0.
 
 #### Décision de mise à la reproduction
 
@@ -701,21 +694,19 @@ title_x <- 0.5  # Ajuster selon les besoins pour le placement horizontal
 
 <!-- La décision ne dépend pas d'un effet aléatoire troupeau. L'effet aléatoire troupeau est une manière de prendre en compte des facteurs non observés qui pourraient agir sur la probabilité d'IA dans le troupeau, par exemple la disponibilité en génisses. -->
 
-La @fig-dag-mam-repro montre le DAG qui schématise cette décision et les variables qui interviennent potentiellement dans cette décision. La grande majorité des éleveurs laitiers aujourd'hui en France utilisent l'insémination artificielle (AI). Il est donc plus facile pour l'éleveur de gérer sa reproduction et de décider quelle vache inséminer pour l'amener à la prochaine lactation. Il doit donc prendre sa décision en fonction de plusieurs facteurs. Ce que cette étude cherche à démontrer c'est que la survenue d'une mammite en tout début de lactation va avoir un impact sur cette décision. Mais cette décision dépend également d'autres facteurs comme : la parité (**P**), la production laitière (**PL**), la race (**B** pour breed en Anglais), ainsi qu'un effet aléatoire de troupeau. 
+La @fig-dag-mam-repro montre le DAG qui schématise cette décision et les variables qui interviennent potentiellement dans cette décision. La grande majorité des éleveurs laitiers aujourd'hui en France utilisent l'insémination artificielle (AI). Il est donc plus facile pour l'éleveur de gérer sa reproduction et de décider quelle vache inséminer pour l'amener à la prochaine lactation. Il doit donc prendre sa décision en fonction de plusieurs facteurs. Ce que cette étude cherche à démontrer c'est que la survenue d'une mammite en tout début de lactation va avoir un impact sur cette décision. Mais cette décision dépend également d'autres facteurs comme : la parité (**P**), la production laitière (**PL**), la race (**B** pour breed en Anglais), ainsi qu'un effet aléatoire de troupeau.
 
 <!-- L'estimand serait plutôt une différence de probabilité. On peut la calculer à partir des probabilités marginales prédites.-->
 
-L'estimand ici est donc la recherche d'une différence de probabilité de survenue de l'évènement, ici la décision de mise à la reproduction, selon les catégories des différentes variables. Le modèle qui convient le mieux est un modèle de **régression logistique binomial** car la variable dépendante est de type binaire. L'estimand qui convient le mieux est donc la recherche des OR pour chaque catégorie de variable afin d'estimer le poids de l'impact de chacune. 
+L'estimand ici est donc la recherche d'une différence de probabilité de survenue de l'évènement, ici la décision de mise à la reproduction, selon les catégories des différentes variables. Le modèle qui convient le mieux est un modèle de **régression logistique binomial** car la variable dépendante est de type binaire. L'estimand qui convient le mieux est donc la recherche des OR pour chaque catégorie de variable afin d'estimer le poids de l'impact de chacune.
 
-la modélisation à été réalisé grâce à la fonction *glmer* du package lme4 de R. Pour cela une variable dépendante à été créée, elle prenait la valeur 1 si la vache a été inséminée au moins une fois au cours de la lactation et 0 sinon. 
+la modélisation à été réalisé grâce à la fonction *glmer* du package lme4 de R. Pour cela une variable dépendante à été créée, elle prenait la valeur 1 si la vache a été inséminée au moins une fois au cours de la lactation et 0 sinon.
 
 <!-- Variable d'entrée = variable d'intérêt. Toutes les variables incluses dans le modèle sont en entrée du modèle. Ici, c'est le Y qui est binaire.-->
 
-
-
 -   **Réussite à la première insémination**
 
-Une fois que l'éleveur a décidé de mettre son animal à la reproduction il l'insémine une première fois (**AI**). Ce qui est espéré habituellement en élevage laitier, c'est qu'il y ait fécondation dès la première insémination afin d'obtenir un intervalle vêlage-première insémination court et ainsi obtenir un intervalle vêlage-vêlage plus court également. De nombreux facteurs sont connus comme ayant un impact direct sur la fertilité d'une vache laitière, comme la parité (**P**), la race (**B**), le niveau production (**PL**) et un effet aléatoire de troupeau (**T**). A cela s'ajouter la variable statut mammite (**M**) qui est la principale variable à tester. 
+Une fois que l'éleveur a décidé de mettre son animal à la reproduction il l'insémine une première fois (**AI**). Ce qui est espéré habituellement en élevage laitier, c'est qu'il y ait fécondation dès la première insémination afin d'obtenir un intervalle vêlage-première insémination court et ainsi obtenir un intervalle vêlage-vêlage plus court également. De nombreux facteurs sont connus comme ayant un impact direct sur la fertilité d'une vache laitière, comme la parité (**P**), la race (**B**), le niveau production (**PL**) et un effet aléatoire de troupeau (**T**). A cela s'ajouter la variable statut mammite (**M**) qui est la principale variable à tester.
 
 <!-- Est-ce que ici le AI1 est le F du premier DAG? -->
 
@@ -760,12 +751,11 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-Là encore l'estimand va être de trouver les OR grâce à une **régression logistique binomiale** réalisé avec une fonction *glmer*. Pour cela une nouvelle variable prenait la valeur 1 si la vache n'a été inséminée qu'une seule fois et qu'une date de vêlage suivante était donnée. 
+Là encore l'estimand va être de trouver les OR grâce à une **régression logistique binomiale** réalisé avec une fonction *glmer*. Pour cela une nouvelle variable prenait la valeur 1 si la vache n'a été inséminée qu'une seule fois et qu'une date de vêlage suivante était donnée.
 
 -   **fertilité**
 
-Pour modéliser la fertilité (**F**) il a été décidé de la représenter par le nombre d'IA avant fécondation ou non de la vache. 
-Dans le cas où la $1^{ère}$ IA n'est pas un succès et que la vache revient en chaleur, l'éleveur peut décider de retenter l'insémination artificielle à chaque nouveau cycle. Cette voie, représentée par la @fig-dag-mam-nai, est complexe puisqu'elle met en évidence une décision prise par l'éleveur mais qui est largement influencée par des facteurs propres à la condition physiologique de l'animal entraînant une baisse de la fertilité (**F**), comme la parité (**P**), la race (**B**), le niveau de production (**PL**) ainsi qu'un effet aléatoire de troupeau (**T**). En effet cela peut être compliqué à modéliser car c'est l'éleveur qui décide combien d'inséminations il va tenter sur son animal, mais c'est la fertilité propre de l'animal qui entraîne la réussite ou l'échec de cette insémination. Donc c'est également cette fertilité qui indirectement influence la décision de l'éleveur et donc influence le nombre d'inséminations tentées. 
+Pour modéliser la fertilité (**F**) il a été décidé de la représenter par le nombre d'IA avant fécondation ou non de la vache. Dans le cas où la $1^{ère}$ IA n'est pas un succès et que la vache revient en chaleur, l'éleveur peut décider de retenter l'insémination artificielle à chaque nouveau cycle. Cette voie, représentée par la @fig-dag-mam-nai, est complexe puisqu'elle met en évidence une décision prise par l'éleveur mais qui est largement influencée par des facteurs propres à la condition physiologique de l'animal entraînant une baisse de la fertilité (**F**), comme la parité (**P**), la race (**B**), le niveau de production (**PL**) ainsi qu'un effet aléatoire de troupeau (**T**). En effet cela peut être compliqué à modéliser car c'est l'éleveur qui décide combien d'inséminations il va tenter sur son animal, mais c'est la fertilité propre de l'animal qui entraîne la réussite ou l'échec de cette insémination. Donc c'est également cette fertilité qui indirectement influence la décision de l'éleveur et donc influence le nombre d'inséminations tentées.
 
 ```{r mammite - nai, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-nai
@@ -808,7 +798,7 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-L'estimand peut être défini ici comme la recherche de l'effet causal des mammites sur le nombre de tentatives d'inséminations chez la vache laitière. Contrairement aux questions précédentes, nous avons ici une variable de comptage et non une variable binaire. Il n'est plus possible d'utiliser la loi binomiale. Le modèle de Poisson est plus adapté à une variable de comptage, il permet d'obtenir l'IRR. 
+L'estimand peut être défini ici comme la recherche de l'effet causal des mammites sur le nombre de tentatives d'inséminations chez la vache laitière. Contrairement aux questions précédentes, nous avons ici une variable de comptage et non une variable binaire. Il n'est plus possible d'utiliser la loi binomiale. Le modèle de Poisson est plus adapté à une variable de comptage, il permet d'obtenir l'IRR.
 
 -   **Revêlage**
 
@@ -852,13 +842,13 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-L'estimand représente la recherche de l'effet causal des différentes catégories de mammites sur la probabilité de vêler à nouveau pour une vache laitière. Comme c'est également une régréssion logistique qui est utilisée ici, c'est également la recherche des OR qui est intéressante. 
+L'estimand représente la recherche de l'effet causal des différentes catégories de mammites sur la probabilité de vêler à nouveau pour une vache laitière. Comme c'est également une régréssion logistique qui est utilisée ici, c'est également la recherche des OR qui est intéressante.
 
 #### Modélisation de l'impact des mammites sur le niveau de production laitière
 
 Comme modélisé sur la @fig-dag-mammites, une autre voie qui pourrait conduire à une réforme suite à la survenue d'une mammite serait que la mammite en question entraîne une baisse de production laitière (**PL**). Ce qui conduirait l'éleveur à décider de remplacer sa vache par une génisse.
 
-La @fig-dag-mam-pl montre que les facteurs considérés dans l'étude sont la parité (**P**), le jour en lait (**DIM**), la race (**B**) ainsi que le statut mammite (**M**). Un effet aléatoire de troupeau (**T**) a également été ajouté. 
+La @fig-dag-mam-pl montre que les facteurs considérés dans l'étude sont la parité (**P**), le jour en lait (**DIM**), la race (**B**) ainsi que le statut mammite (**M**). Un effet aléatoire de troupeau (**T**) a également été ajouté.
 
 ```{r mammite - PL, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-pl
@@ -905,15 +895,13 @@ On voit que le pic de lactation intervient généralement avant 40 jours de lact
 
 Pour simplifier l'étude, comme la phase d'intérêt est la première phase de lactation, il a été décidé d'assimiler les courbes de lactation à des droites. Il devient ainsi possible de comparer l'écart entre les droites de la lactation en cours et de la lactation précédente en fonction de la survenue ou non d'une mammite.
 
-Le modèle le plus adapté est donc le modèle de régression linéaire mixte. réalisé grâce à la fonction *lmer* du package lme4 de R. 
-Ce modèle permet d'obtenir directement l'estimand qui est représenté par le coefficient associé à chaque variable. 
+Le modèle le plus adapté est donc le modèle de régression linéaire mixte. réalisé grâce à la fonction *lmer* du package lme4 de R. Ce modèle permet d'obtenir directement l'estimand qui est représenté par le coefficient associé à chaque variable.
 
 #### Modélisation de l'impact des mammites sur la probabilité de mort
 
 Imaginons maintenant que la survenue d'un épisode de mammite ayant des conséquences cliniques puisse entraîner la mort de la vache. Cette hypothèse ne conduit pas littéralement à la réforme de l'animal, mais elle entraîne sa sortie involontaire du troupeau et une perte économique non négligeable pour l'éleveur. D'après les différentes publications scientifiques consultées sur le sujet et les connaissances acquises au cours du cursus vétérinaire, il est plutôt rare qu'un épisode clinique entraîne le décès de l'animal. Les rares cas qui surviennent sont généralement provoqué par un passage dans le sang de l'infection.
 
-Afin de modéliser au mieux cette relation, une étude de survie grâce à une régression de Cox semble le plus approprié. 
-Il est intéressant de se demander quels autres facteurs interviennent dans cette relation. La @fig-dag-mam-death, représente l'intervention des ces différents facteurs dont notamment la parité (**P**) et le statut mammite (**M**). 
+Afin de modéliser au mieux cette relation, une étude de survie grâce à une régression de Cox semble le plus approprié. Il est intéressant de se demander quels autres facteurs interviennent dans cette relation. La @fig-dag-mam-death, représente l'intervention des ces différents facteurs dont notamment la parité (**P**) et le statut mammite (**M**).
 
 ```{r,echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-death
@@ -952,22 +940,21 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-La régression de Cox réalisée avec la fonction *coxph* du package survival de R permet d'obtenir le HR qui traduit le risque de mort selon la variable dans le temps t. 
+La régression de Cox réalisée avec la fonction *coxph* du package survival de R permet d'obtenir le HR qui traduit le risque de mort selon la variable dans le temps t.
 
 ### Etude de la dynamique des infections intramammaires
 
-Une fois que toutes les voies liant mammites et réforme ont été étudiées, il a fallut décrire les dynamiques de cellule au sein des troupeaux étudiés.
-Cette étude s'intéresse tout particulièrement au statut de chaque vache avant tarissement et après vêlage. Toute la période entre ces deux évènements est une zone d'ombre car aucune donnée du contrôle laitier ne permet avec certitude de connaître le statut des vache à chaque instant.
+Une fois que toutes les voies liant mammites et réforme ont été étudiées, il a fallut décrire les dynamiques de cellule au sein des troupeaux étudiés. Cette étude s'intéresse tout particulièrement au statut de chaque vache avant tarissement et après vêlage. Toute la période entre ces deux évènements est une zone d'ombre car aucune donnée du contrôle laitier ne permet avec certitude de connaître le statut des vache à chaque instant.
 
 Trois sous-questions ont été soulevées :
 
 -   Quelle est la probabilité d'avoir un comptage cellulaire $> 200 000 cell/mL$ au dernier contrôle de la lactation, c'est-à-dire au dernier contrôle avant tarissement ?
 
--   Quelle est la probabilité d'une guérison pendant le tarissement ? c'est-à-dire passer d'un SCC élevé à un SCC en dessous du seuil. 
+-   Quelle est la probabilité d'une guérison pendant le tarissement ? c'est-à-dire passer d'un SCC élevé à un SCC en dessous du seuil.
 
--   Quelle est la probabilité d'une nouvelle infection pendant le tarissement ? c'est-à-dire passer d'un SCC considéré normal à un SCC élevé. 
+-   Quelle est la probabilité d'une nouvelle infection pendant le tarissement ? c'est-à-dire passer d'un SCC considéré normal à un SCC élevé.
 
-Pour répondre à ces questions trois régressions logistiques ont été réalisées avec la fonction *glmer* avec les variables dépendantes suivantes : 
+Pour répondre à ces questions trois régressions logistiques ont été réalisées avec la fonction *glmer* avec les variables dépendantes suivantes :
 
 #### Probabilité d'avoir un SCC élevé au dernier contrôle avant tarissement
 
@@ -1001,8 +988,7 @@ Trois scénarios ont été testés :
 
 -   Le troisième scénario modélise le cas ou l'éleveur réforme toutes les vaches contagieuses en plus des vaches initialement envoyées à la réforme. C'est le scénario qui semblait le plus réalisable sur le terrain. Cependant il a été important de vérifier que cela n'entraîner pas une trop grosse perte d'effectif au niveau des troupeaux, ce qui aurait entraîner un non intérêt du modèle.
 
-Pour ces trois scénarios des variables étaient recréées grâce aux prédictions générées par les modèles entraînés. Il était ainsi souhaité de pouvoir évaluer la différence d'impact en présentant cette différence comme une différence de probabilité de guérison et une différence de probabilité de nouvelle infection. 
-Un impact sur le niveau de production moyen du troupeau a également été évalué. 
+Pour ces trois scénarios des variables étaient recréées grâce aux prédictions générées par les modèles entraînés. Il était ainsi souhaité de pouvoir évaluer la différence d'impact en présentant cette différence comme une différence de probabilité de guérison et une différence de probabilité de nouvelle infection. Un impact sur le niveau de production moyen du troupeau a également été évalué.
 
 ## Résultats
 
@@ -1010,31 +996,36 @@ Un impact sur le niveau de production moyen du troupeau a également été éval
 
 #### Modélisation de l'impact des mammites sur la décision de mise à la reproduction
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-regression-repro
-#| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la décision de mise à la reproduction. 
+#| tbl-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la décision de mise à la reproduction. 
 readRDS("generated_datasets/t_repro.RData")
 ```
 
-```{r}
+Pour la variable d'intérêt de cette étude, c'est-à-dire le statut mammite, le modèle semble mettre en évidence que les statut au tarissement avec un SCC élevé (dpHigh) ont moins de chances d'être mis à la reproduction que les primipares saines (primi_healthy). C'est d'autant plus marqué pour les vaches jugés contagieuses ou à mammite environnementale (dpHigh_cont & dpHigh_env) par rapport aux multipares saines (dpHigh_healthy). Même constatation pour les multipares a statut avant tarissement en dessous du seuil (dpLow) mais qui sont définies comme à mammite contagieuse ou environnementale durant cette lactation (dpLow_env & dpLow_cont) et pour les primipares non saines également (primi_cont & primi_env).
+
+Pour les autres covariables, les OR sont visibles dans le tbl-regression-repro. 
+Les prédictions réalisées à l'aide du modèle et du package *marginaleffetcs* sont visibles grâce aux @fig-predict-repro-mam, @fig-predict-repro-parit, @fig-predict-repro-race et @fig-predict-repro-milk
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-repro-mam
 #| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon le statut mammite  
 readRDS("generated_datasets/repro_mast.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-repro-parit
 #| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la parité  
 readRDS("generated_datasets/repro_parit.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-repro-race
 #| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la race 
 readRDS("generated_datasets/repro_race.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-repro-milk
 #| fig-cap: graphique montrant les prédictions sur la probabilité de mise à la reproduction selon la PL 
 readRDS("generated_datasets/repro_milk.RData")
@@ -1042,31 +1033,37 @@ readRDS("generated_datasets/repro_milk.RData")
 
 #### Modélisation de l'impact des mammites sur la probabilité de réussite à la première insémination
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-regression-ia1
-#| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur le succès à la première insémination. 
+#| tbl-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur le succès à la première insémination. 
 readRDS("generated_datasets/t_ia1.RData")
 ```
 
-```{r}
+En ce qui concerne la réussite à la première IA, le statut mammite semble avoir un effet significatif surtout pour les multipares atteintes de mammites dites contagieuses. Pas d'effet significatif semble être détecté pour les les vaches multipares saines ou les primipares à mammites environnementales. Pour les primipares contagieuses, il semblerait qu'elle ait une chance légèrement plus réduite d'avoir une réussite à la première IA par rapport aux primipares saines. 
+
+Pour les autres covariables, les OR sont visibles dans le @tbl-regression-ia1 et les prédictions réalisées à partir de ce modèle sont visibles sur les @fig-predict-ia1-mam, @fig-predict-ia1-parit, @fig-predict-ia1-race et @fig-predict-ia1-milk.
+
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-ia1-mam
 #| fig-cap: graphique montrant les prédictions sur la probabilité de succès à la première IA selon le statut mammite  
 readRDS("generated_datasets/ia1_mam.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-ia1-parit
 #| fig-cap: graphique montrant les prédictions sur la probabilité de succès à la première IA selon la parité  
 readRDS("generated_datasets/ia1_parit.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-ia1-race
 #| fig-cap: graphique montrant les prédictions sur la probabilité de succès à la première IA selon la race 
 readRDS("generated_datasets/ia1_race.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-ia1-milk
 #| fig-cap: graphique montrant les prédictions sur la probabilité de succès à la première IA selon la PL 
 readRDS("generated_datasets/ia1_milk.RData")
@@ -1074,31 +1071,35 @@ readRDS("generated_datasets/ia1_milk.RData")
 
 #### Modélisation de l'impact des mammites sur le nombre moyen d'inséminations tentées
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-regression-nai
-#| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur le nombre d'inséminations tentées. 
+#| tbl-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur le nombre d'inséminations tentées. 
 readRDS("generated_datasets/t_nai.RData")
 ```
 
-```{r}
+Ces résultats montrent que certaines conditions du statut mammaire, notamment le fait d'avoir une mammite contagieuse qui réduit l'incidence des insémination tentées de 6%, et le fait d'avoir une mammite environnementale qui réduit l'incidence plus modestement de 3%. Ce résultat n'est cependant pas observé dans le cas des primipare, quel que soit le statut. Cela semble suggérer que dans le cas de mammites contagieuses, dites peu curables, l'éleveur tend à moins tenter d'inséminations, sauf s'il s'agit d'une primipare.
+
+Pour les autres covariables, les OR sont visibles dans le @tbl-regression-nai et les prédictions réalisées à partir de ce modèle sont visibles sur les @fig-predict-nai-mam, @fig-predict-nai-parit, @fig-predict-nai-race et @fig-predict-nai-milk.
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-nai-mam
 #| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon le statut mammite  
 readRDS("generated_datasets/nai_mam.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-nai-parit
 #| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon la parité   
 readRDS("generated_datasets/nai_parit.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-nai-race
 #| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon la race   
 readRDS("generated_datasets/nai_race.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-nai-milk
 #| fig-cap: graphique montrant les prédictions sur le nombre moyen d'inséminations selon la PL  
 readRDS("generated_datasets/nai_milk.RData")
@@ -1106,31 +1107,35 @@ readRDS("generated_datasets/nai_milk.RData")
 
 #### Modélisation de l'impact des mammites sur la probabilité de revêlage
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-regression-revel
-#| fig-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la probabilité de revêler. 
+#| tbl-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la probabilité de revêler. 
 readRDS("generated_datasets/t_revel.RData")
 ```
 
-```{r}
+Pour la probabilité de revêlage, les résultats montrent que les catégories de vaches ou le statut avant tarissement est élevé et celles dont un statut mammite environnemental et contagieuse à été établit pour cette lactation sont associé à une probabilité plus faible de revêler. En revanche, aucun effet significatif n'a été montré pour les primipares saines ou a mammite environnementale. 
+
+Pour les autres covariables, les OR sont visibles dans le @tbl-regression-revel et les prédictions réalisées à partir de ce modèle sont visibles sur les @fig-predict-revel-mam, @fig-predict-revel-parit, @fig-predict-revel-race et @fig-predict-revel-milk.
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-revel-mam
 #| fig-cap: graphique montrant les prédictions sur la probabilité de revêler selon le statut mammite  
 readRDS("generated_datasets/revel_mam.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-revel-parit
 #| fig-cap: graphique montrant les prédictions sur la probabilité de revêler selon la parité   
 readRDS("generated_datasets/revel_parit.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-revel-race
 #| fig-cap: graphique montrant les prédictions sur la probabilité de revêler selon la race   
 readRDS("generated_datasets/revel_race.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-revel-milk
 #| fig-cap: graphique montrant les prédictions sur la probabilité de revêler selon la PL   
 readRDS("generated_datasets/revel_milk.RData")
@@ -1138,37 +1143,41 @@ readRDS("generated_datasets/revel_milk.RData")
 
 #### Modélisation de l'impact des mammites sur la production laitière en début de lactation
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-regression-lac
-#| fig-cap: Résultat de la régression linéaire visant à montrer l'impact des mammites sur la PL en début de lactation (les 40 premiers jours). 
+#| tbl-cap: Résultat de la régression linéaire visant à montrer l'impact des mammites sur la PL en début de lactation (les 40 premiers jours). 
 readRDS("generated_datasets/t_lac.RData")
 ```
 
-```{r}
+Les résultats sont moins nets concernant la PL. Seules les multipares saines ainsi que les primipares ont montré un effet significatif. Concernant les multipares, quel que soit leur statut avant tarissement, le fait d'être exempt de toute mammite au cours de cette lactation semble montrer une augmentation de la production laitière de 1,3 unité par rapport aux primipares saines. Et concernant les primipares, le fait d'avoir une mammite semble tout de même entraîner une baisse de production, plus marqué lors de mammite environnementale. 
+
+Pour les autres covariables, les OR sont visibles dans le @tbl-regression-lac et les prédictions réalisées à partir de ce modèle sont visibles sur les @fig-predict-lac-mam7, @fig-predict-lac-mam15, @fig-predict-lac-dim, @fig-predict-nai-parit, @fig-predict-nai-race et @fig-predict-nai-milk.
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-lac-mam7
 #| fig-cap: graphique montrant les prédictions sur la PL à J7 selon le statut mammite  
 readRDS("generated_datasets/lac_mam7.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-lac-mam15
 #| fig-cap: graphique montrant les prédictions sur la PL à J15 selon le statut mammite  
 readRDS("generated_datasets/lac_mam15.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-lac-dim
 #| fig-cap: graphique montrant les prédictions sur la PL en début de lactation selon le jour en lait   
 readRDS("generated_datasets/lac_dim.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-lac-parit
 #| fig-cap: graphique montrant les prédictions sur la PL en début de lactation selon la parité   
 readRDS("generated_datasets/lac_parit.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-lac-race
 #| fig-cap: graphique montrant les prédictions sur la PL en début de lactation selon la race   
 readRDS("generated_datasets/lac_race.RData")
@@ -1176,19 +1185,21 @@ readRDS("generated_datasets/lac_race.RData")
 
 #### Modélisation de l'impact des mammites sur le risque de mort
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-regression-cox
-#| fig-cap: Résultat de la régression de Cox visant à montrer l'impact des mammites sur le risque de mort imminente. 
+#| tbl-cap: Résultat de la régression de Cox visant à montrer l'impact des mammites sur le risque de mort imminente. 
 readRDS("generated_datasets/t_cox.RData")
 ```
 
-```{r}
+Les résultats sont assez peu significatifs, ils montrent que seules les catégories de multipares hautes en cellules avant tarissement, en mammite contagieuse à la lactation en cours, ainsi que la parité 4 et plus présentent une augmentation siginificative du risque de mort avec des valeurs de p-value < 0,001.
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-cox-mam
 #| fig-cap: graphique montrant les prédictions sur le risque de mort selon le statut mammite 
 readRDS("generated_datasets/cox_mam.RData")
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-cox-parit
 #| fig-cap: graphique montrant les prédictions sur le risque de mort selon la parité 
 readRDS("generated_datasets/cox_parit.RData")
@@ -1196,7 +1207,233 @@ readRDS("generated_datasets/cox_parit.RData")
 
 #### Modélisation de l'impact des mammites sur les dynamiques de cellules
 
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: tbl-regression-scc
+#| tbl-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la probabilité d'avoir un SCC élevé au dernier contrôle avant tarissement  
+readRDS("generated_datasets/t_scc_high.RData")
+```
+
+Par rapport aux primipares saines prises comme référence, toutes les autres catégories ont une probabilité augmentée d'avoir un SCC supérieur à 200 000 cell/mL au dernier contrôle avant tarissement. Notamment les multipares qui avaient déjà un taux cellulaire élevé au dernier contrôle avant tarissement de la précédente lactation, car les animaux de cette catégorie ont environ 10,6 plus de chances d'avoir un contrôle élevé avant tarissement comparativement à la catégorie de référence. Les probabilités sont d'autant plus élevées que l'animal apartient à une catégorie dite de mammite contagieuse. 
+
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-scc-mam
+#| fig-cap: graphique montrant les prédictions sur la probabilité d'avoir un SCC élevé avant tarissement selon le statut mammite  
+readRDS("generated_datasets/scc_mam.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-scc-parit
+#| fig-cap: graphique montrant les prédictions sur la probabilité d'avoir un SCC élevé avant tarissement selon la parité  
+readRDS("generated_datasets/scc_parit.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-scc-race
+#| fig-cap: graphique montrant les prédictions sur la probabilité d'avoir un SCC élevé avant tarissement selon la race 
+readRDS("generated_datasets/scc_race.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-scc-PL
+#| fig-cap: graphique montrant les prédictions sur la probabilité d'avoir un SCC élevé avant tarissement selon la PL 
+readRDS("generated_datasets/scc_milk.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: tbl-regression-cure
+#| tbl-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la probabilité de guérir au cours du tarissement.   
+readRDS("generated_datasets/t_cure.RData")
+```
+
+Le @tbl-regression-cure montre que concernant la probabilité de guérison au cours du tarissement, le fait d'avoir une mammite contagieuse réduit significativement la probabilité d'une guérison au tarissement. C'est également le cas pour les mammites environnementales mais de manière moins marquée. 
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-cure-mam
+#| fig-cap: graphique montrant les prédictions sur la probabilité de guérir au cours du tarissement selon le statut mammite.  
+readRDS("generated_datasets/cure_mam.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-cure-parit
+#| fig-cap: graphique montrant les prédictions sur la probabilité de guérir au cours du tarissement selon la parité  
+readRDS("generated_datasets/cure_parit.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-cure-race
+#| fig-cap: graphique montrant les prédictions sur la probabilité de guérir au cours du tarissement selon la race  
+readRDS("generated_datasets/cure_race.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-cure-milk
+#| fig-cap: graphique montrant les prédictions sur la probabilité de guérir au cours du tarissement selon la PL.  
+readRDS("generated_datasets/cure_milk.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: tbl-regression-ninf
+#| tbl-cap: Résultat de la régression logistique visant à montrer l'impact des mammites sur la probabilité d'une nouvelle infection au cours du tarissement.   
+readRDS("generated_datasets/t_ninf.RData")
+```
+
+Selon le @tbl-regression-ninf, toute mammite quel soit environnementale ou contagieuse, chez une primipare ou une multipare augmente le risque de nouvelle infection acquise au cours du tarissement. Le risque est d'autant plus élevé que la mammite appartient à la catégorie contagieuse. 
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-ninf_mam
+#| fig-cap: graphique montrant les prédictions sur la probabilité d'acquérir une nouvelle infection au cours du tarissement selon le statut mammite 
+readRDS("generated_datasets/inf_mam.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-ninf_parit
+#| fig-cap: graphique montrant les prédictions sur la probabilité d'acquérir une nouvelle infection au cours du tarissement selon la parité 
+readRDS("generated_datasets/inf_parit.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-ninf-race
+#| fig-cap: graphique montrant les prédictions sur la probabilité d'acquérir une nouvelle infection au cours du tarissement selon la race 
+readRDS("generated_datasets/inf_race.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: fig-predict-ninf-milk
+#| fig-cap: graphique montrant les prédictions sur la probabilité d'acquérir une nouvelle infection au cours du tarissement selon la PL 
+readRDS("generated_datasets/inf_milk.RData")
+```
+
+#### Contrefactuels 
+
+##### Scénario 1 
+
+Les résultats du scénario 1 montrent qu'il n'y a pas de différence statistiquement significative pour le taux moyen de nouvelles infections au tarissement (@tbl-comp-ninf) ni pour pour la PL moyenne a 15 jours en lait (@tbl-comp-pl). Cependant le taux moyen de guérison au tarissement est plus plus élevé (77% pour le contrefactuel contre 74% pour le factuel) et la différence est statistiquement significative (@tbl-comp-cure).  
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-ninf
+#| fig-cap: boxplot montrant la différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
+readRDS("generated_datasets/comp_ninf.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: tbl-comp-ninf
+#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
+readRDS("generated_datasets/scenario1_ninf.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-cure
+#| fig-cap: boxplot montrant la différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
+readRDS("generated_datasets/comp_cure.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: tbl-comp-cure
+#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
+readRDS("generated_datasets/scenario1_cure.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-pl
+#| fig-cap: boxplot montrant la différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 1. 
+readRDS("generated_datasets/comp_pl.RData")
+```
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: tbl-comp-pl
+#| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 1. 
+readRDS("generated_datasets/scenario1_pl.RData")
+```
+
+##### Scénario 2 
+
+Concernant le scénario 2, il n'y a pas de différence statistiquement significative pour le taux moyen de nouvelles infections au tarissement (@tbl-comp-ninf2) ni pour pour la PL moyenne a 15 jours en lait non plus (@tbl-comp-pl2). Cependant, là aussi, le taux moyen de guérison au tarissement est plus plus élevé (77% pour le contrefactuel contre 74% pour le factuel) et la différence est statistiquement significative (@tbl-comp-cure2).  
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-ninf2
+#| fig-cap: boxplot montrant la différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
+readRDS("generated_datasets/comp_ninf2.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: tbl-comp-ninf2
+#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
+readRDS("generated_datasets/scenario2_ninf.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-cure2
+#| fig-cap: boxplot montrant la différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
+readRDS("generated_datasets/comp_cure2.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: tbl-comp-cure2
+#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
+readRDS("generated_datasets/scenario2_cure.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-pl2
+#| fig-cap: boxplot montrant la différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 2. 
+readRDS("generated_datasets/comp_pl2.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: tbl-comp-pl2
+#| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 2. 
+readRDS("generated_datasets/scenario2_pl.RData")
+```
+
+##### Scénario 3 
+
+Pour ce dernier scénario, la même constatation est faite, il n'y pas de réelle différence significative entre le taux moyen de nouvelles infections au tarissement (@tbl-comp-ninf3), ainsi que pour la PL moyenne à 15 jours (@tbl-comp-pl3) entre le contrefactuel et le factuel mais il existe cependant toujours une différence entre le taux moyen de guérison au tarissement (77% contre 74% pour le factuel) (@tbl-comp-cure3)
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-ninf3
+#| fig-cap: boxplot montrant la différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
+readRDS("generated_datasets/comp_ninf3.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: tbl-comp-ninf3
+#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
+readRDS("generated_datasets/scenario3_ninf.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-cure3
+#| fig-cap: boxplot montrant la différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
+readRDS("generated_datasets/comp_cure3.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: tbl-comp-cure3
+#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
+readRDS("generated_datasets/scenario3_cure.RData")
+```
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+#| label: fig-comp-pl3
+#| fig-cap: boxplot montrant la différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 3. 
+readRDS("generated_datasets/comp_pl3.RData")
+```
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#| label: tbl-comp-pl3
+#| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 3. 
+readRDS("generated_datasets/scenario3_pl.RData")
+```
+
+Pour ces trois scénarios, on observe une grande dispersion des données contrefactuelles avec quelques valeurs extrêmes aberrantes. De plus il semble logique que le taux de guérison au tarissement soit plus élevé pour ces trois scénarios car toutes les vaches dites "incurables" ont été retirées des troupeaux. 
+
 ## Discussion
+
+### Impact des mammites sur la reproduction. 
+
+Pour la mise à la reproduction, il semblerait que les primipares, surtout si elles produisent plus de lait et qu'elles sont de race autre que PH semblent avoir une chance plus élevée de mise à la reproduction. Ce qui semble cohérent avec la réalité de l'élevage français car l’objectif pour les primipares élevées pour le renouvellement est de les amener à produire une seconde lactation surtout si ces dernières produisent plus ou que le lait est mieux valorisé comme c'est le cas pour certaines races (Montbéliardes par exemple). La parité 3 a été prise comme référence et il est observé que les parités supérieures ont moins de chance d'être mises à la reproduction et donc indirectement ont plus de risque d'être réformées. Cette observation est cohérente également et semble montrer qu'à partir du moment ou la vache à atteint le seuil de rentabilité, l'éleveur semble plus facilement s'en séparer. Cette observation est d'autant plus vrai que la comptage cellulaire à la fin de la précédente lactation était élevé. 
 
 ## Conclusion
 

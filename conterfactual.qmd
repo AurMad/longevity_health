@@ -715,7 +715,7 @@ resultats_cure <- data.frame(
   Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
   Statistique = c(sprintf("%.3f", t_stat_cure_fact), sprintf("%.3f", t_stat_cure_ctr), sprintf("%.2f", w_statistic_cure)),
   Valeur_p = c(sprintf("%.3e", t_p_value_cure_fact), sprintf("%.3e", t_p_value_cure_ctr), sprintf("%.3e", w_p_value_cure)),
-  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+  Moyennes = c(sprintf("%.3f", mean_fact), sprintf("%.3f", mean_ctr), NA)
 )
 
 # Affichage du tableau
@@ -884,7 +884,6 @@ w_p_value_pl <- test_final_pl$p.value
 resultats_pl <- data.frame(
   Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
   Statistique = c(sprintf("%.3f", t_stat_pl_fact), sprintf("%.3f", t_stat_pl_ctr), sprintf("%.2f", w_statistic_pl)),
-  Degrés_de_liberté = c(sprintf("%.0f", t_df_pl_fact), sprintf("%.0f", t_df_pl_ctr), NA),
   Valeur_p = c(sprintf("%.6f", t_p_value_pl_fact), sprintf("%.6f", t_p_value_pl_ctr), sprintf("%.3f", w_p_value_pl)),
   Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
 )
@@ -1414,7 +1413,7 @@ resultats_cure2 <- data.frame(
   Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
   Statistique = c(sprintf("%.3f", t_stat_cure_fact), sprintf("%.3f", t_stat_cure_ctr), sprintf("%.2f", w_statistic_cure)),
   Valeur_p = c(sprintf("%.3e", t_p_value_cure_fact), sprintf("%.3e", t_p_value_cure_ctr), sprintf("%.3e", w_p_value_cure)),
-  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+  Moyennes = c(sprintf("%.3f", mean_fact), sprintf("%.3f", mean_ctr), NA)
 )
 
 # Affichage du tableau
@@ -1932,7 +1931,7 @@ condition_counterfactual <- combi3$type == "Contrefactuel"
 
 # Extraction des résultats
 t_stat_cure_ctr <- normal_test_cure3 $Contrefactuel$statistic
-t_p_value_cure_ctr <- normal_test_cure3 $Contrefactuel$p.value
+t_p_value_cure_ctr <- normal_test_cure3$Contrefactuel$p.value
 t_stat_cure_fact <- normal_test_cure3$Factuel$statistic
 t_p_value_cure_fact <- normal_test_cure3$Factuel$p.value
 mean_fact <- mean(combi3$cure_rate[condition_factual], na.rm = TRUE)
@@ -1949,7 +1948,7 @@ resultats_cure3 <- data.frame(
   Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
   Statistique = c(sprintf("%.3f", t_stat_cure_fact), sprintf("%.3f", t_stat_cure_ctr), sprintf("%.2f", w_statistic_cure)),
   Valeur_p = c(sprintf("%.3e", t_p_value_cure_fact), sprintf("%.3e", t_p_value_cure_ctr), sprintf("%.3e", w_p_value_cure)),
-  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+  Moyennes = c(sprintf("%.3f", mean_fact), sprintf("%.3f", mean_ctr), NA)
 )
 
 # Affichage du tableau
