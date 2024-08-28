@@ -20,6 +20,7 @@ library(GGally)
 library(effects)
 library(ggpubr)
 library(RColorBrewer)
+library(kableExtra)
 ```
 
 ```{r seuil utilisés}
@@ -188,7 +189,7 @@ hd_yr1 |>
 
 ici on observe le phénomène inverse ce qui est conforme à ce qu'on a pu observer précédemment. 
 
-# Création des contrefactuels : prévention des mammites contagieuses 
+# Premier scénario : prévention des mammites contagieuses 
 
 ```{r}
 lac_ctr <- lac |> 
@@ -255,7 +256,7 @@ A ce stade lac_ctr comptabilise 125 740 observations
 
 ## probabilité de succès à la première IA
 
-```{r} 
+```{r, eval=FALSE} 
 success_ia_full1 <- readRDS("generated_datasets/success_ia_full1.RData")
 ```
 
@@ -265,14 +266,14 @@ lac_ctr_repro <- lac_ctr |>
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 proba = predict(object = success_ia_full1,
                 newdata = lac_ctr_repro,
                 re.form = NULL,
                 type = "response")
 ```
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr_repro <- lac_ctr_repro |> 
   mutate(prob_ia1_ctr = predict(object = success_ia_full1,
                                 newdata = lac_ctr_repro,
@@ -285,32 +286,32 @@ lac_ctr_repro <- lac_ctr_repro |>
   ungroup()
 ```
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr_repro_unique <- lac_ctr_repro |> 
   distinct(anim_id, calv_date, herd_id, parKat, race, milk_early_max_scaled_p1, milk_early_max_scaled_p2,
            milk_early_max_scaled_p3, milk_early_max_scaled_p4, mast_cat1, prob_ctr, repro, .keep_all = TRUE)
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr <- left_join(lac_ctr, lac_ctr_repro)
 ```
 
 
 ## Probabilité de recevoir plusieurs inséminations 
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr_ai <- lac_ctr_repro |> 
   filter(success_ia1 == 0)
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 ai_number_full1 <- readRDS("generated_datasets/ai_number_full1.RData")
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 proba = predict(object = ai_number_full1,
                 newdata = lac_ctr_ai,
                 re.form = NULL,
@@ -319,7 +320,7 @@ proba = predict(object = ai_number_full1,
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr_ai <- lac_ctr_ai |> 
   mutate(nia_ctr = predict(object = ai_number_full1,
                            newdata = lac_ctr_ai,
@@ -328,22 +329,22 @@ lac_ctr_ai <- lac_ctr_ai |>
 
 ```
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr_ai <- lac_ctr_ai |> 
   mutate(n_ai = round(nia_ctr))
 ```
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr_repro <- left_join(lac_ctr_repro,
                            lac_ctr_ai)
 ```
-```{r}
+```{r, eval=FALSE}
 lac_ctr_repro <- lac_ctr_repro |> 
   mutate(n_ai = as.numeric(ifelse(is.na(n_ai), 1, n_ai)))
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr <- left_join(lac_ctr, lac_ctr_repro)
 ```
 
@@ -356,7 +357,7 @@ repro_revel_mast_final <- readRDS("generated_datasets/repro_revel_mast_final.RDa
 
 ```{r}
 lac_ctr_repro <- lac_ctr_repro |> 
-  mutate(prob_revel = predict(object = repro_revel_mast1,
+  mutate(prob_revel = predict(object = repro_revel_mast_final,
                               newdata = lac_ctr_repro,
                               re.form = NULL,
                               type = "response"))
@@ -421,11 +422,11 @@ rec_lac_ctr <- rec_lac_ctr |>
 
 ## Probabilité de mort 
 
-```{r}
+```{r, eval=FALSE}
 cox_model_essai2 <- readRDS("generated_datasets/cox_model_essai2.RData")
 ```
 
-```{r}
+```{r, eval=FALSE}
 lac_ctr <- lac_ctr |> 
   mutate(death_risk = predict(object = cox_model_essai2,
                       newdata = lac_ctr,
@@ -449,7 +450,7 @@ summary(scc_high_dp_model)
 
 ```{r}
 lac_ctr_dynamo <- lac_ctr |> 
-  filter(repro == 1 & dth == 0)
+  filter(repro == 1)
 ```
 
 ```{r}
@@ -554,7 +555,7 @@ hd_yr_ctr <- lac_ctr |>
             ninf_rate = round(length(ninf[!is.na(ninf) & ninf == 1]) / length(ninf[!is.na(ninf)]), 3), #proportion de nouvelles infections
             cure_rate = round(length(cure[!is.na(cure) & cure == 1]) / length(cure[!is.na(cure)]), 3)) #proportion de guérisons
 ```
-```{r proportion de lactation avec au moins un recontrôle}
+```{r proportion de lactation avec au moins un recontrôle, eval = FALSE}
 hd_yr_ctr |> 
   filter(n_rectrl > 30) |> 
   ggplot(aes(x = p_rectrl)) +
@@ -562,7 +563,7 @@ hd_yr_ctr |>
   xlab("Proportion de lactations avec au moins un contrôle lors de la lactation suivante.")
 ```
 
-```{r sélection élevages-années}
+```{r sélection élevages-années, eval = FALSE}
 hd_yr_ctr <- hd_yr_ctr |> 
   filter(n_rectrl > 30 & p_rectrl > .5)
 
@@ -581,6 +582,151 @@ hist(hd_yr_ctr$cure_rate,
      main = "Distribution contrefactuelle des proportions de guérisons\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
      xlab = "Proportion de guérisons contrefactuelles")
 ```
+```{r}
+# Ajoute une colonne pour identifier le type de données
+hd_yr <- hd_yr |> 
+  mutate(type = "Factuel",
+         year = as.character(year))
+
+hd_yr_ctr <- hd_yr_ctr |> 
+  mutate(type = "Contrefactuel")
+
+# Combine les deux jeux de données
+combi <- bind_rows(hd_yr, hd_yr_ctr)
+```
+
+```{r}
+# Crée le boxplot
+comp_ninf <- ggplot(combi, aes(x = type, y = ninf_rate, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison des taux de nouvelles infections : Factuels vs Contrefactuels",
+       x = "Type de données",
+       y = "Taux de nouvelles infections") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Factuel" = "skyblue", "Contrefactuel" = "salmon"))
+
+comp_ninf
+```
+```{r}
+saveRDS(comp_ninf, "generated_datasets/comp_ninf.RData")
+```
+
+
+```{r, test de normalité de ninf}
+normal_test_ninf <- tapply(combi$ninf_rate, combi$type, shapiro.test)
+print(normal_test_ninf)
+```
+
+hypothèse de normalité rejetée. 
+
+```{r}
+test_final_ninf <- wilcox.test(combi$ninf_rate~combi$type)
+print(test_final_ninf)
+```
+pas de différence significative 
+
+
+```{r}
+condition_factual <- combi$type == "Factuel"
+condition_counterfactual <- combi$type == "Contrefactuel"
+
+# Extraction des résultats
+t_stat_ninf_ctr <- normal_test_ninf$Contrefactuel$statistic
+t_p_value_ninf_ctr <- normal_test_ninf$Contrefactuel$p.value
+t_stat_ninf_fact <- normal_test_ninf$Factuel$statistic
+t_p_value_ninf_fact <- normal_test_ninf$Factuel$p.value
+mean_fact <- mean(combi$ninf_rate[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(combi$ninf_rate[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_ninf <- test_final_ninf$statistic
+w_p_value_ninf <- test_final_ninf$p.value
+```
+
+
+```{r}
+# Création du tableau
+resultats_ninf <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_ninf_fact), sprintf("%.3f", t_stat_ninf_ctr), sprintf("%.2f", w_statistic_ninf)),
+  Valeur_p = c(sprintf("%.3e", t_p_value_ninf_fact), sprintf("%.3e", t_p_value_ninf_ctr), sprintf("%.3f", w_p_value_ninf)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario1_ninf <- kable(resultats_ninf, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 1") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario1_ninf
+
+saveRDS(scenario1_ninf, "generated_datasets/scenario1_ninf.RData")
+```
+
+```{r}
+
+# Crée le boxplot
+comp_cure <- ggplot(combi, aes(x = type, y = cure_rate, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison des taux de guérison : Factuels vs Contrefactuels",
+       x = "Type de données",
+       y = "Taux de guérison") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Factuel" = "skyblue", "Contrefactuel" = "salmon"))
+
+comp_cure
+```
+```{r}
+saveRDS(comp_cure, "generated_datasets/comp_cure.RData")
+```
+
+```{r, test de normalité de cure}
+normal_test_cure <- tapply(combi$cure_rate, combi$type, shapiro.test)
+print(normal_test_cure)
+```
+
+hypothèse de normalité rejetée.
+
+```{r}
+test_final_cure <- wilcox.test(combi$cure_rate~combi$type)
+print(test_final_cure)
+```
+p-value < 0,05 donc il existe une différence significative 
+
+
+```{r}
+condition_factual <- combi$type == "Factuel"
+condition_counterfactual <- combi$type == "Contrefactuel"
+
+# Extraction des résultats
+t_stat_cure_ctr <- normal_test_cure $Contrefactuel$statistic
+t_p_value_cure_ctr <- normal_test_cure $Contrefactuel$p.value
+t_stat_cure_fact <- normal_test_cure$Factuel$statistic
+t_p_value_cure_fact <- normal_test_cure$Factuel$p.value
+mean_fact <- mean(combi$cure_rate[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(combi$cure_rate[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_cure <- test_final_cure$statistic
+w_p_value_cure <- test_final_cure$p.value
+```
+
+
+```{r}
+# Création du tableau
+resultats_cure <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_cure_fact), sprintf("%.3f", t_stat_cure_ctr), sprintf("%.2f", w_statistic_cure)),
+  Valeur_p = c(sprintf("%.3e", t_p_value_cure_fact), sprintf("%.3e", t_p_value_cure_ctr), sprintf("%.3e", w_p_value_cure)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario1_cure <- kable(resultats_cure, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 1") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario1_cure
+
+saveRDS(scenario1_cure, "generated_datasets/scenario1_cure.RData")
+```
+
 ```{r}
 rec_lac_ctr <- rec_lac_ctr |> 
   mutate(year = format(calv_date, "%Y"))
@@ -690,16 +836,70 @@ hd_milk_combine <- bind_rows(hd_milk, hd_milk_ctr)
 ```
 
 ```{r}
-ggplot(hd_milk_combine, aes(x = type, y = mean_milk, fill = type)) +
+comp_pl <- ggplot(hd_milk_combine, aes(x = type, y = mean_milk, fill = type)) +
   geom_boxplot() +
   labs(title = "Comparaison de la production laitière à DIM = 15 jours",
        x = "Type de données",
        y = "Production laitière (kg)") +
   theme_minimal()
+
+comp_pl 
+```
+```{r}
+saveRDS(comp_pl, "generated_datasets/comp_pl.RData")
+```
+
+```{r, test de normalité de pl1}
+normal_test_pl <- tapply(hd_milk_combine$mean_milk, hd_milk_combine$type, shapiro.test)
+print(normal_test_pl)
+```
+
+```{r}
+test_final_pl <- wilcox.test(hd_milk_combine$mean_milk~hd_milk_combine$type)
+print(test_final_pl)
+```
+p-value > 0,05 donc pas de différence significative 
+
+```{r}
+condition_factual <- hd_milk_combine$type == "factual"
+condition_counterfactual <- hd_milk_combine$type == "counterfactual"
+
+# Extraction des résultats
+t_stat_pl_ctr <- normal_test_pl$counterfactual$statistic
+t_df_pl_ctr <- normal_test_pl$counterfactual$parameter
+t_p_value_pl_ctr <- normal_test_pl$counterfactual$p.value
+t_stat_pl_fact <- normal_test_pl$factual$statistic
+t_df_pl_fact <- normal_test_pl$factual$parameter
+t_p_value_pl_fact <- normal_test_pl$factual$p.value
+mean_fact <- mean(hd_milk_combine$mean_milk[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(hd_milk_combine$mean_milk[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_pl <- test_final_pl$statistic
+w_p_value_pl <- test_final_pl$p.value
 ```
 
 
-#Création des contrefactuels : Réforme des vaches contagieuses 
+```{r}
+# Création du tableau
+resultats_pl <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_pl_fact), sprintf("%.3f", t_stat_pl_ctr), sprintf("%.2f", w_statistic_pl)),
+  Degrés_de_liberté = c(sprintf("%.0f", t_df_pl_fact), sprintf("%.0f", t_df_pl_ctr), NA),
+  Valeur_p = c(sprintf("%.6f", t_p_value_pl_fact), sprintf("%.6f", t_p_value_pl_ctr), sprintf("%.3f", w_p_value_pl)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario1_pl <- kable(resultats_pl, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 1") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario1_pl
+
+saveRDS(scenario1_pl, "generated_datasets/scenario1_pl.RData")
+```
+
+
+# Deuxième scénario : Réforme des vaches contagieuses 
 
 Cette fois-ci au lieu de modifier le statut des animaux je vais simplement réformer les animaux contagieux. 
 
@@ -753,7 +953,7 @@ A ce stade lac_cull comptabilise 110 817 obs
 ## probabilité de réussite à la première IA
 
 
-```{r}
+```{r, eval=FALSE}
 lac_cull_repro <- lac_cull_repro |> 
   mutate(prob_ia1_ctr = predict(object = success_ia_full1,
                                 newdata = lac_cull_repro,
@@ -768,19 +968,19 @@ lac_cull_repro <- lac_cull_repro |>
 
 
 
-```{r}
+```{r, eval=FALSE}
 lac_cull <- left_join(lac_cull, lac_cull_repro)
 ```
 ## Probabilité d'être réinséminée 
 
 
-```{r}
+```{r, eval=FALSE}
 lac_cull_ai <- lac_cull_repro |> 
   filter(success_ia1 == 0)
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 lac_cull_ai <- lac_cull_ai |> 
   mutate(nia_ctr = predict(object = ai_number_full1,
                            newdata = lac_cull_ai,
@@ -789,23 +989,23 @@ lac_cull_ai <- lac_cull_ai |>
 
 ```
 
-```{r}
+```{r, eval=FALSE}
 lac_cull_ai <- lac_cull_ai |> 
   mutate(n_ai = round(nia_ctr))
 ```
 
-```{r}
+```{r, eval=FALSE}
 lac_cull_repro <- left_join(lac_cull_repro,
                            lac_cull_ai)
 ```
 
-```{r}
+```{r, eval=FALSE}
 lac_cull_repro <- lac_cull_repro |> 
   mutate(n_ai = as.numeric(ifelse(is.na(n_ai), 1, n_ai)))
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 lac_cull <- left_join(lac_cull, lac_cull_repro)
 ```
 ##Probabilité de revêler 
@@ -813,7 +1013,7 @@ lac_cull <- left_join(lac_cull, lac_cull_repro)
 
 ```{r}
 lac_cull_repro <- lac_cull_repro |> 
-  mutate(prob_revel = predict(object = repro_revel_mast1,
+  mutate(prob_revel = predict(object = repro_revel_mast_final,
                               newdata = lac_cull_repro,
                               re.form = NULL,
                               type = "response"))
@@ -832,7 +1032,7 @@ lac_cull <- left_join(lac_cull, lac_cull_repro)
 ##Probabilité de mort 
 
 
-```{r}
+```{r, eval=FALSE}
 lac_cull <- lac_cull |> 
   mutate(death_risk = predict(object = cox_model_essai2,
                       newdata = lac_cull,
@@ -853,7 +1053,7 @@ lac_cull <- lac_cull |>
 
 ```{r}
 lac_cull_dynamo <- lac_cull |> 
-  filter(repro == 1 & dth == 0)
+  filter(repro == 1)
 ```
 
 ```{r}
@@ -981,7 +1181,6 @@ hist(hd_yr_cull$ninf_rate,
      main = "Distribution contrefactuelle des proportions de nouvelles infections\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
      xlab = "Proportion de nouvelles infections contrefactuelles")
 ```
-
 ```{r}
 hist(hd_yr_cull$cure_rate,
      main = "Distribution contrefactuelle des proportions de guérisons\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
@@ -994,6 +1193,7 @@ hist(hd_yr_cull$cure_rate,
 lac_cull <- lac_cull |> 
   mutate(dim = 15)
 ```
+
 
 
 ```{r}
@@ -1027,13 +1227,806 @@ hd_milk_combine2 <- bind_rows(hd_milk, hd_milk_cull)
 ```
 
 ```{r}
-ggplot(hd_milk_combine2, aes(x = type, y = mean_milk, fill = type)) +
+comp_pl2 <- ggplot(hd_milk_combine2, aes(x = type, y = mean_milk, fill = type)) +
   geom_boxplot() +
   labs(title = "Comparaison de la production laitière à DIM = 15 jours",
        x = "Type de données",
        y = "Production laitière (kg)") +
   theme_minimal()
+
+comp_pl2
 ```
+```{r}
+saveRDS(comp_pl2, "generated_datasets/comp_pl2.RData")
+```
+
+```{r, test de normalité de pl2}
+normal_test_pl2 <- tapply(hd_milk_combine2$mean_milk, hd_milk_combine2$type, shapiro.test)
+print(normal_test_pl2)
+```
+hypothèse de normalité rejetée. 
+
+
+```{r}
+test_final_pl2 <- wilcox.test(hd_milk_combine2$mean_milk~hd_milk_combine2$type)
+print(test_final_pl2)
+```
+pas de différence significative 
+
+```{r}
+condition_factual <- hd_milk_combine2$type == "factual"
+condition_counterfactual <- hd_milk_combine2$type == "counterfactual"
+
+# Extraction des résultats
+t_stat_pl_ctr <- normal_test_pl2$counterfactual$statistic
+t_df_pl_ctr <- normal_test_pl2$counterfactual$parameter
+t_p_value_pl_ctr <- normal_test_pl2$counterfactual$p.value
+t_stat_pl_fact <- normal_test_pl2$factual$statistic
+t_df_pl_fact <- normal_test_pl2$factual$parameter
+t_p_value_pl_fact <- normal_test_pl2$factual$p.value
+mean_fact <- mean(hd_milk_combine2$mean_milk[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(hd_milk_combine2$mean_milk[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_pl <- test_final_pl2$statistic
+w_p_value_pl <- test_final_pl2$p.value
+```
+
+
+```{r}
+# Création du tableau
+resultats_pl2 <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_pl_fact), sprintf("%.3f", t_stat_pl_ctr), sprintf("%.2f", w_statistic_pl)),
+  Valeur_p = c(sprintf("%.6f", t_p_value_pl_fact), sprintf("%.6f", t_p_value_pl_ctr), sprintf("%.3f", w_p_value_pl)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario2_pl <- kable(resultats_pl2, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 2") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario2_pl
+
+saveRDS(scenario2_pl, "generated_datasets/scenario2_pl.RData")
+```
+
+```{r}
+hd_yr_cull <- hd_yr_cull |> 
+  mutate(type = "Contrefactuel")
+
+# Combine les deux jeux de données
+combi2 <- bind_rows(hd_yr, hd_yr_cull)
+```
+
+```{r}
+# Crée le boxplot
+comp_ninf2 <- ggplot(combi2, aes(x = type, y = ninf_rate, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison des taux de nouvelles infections : Factuels vs Contrefactuels",
+       x = "Type de données",
+       y = "Taux de nouvelles infections") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Factuel" = "skyblue", "Contrefactuel" = "salmon"))
+
+comp_ninf2
+```
+```{r}
+saveRDS(comp_ninf2, "generated_datasets/comp_ninf2.RData")
+```
+
+```{r, test de normalité de ninf2}
+normal_test_ninf2 <- tapply(combi2$ninf_rate, combi2$type, shapiro.test)
+print(normal_test_ninf2)
+```
+hypothèse de normalité rejetée
+
+```{r}
+test_final_ninf2 <- wilcox.test(combi2$ninf_rate~combi2$type)
+print(test_final_ninf2)
+```
+
+pas de différence significative 
+
+```{r}
+condition_factual <- combi2$type == "Factuel"
+condition_counterfactual <- combi2$type == "Contrefactuel"
+
+# Extraction des résultats
+t_stat_ninf_ctr <- normal_test_ninf2$Contrefactuel$statistic
+t_p_value_ninf_ctr <- normal_test_ninf2$Contrefactuel$p.value
+t_stat_ninf_fact <- normal_test_ninf2$Factuel$statistic
+t_p_value_ninf_fact <- normal_test_ninf2$Factuel$p.value
+mean_fact <- mean(combi2$ninf_rate[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(combi2$ninf_rate[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_ninf <- test_final_ninf2$statistic
+w_p_value_ninf <- test_final_ninf2$p.value
+```
+
+
+```{r}
+# Création du tableau
+resultats_ninf2 <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_ninf_fact), sprintf("%.3f", t_stat_ninf_ctr), sprintf("%.2f", w_statistic_ninf)),
+  Valeur_p = c(sprintf("%.3e", t_p_value_ninf_fact), sprintf("%.3e", t_p_value_ninf_ctr), sprintf("%.3f", w_p_value_ninf)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario2_ninf <- kable(resultats_ninf2, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 2") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario2_ninf
+
+saveRDS(scenario2_ninf, "generated_datasets/scenario2_ninf.RData")
+```
+
+```{r}
+# Crée le boxplot
+comp_cure2<- ggplot(combi2, aes(x = type, y = cure_rate, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison des taux de guérison : Factuels vs Contrefactuels",
+       x = "Type de données",
+       y = "Taux de guérison") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Factuel" = "skyblue", "Contrefactuel" = "salmon"))
+
+comp_cure2
+```
+```{r}
+saveRDS(comp_cure2, "generated_datasets/comp_cure2.RData")
+```
+
+```{r, test de normalité de cure2}
+normal_test_cure2 <- tapply(combi2$cure_rate, combi2$type, shapiro.test)
+print(normal_test_cure2)
+```
+p-value < 0,05 donc on rejète l'hypothèse de normalité 
+
+```{r}
+test_final_cure2 <- wilcox.test(combi2$cure_rate~combi2$type)
+print(test_final_cure2)
+```
+
+Il existe une différence significative 
+
+```{r}
+condition_factual <- combi2$type == "Factuel"
+condition_counterfactual <- combi2$type == "Contrefactuel"
+
+# Extraction des résultats
+t_stat_cure_ctr <- normal_test_cure2 $Contrefactuel$statistic
+t_p_value_cure_ctr <- normal_test_cure2 $Contrefactuel$p.value
+t_stat_cure_fact <- normal_test_cure2$Factuel$statistic
+t_p_value_cure_fact <- normal_test_cure2$Factuel$p.value
+mean_fact <- mean(combi2$cure_rate[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(combi2$cure_rate[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_cure <- test_final_cure2$statistic
+w_p_value_cure <- test_final_cure2$p.value
+```
+
+
+```{r}
+# Création du tableau
+resultats_cure2 <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_cure_fact), sprintf("%.3f", t_stat_cure_ctr), sprintf("%.2f", w_statistic_cure)),
+  Valeur_p = c(sprintf("%.3e", t_p_value_cure_fact), sprintf("%.3e", t_p_value_cure_ctr), sprintf("%.3e", w_p_value_cure)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario2_cure <- kable(resultats_cure2, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 2") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario2_cure
+
+saveRDS(scenario2_cure, "generated_datasets/scenario2_cure.RData")
+```
+
+# Troisième scénario : réforme des vaches en mammite contagieuse en plus du reste des réforme normalement prévues 
+
+```{r}
+lac_ref_bis <- lac |> 
+  mutate(cull_need = ifelse(mast_cat1 == "primi_cont" | mast_cat1 == "dpLow_cont" | mast_cat1 == "dpHigh_cont", 1,0))
+```
+
+```{r}
+lac_ref_bis <- lac_ref_bis |> 
+  group_by(anim_id) |> 
+  mutate(cull = ifelse((cull_need == 1 & lag(cull_need, default = 0) == 0) | 
+                       (cull_need == 1 & lag(cull_need, default = 0) == 1) | 
+                        out_cause_last == "B" & parity == max(parity), 1, 0)) |> 
+  ungroup()
+   
+```
+
+```{r}
+lac_cull_bis <- lac_ref_bis |> 
+  filter(cull == 0)
+```
+
+```{r}
+lac_cull_bis <- lac_cull_bis |> 
+  filter(n_ctrl_early > 0 & dp_mis == 0) |> 
+  select(herd_id, anim_id, calv_date, parKat, milk_early_max_scaled, milk_early_max_scaled_p1, milk_early_max_scaled_p2, milk_early_max_scaled_p3, milk_early_max_scaled_p4, mast_cat1, race)
+```
+
+## probabilité de reproduction 
+
+
+```{r} 
+lac_cull_bis <- lac_cull_bis |> 
+  mutate(prob_ctr = predict(object = repro_full1,
+                            newdata = lac_cull_bis,
+                            re.form = NULL,
+                            type = "response"))
+lac_cull_bis <- lac_cull_bis |> 
+  rowwise() |> 
+  mutate(repro = rbinom(1, 1, prob_ctr)) |> 
+  ungroup()
+```
+
+```{r}
+lac_cull_bis_repro <- lac_cull_bis |> 
+  filter(repro == 1)
+```
+
+A ce stade lac_cull comptabilise 74 019 obs 
+
+## probabilité de réussite à la première IA
+
+
+```{r, eval=FALSE}
+lac_cull_bis_repro <- lac_cull_bis_repro |> 
+  mutate(prob_ia1_ctr = predict(object = success_ia_full1,
+                                newdata = lac_cull_bis_repro,
+                                re.form = NULL,
+                                type = "response"))
+
+lac_cull_bis_repro <- lac_cull_bis_repro |> 
+  rowwise() |> 
+  mutate(success_ia1 = rbinom(1, 1, prob_ia1_ctr)) |> 
+  ungroup()
+```
+
+
+
+```{r, eval=FALSE}
+lac_cull_bis <- left_join(lac_cull_bis, lac_cull_bis_repro)
+```
+
+## Probabilité d'être réinséminée 
+
+
+```{r, eval=FALSE}
+lac_cull_bis_ai <- lac_cull_bis_repro |> 
+  filter(success_ia1 == 0)
+```
+
+
+```{r, eval=FALSE}
+lac_cull_bis_ai <- lac_cull_bis_ai |> 
+  mutate(nia_ctr = predict(object = ai_number_full1,
+                           newdata = lac_cull_bis_ai,
+                           re.form = NULL,
+                           type = "response"))
+
+```
+
+```{r, eval=FALSE}
+lac_cull_bis_ai <- lac_cull_bis_ai |> 
+  mutate(n_ai = round(nia_ctr))
+```
+
+```{r, eval=FALSE}
+lac_cull_bis_repro <- left_join(lac_cull_bis_repro,
+                           lac_cull_bis_ai)
+```
+
+```{r, eval=FALSE}
+lac_cull_bis_repro <- lac_cull_bis_repro |> 
+  mutate(n_ai = as.numeric(ifelse(is.na(n_ai), 1, n_ai)))
+```
+
+
+```{r, eval=FALSE}
+lac_cull_bis <- left_join(lac_cull_bis, lac_cull_bis_repro)
+```
+##Probabilité de revêler 
+
+
+```{r}
+lac_cull_bis_repro <- lac_cull_bis_repro |> 
+  mutate(prob_revel = predict(object = repro_revel_mast_final,
+                              newdata = lac_cull_bis_repro,
+                              re.form = NULL,
+                              type = "response"))
+
+lac_cull_bis_repro <- lac_cull_bis_repro |> 
+  rowwise() |> 
+  mutate(revel = rbinom(1, 1, prob_revel)) |> 
+  ungroup()
+```
+
+
+```{r}
+lac_cull_bis <- left_join(lac_cull_bis, lac_cull_bis_repro)
+```
+
+##Probabilité de mort 
+
+
+```{r, eval=FALSE}
+lac_cull_bis <- lac_cull_bis |> 
+  mutate(death_risk = predict(object = cox_model_essai2,
+                      newdata = lac_cull_bis,
+                      re.form = NULL,
+                      type = "risk"))
+
+lac_cull_bis <- lac_cull_bis |> 
+  mutate(death_risk_prob = 1 / (1 + exp(-scale(death_risk))))  # Utiliser scale pour centrer les scores
+
+lac_cull_bis <- lac_cull_bis |> 
+  rowwise() |> 
+  mutate(dth = rbinom(1, 1, death_risk_prob)) |> 
+  ungroup()
+```
+
+
+## Probabilité d'un dernier contrôle élevé 
+
+
+```{r}
+lac_cull_dynamo_bis <- lac_cull_bis |> 
+  filter(repro == 1)
+```
+
+```{r}
+lac_cull_dynamo_bis <- lac_cull_dynamo_bis |> 
+  mutate(dpHigh_prob = predict(object = scc_high_dp_model,
+                               newdata = lac_cull_dynamo_bis,
+                               re.form = NULL,
+                               type = "response",
+                               allow.new.levels = TRUE))
+
+lac_cull_dynamo_bis <- lac_cull_dynamo_bis |> 
+  rowwise() |> 
+  mutate(dpHigh = rbinom(1, 1, dpHigh_prob)) |> 
+  ungroup()
+```
+
+
+```{r}
+lac_cull_bis <- left_join(lac_cull_bis, lac_cull_dynamo_bis)
+```
+
+## Probabilité de guérison 
+
+On doit prendre les vaches qui ont revêler. 
+
+```{r}
+lac_cull_revel_bis <- lac_cull_dynamo_bis |> 
+  filter(revel == 1)
+```
+
+```{r}
+lac_cull_dpHigh_bis <- lac_cull_revel_bis |> 
+  filter(dpHigh == 1)
+
+lac_cull_dpLow_bis <- lac_cull_revel_bis |> 
+  filter(dpHigh == 0)
+```
+
+
+
+
+```{r}
+lac_cull_dpHigh_bis <- lac_cull_dpHigh_bis |> 
+  mutate(cure_prob = predict(object = cure_dp_model,
+                               newdata = lac_cull_dpHigh_bis,
+                               re.form = NULL,
+                               type = "response",
+                               allow.new.levels = TRUE
+                             ))
+
+lac_cull_dpHigh_bis <- lac_cull_dpHigh_bis |> 
+  rowwise() |> 
+  mutate(cure = rbinom(1, 1, cure_prob)) |> 
+  ungroup()
+```
+
+
+```{r}
+lac_cull_bis <- left_join(lac_cull_bis, lac_cull_dpHigh_bis)
+```
+## Probabilité de nouvelle infection 
+
+
+```{r}
+lac_cull_dpLow_bis <- lac_cull_dpLow_bis |> 
+  mutate(ninf_prob = predict(object = new_inf_model,
+                               newdata = lac_cull_dpLow_bis,
+                               re.form = NULL,
+                               type = "response",
+                               allow.new.levels = TRUE
+                             ))
+
+lac_cull_dpLow_bis <- lac_cull_dpLow_bis |> 
+   rowwise() |> 
+  mutate(ninf = rbinom(1, 1, ninf_prob)) |> 
+  ungroup()
+```
+
+```{r}
+lac_cull_bis <- left_join(lac_cull_bis, lac_cull_dpLow_bis)
+```
+
+# Visualisation 
+
+```{r}
+lac_cull_bis <- lac_cull_bis |> 
+  mutate(year = format(calv_date, "%Y"))
+```
+
+
+```{r création du jeu de donnees elevage annee de velage}
+hd_yr_cull_bis <- lac_cull_bis |> 
+  mutate(lac_id = 1:n()) |> 
+  group_by(herd_id, year) |> 
+  summarise(n_cows = length(unique(anim_id)), #nombre de vaches qui vêle par troupeau par an
+            n_lacs = length(unique(lac_id)), #nombre de lactations
+            n_rectrl = length(revel[!is.na(revel)]), #nombre de vaches recontrôlées pour la lactation suivante
+            n_low_end_lac = length(ninf[!is.na(ninf)]), 
+            n_high_end_lac = length(cure[!is.na(cure)]),
+            p_rectrl = round(n_rectrl / n_lacs, 3), #proportion de recontrôles
+            ninf_rate = round(length(ninf[!is.na(ninf) & ninf == 1]) / length(ninf[!is.na(ninf)]), 3), #proportion de nouvelles infections
+            cure_rate = round(length(cure[!is.na(cure) & cure == 1]) / length(cure[!is.na(cure)]), 3)) #proportion de guérisons
+```
+
+```{r proportion de lactation avec au moins un recontrôle, eval= FALSE}
+hd_yr_cull_bis |> 
+  filter(n_rectrl > 30) |> 
+  ggplot(aes(x = p_rectrl)) +
+  geom_histogram() +
+  xlab("Proportion de lactations avec au moins un contrôle lors de la lactation suivante.")
+```
+
+
+```{r sélection élevages-années, eval = FALSE}
+hd_yr_cull_bis <- hd_yr_cull_bis |> 
+  filter(n_rectrl > 30 & p_rectrl > .5)
+
+nrow(hd_yr_cull_bis)
+
+length(unique(hd_yr_cull_bis$herd_id))
+```
+
+```{r}
+hist(hd_yr_cull_bis$ninf_rate,
+     main = "Distribution contrefactuelle des proportions de nouvelles infections\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
+     xlab = "Proportion de nouvelles infections contrefactuelles")
+```
+
+
+```{r} 
+hist(hd_yr_cull_bis$cure_rate,
+     main = "Distribution contrefactuelle des proportions de guérisons\nentre le dernier contrôle d'une lactation et le premier contrôle\nde la lactation suivante par élevage-année",
+     xlab = "Proportion de guérisons contrefactuelles")
+```
+
+
+
+```{r}
+lac_cull_bis <- lac_cull_bis |> 
+  mutate(dim = 15)
+```
+
+
+
+```{r}
+lac_cull_bis <- lac_cull_bis |> 
+  mutate(pl = predict(object = lac_start_model_full2,
+                      newdata = lac_cull_bis,
+                      re.form = NULL,
+                      type = "response"))
+```
+
+```{r}
+hd_milk_cull_bis <- lac_cull_bis |> 
+  group_by(herd_id, year) |>
+  summarize(n_cows = length(unique(anim_id)),
+            mean_milk = mean(pl))
+```
+
+
+```{r}
+
+hd_milk_cull_bis <- hd_milk_cull_bis |> 
+  mutate(type = "counterfactual")
+```
+
+```{r}
+hd_milk_combine3 <- bind_rows(hd_milk, hd_milk_cull_bis)
+```
+
+```{r}
+comp_pl3 <- ggplot(hd_milk_combine3, aes(x = type, y = mean_milk, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison de la production laitière à DIM = 15 jours",
+       x = "Type de données",
+       y = "Production laitière (kg)") +
+  theme_minimal()
+
+comp_pl3
+```
+
+```{r}
+saveRDS(comp_pl3, "generated_datasets/comp_pl3.RData")
+```
+
+```{r, test de normalité de pl3}
+normal_test_pl3 <- tapply(hd_milk_combine3$mean_milk, hd_milk_combine3$type, shapiro.test)
+print(normal_test_pl3)
+```
+
+```{r}
+test_final_pl3 <- wilcox.test(hd_milk_combine3$mean_milk~hd_milk_combine3$type)
+print(test_final_pl3)
+```
+p-value < 0,05 donc il y a une différence significative 
+
+
+```{r}
+condition_factual <- hd_milk_combine3$type == "factual"
+condition_counterfactual <- hd_milk_combine3$type == "counterfactual"
+
+# Extraction des résultats
+t_stat_pl_ctr <- normal_test_pl3$counterfactual$statistic
+t_df_pl_ctr <- normal_test_pl3$counterfactual$parameter
+t_p_value_pl_ctr <- normal_test_pl3$counterfactual$p.value
+t_stat_pl_fact <- normal_test_pl3$factual$statistic
+t_df_pl_fact <- normal_test_pl3$factual$parameter
+t_p_value_pl_fact <- normal_test_pl3$factual$p.value
+mean_fact <- mean(hd_milk_combine3$mean_milk[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(hd_milk_combine3$mean_milk[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_pl <- test_final_pl3$statistic
+w_p_value_pl <- test_final_pl3$p.value
+```
+
+
+```{r}
+# Création du tableau
+resultats_pl3 <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_pl_fact), sprintf("%.3f", t_stat_pl_ctr), sprintf("%.2f", w_statistic_pl)),
+  Valeur_p = c(sprintf("%.6f", t_p_value_pl_fact), sprintf("%.6f", t_p_value_pl_ctr), sprintf("%.3f", w_p_value_pl)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario3_pl <- kable(resultats_pl3, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 3") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario3_pl
+
+saveRDS(scenario3_pl, "generated_datasets/scenario3_pl.RData")
+```
+
+```{r}
+hd_yr_cull_bis <- hd_yr_cull_bis |> 
+  mutate(type = "Contrefactuel") |> 
+  rename(n_cows_ctr = n_cows)
+
+# Combine les deux jeux de données
+combi3 <- bind_rows(hd_yr, hd_yr_cull_bis)
+combi4 <- full_join(hd_yr, hd_yr_cull_bis)
+```
+
+
+
+
+```{r}
+# Crée le boxplot
+comp_ninf3 <- ggplot(combi3, aes(x = type, y = ninf_rate, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison des taux de nouvelles infections : Factuels vs Contrefactuels",
+       x = "Type de données",
+       y = "Taux de nouvelles infections") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Factuel" = "skyblue", "Contrefactuel" = "salmon"))
+
+comp_ninf3
+```
+```{r}
+saveRDS(comp_ninf3, "generated_datasets/comp_ninf3.RData")
+```
+
+```{r, test de normalité de ninf3}
+normal_test_ninf3 <- tapply(combi3$ninf_rate, combi3$type, shapiro.test)
+print(normal_test_ninf3)
+```
+p-value < 0,05 donc on rejète l'hypothèse de normalité 
+
+```{r}
+test_final_ninf3 <- wilcox.test(combi3$ninf_rate~combi3$type)
+print(test_final_ninf3)
+```
+p-value < 0,05 donc la différence est significative 
+
+```{r}
+condition_factual <- combi3$type == "Factuel"
+condition_counterfactual <- combi3$type == "Contrefactuel"
+
+# Extraction des résultats
+t_stat_ninf_ctr <- normal_test_ninf3$Contrefactuel$statistic
+t_p_value_ninf_ctr <- normal_test_ninf3$Contrefactuel$p.value
+t_stat_ninf_fact <- normal_test_ninf3$Factuel$statistic
+t_p_value_ninf_fact <- normal_test_ninf3$Factuel$p.value
+mean_fact <- mean(combi3$ninf_rate[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(combi3$ninf_rate[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_ninf <- test_final_ninf3$statistic
+w_p_value_ninf <- test_final_ninf3$p.value
+```
+
+
+```{r}
+# Création du tableau
+resultats_ninf3 <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_ninf_fact), sprintf("%.3f", t_stat_ninf_ctr), sprintf("%.2f", w_statistic_ninf)),
+  Valeur_p = c(sprintf("%.3e", t_p_value_ninf_fact), sprintf("%.3e", t_p_value_ninf_ctr), sprintf("%.3f", w_p_value_ninf)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario3_ninf <- kable(resultats_ninf3, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 3") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario3_ninf
+
+saveRDS(scenario3_ninf, "generated_datasets/scenario3_ninf.RData")
+```
+
+```{r}
+# Crée le boxplot
+comp_cure3 <- ggplot(combi3, aes(x = type, y = cure_rate, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Comparaison des taux de guérison : Factuels vs Contrefactuels",
+       x = "Type de données",
+       y = "Taux de guérison") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Factuel" = "skyblue", "Contrefactuel" = "salmon"))
+
+comp_cure3
+```
+```{r}
+saveRDS(comp_cure3, "generated_datasets/comp_cure3.RData")
+```
+
+```{r}
+table(combi3$type)
+table(combi3$cure_rate)
+```
+
+```{r, test de normalité de cure3}
+normal_test_cure3 <- tapply(combi3$cure_rate, combi3$type, shapiro.test)
+print(normal_test_cure3)
+```
+p-value < 0,05 donc on rejète l'hypothèse de normalité 
+
+```{r}
+test_final_cure3 <- wilcox.test(combi3$cure_rate~combi3$type)
+print(test_final_cure3)
+```
+p-value < 0,05 --> la différence est significative 
+
+
+```{r}
+condition_factual <- combi3$type == "Factuel"
+condition_counterfactual <- combi3$type == "Contrefactuel"
+
+# Extraction des résultats
+t_stat_cure_ctr <- normal_test_cure3 $Contrefactuel$statistic
+t_p_value_cure_ctr <- normal_test_cure3 $Contrefactuel$p.value
+t_stat_cure_fact <- normal_test_cure3$Factuel$statistic
+t_p_value_cure_fact <- normal_test_cure3$Factuel$p.value
+mean_fact <- mean(combi3$cure_rate[condition_factual], na.rm = TRUE)
+mean_ctr <- mean(combi3$cure_rate[condition_counterfactual], na.rm = TRUE)
+
+w_statistic_cure <- test_final_cure3$statistic
+w_p_value_cure <- test_final_cure3$p.value
+```
+
+
+```{r}
+# Création du tableau
+resultats_cure3 <- data.frame(
+  Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
+  Statistique = c(sprintf("%.3f", t_stat_cure_fact), sprintf("%.3f", t_stat_cure_ctr), sprintf("%.2f", w_statistic_cure)),
+  Valeur_p = c(sprintf("%.3e", t_p_value_cure_fact), sprintf("%.3e", t_p_value_cure_ctr), sprintf("%.3e", w_p_value_cure)),
+  Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
+)
+
+# Affichage du tableau
+scenario3_cure <- kable(resultats_cure3, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 3") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+scenario3_cure
+
+saveRDS(scenario3_cure, "generated_datasets/scenario3_cure.RData")
+```
+
+```{r}
+combi4 <- combi4 |> 
+  group_by(herd_id, year) |> 
+  mutate(diff_effectif = n_cows - n_cows_ctr)
+  
+ggplot(combi3, aes(x = factor(year), y = diff_effectif, fill = herd_id)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Différence d'effectif entre données factuelles et contrefactuelles",
+       x = "Année",
+       y = "Différence d'effectif (Factuel - Contrefactuel)",
+       fill = "Troupeau") +
+  theme_minimal()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
