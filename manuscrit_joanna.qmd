@@ -20,9 +20,10 @@ library(knitr)
 library(kableExtra)
 library(rpart)
 library(rpart.plot)
+library(webshot)
 ```
 
-```{r}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 level_order <- c("primi_healthy", "primi_env", "primi_cont",
                  "dpLow_healthy", "dpLow_env", "dpLow_cont",
                  "dpHigh_healthy", "dpHigh_env", "dpHigh_cont")
@@ -299,7 +300,7 @@ Il est important de souligner que la sensibilité et la spécificité dépendent
 
 #### Inférence causale
 
-```{=html}
+```{=docx}
 <!-- Je te suggère de faire une intro plus concrète à cette partie, avant de rentrer dans la théorie. 
 Si on veut prévenir une partie des réformes, il faut en identifier les causes. 
 Réformer pour mammite pourrait avoir des conséquences sur la dynamique des infections intramammaires et la production laitières.
@@ -508,8 +509,7 @@ Pour répondre ces questions, des données de contrôle laitier et de mammites c
 
 <!-- Les données de mammites cliniques ne mesurent pas la même chose que les données cellules. Il est justifié d'inclure les 2. -->
 
-Les données fournies pour cette étude sont essentiellement des données de contrôle laitier, récoltées directement par un prélèvements individuels dans les élevages. Les données de mammites enregistrées par les éleveurs étaient parfois également fournies mais étant considérées seules comme peu exhaustives.
-Il était également fourni, la généalogie de chaque vache ainsi que les mouvements effectués au cours de sa vie, et les données de reproduction pour chaque lactation. 
+Les données fournies pour cette étude sont essentiellement des données de contrôle laitier, récoltées directement par un prélèvements individuels dans les élevages. Les données de mammites enregistrées par les éleveurs étaient parfois également fournies mais étant considérées seules comme peu exhaustives. Il était également fourni, la généalogie de chaque vache ainsi que les mouvements effectués au cours de sa vie, et les données de reproduction pour chaque lactation.
 
 L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L'étude prend en compte des données de contrôle laitier collectées entre janvier 1989 et mars 2024, pour un total de 3 818 887 enregistrements. Les différentes données fournies sont disponibles en annexe 1.
 
@@ -593,7 +593,7 @@ La première question qui se pose c'est par quels moyens la survenue d'une mammi
 
 <!-- Expliquer les noms des nœuds. Une figure doit pouvoir se lire sans aller lire le texte. -->
 
-```{=html}
+```{=docx}
 <!-- La distinction entre vache non mise à la reproduction, vache inséminée réformée non gestante et vache réformée gestante me semble importante à représenter et à expliquer. Je suppose que AI représente insémination artificielle et que F représente fécondation ou fertilité. S'appuyer là-dessus.
 Dire que c'est un schéma général qui va être décomposé dans les parties suivantes.-->
 ```
@@ -1004,8 +1004,7 @@ readRDS("generated_datasets/t_repro.RData")
 
 Pour la variable d'intérêt de cette étude, c'est-à-dire le statut mammite, le modèle semble mettre en évidence que les statut au tarissement avec un SCC élevé (dpHigh) ont moins de chances d'être mis à la reproduction que les primipares saines (primi_healthy). C'est d'autant plus marqué pour les vaches jugés contagieuses ou à mammite environnementale (dpHigh_cont & dpHigh_env) par rapport aux multipares saines (dpHigh_healthy). Même constatation pour les multipares a statut avant tarissement en dessous du seuil (dpLow) mais qui sont définies comme à mammite contagieuse ou environnementale durant cette lactation (dpLow_env & dpLow_cont) et pour les primipares non saines également (primi_cont & primi_env).
 
-Pour les autres covariables, les OR sont visibles dans le tbl-regression-repro. 
-Les prédictions réalisées à l'aide du modèle et du package *marginaleffetcs* sont visibles grâce aux @fig-predict-repro-mam, @fig-predict-repro-parit, @fig-predict-repro-race et @fig-predict-repro-milk
+Pour les autres covariables, les OR sont visibles dans le tbl-regression-repro. Les prédictions réalisées à l'aide du modèle et du package *marginaleffetcs* sont visibles grâce aux @fig-predict-repro-mam, @fig-predict-repro-parit, @fig-predict-repro-race et @fig-predict-repro-milk
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-repro-mam
@@ -1039,11 +1038,9 @@ readRDS("generated_datasets/repro_milk.RData")
 readRDS("generated_datasets/t_ia1.RData")
 ```
 
-En ce qui concerne la réussite à la première IA, le statut mammite semble avoir un effet significatif surtout pour les multipares atteintes de mammites dites contagieuses. Pas d'effet significatif semble être détecté pour les les vaches multipares saines ou les primipares à mammites environnementales. Pour les primipares contagieuses, il semblerait qu'elle ait une chance légèrement plus réduite d'avoir une réussite à la première IA par rapport aux primipares saines. 
+En ce qui concerne la réussite à la première IA, le statut mammite semble avoir un effet significatif surtout pour les multipares atteintes de mammites dites contagieuses. Pas d'effet significatif semble être détecté pour les les vaches multipares saines ou les primipares à mammites environnementales. Pour les primipares contagieuses, il semblerait qu'elle ait une chance légèrement plus réduite d'avoir une réussite à la première IA par rapport aux primipares saines.
 
 Pour les autres covariables, les OR sont visibles dans le @tbl-regression-ia1 et les prédictions réalisées à partir de ce modèle sont visibles sur les @fig-predict-ia1-mam, @fig-predict-ia1-parit, @fig-predict-ia1-race et @fig-predict-ia1-milk.
-
-
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-ia1-mam
@@ -1113,7 +1110,7 @@ readRDS("generated_datasets/nai_milk.RData")
 readRDS("generated_datasets/t_revel.RData")
 ```
 
-Pour la probabilité de revêlage, les résultats montrent que les catégories de vaches ou le statut avant tarissement est élevé et celles dont un statut mammite environnemental et contagieuse à été établit pour cette lactation sont associé à une probabilité plus faible de revêler. En revanche, aucun effet significatif n'a été montré pour les primipares saines ou a mammite environnementale. 
+Pour la probabilité de revêlage, les résultats montrent que les catégories de vaches ou le statut avant tarissement est élevé et celles dont un statut mammite environnemental et contagieuse à été établit pour cette lactation sont associé à une probabilité plus faible de revêler. En revanche, aucun effet significatif n'a été montré pour les primipares saines ou a mammite environnementale.
 
 Pour les autres covariables, les OR sont visibles dans le @tbl-regression-revel et les prédictions réalisées à partir de ce modèle sont visibles sur les @fig-predict-revel-mam, @fig-predict-revel-parit, @fig-predict-revel-race et @fig-predict-revel-milk.
 
@@ -1149,7 +1146,7 @@ readRDS("generated_datasets/revel_milk.RData")
 readRDS("generated_datasets/t_lac.RData")
 ```
 
-Les résultats sont moins nets concernant la PL. Seules les multipares saines ainsi que les primipares ont montré un effet significatif. Concernant les multipares, quel que soit leur statut avant tarissement, le fait d'être exempt de toute mammite au cours de cette lactation semble montrer une augmentation de la production laitière de 1,3 unité par rapport aux primipares saines. Et concernant les primipares, le fait d'avoir une mammite semble tout de même entraîner une baisse de production, plus marqué lors de mammite environnementale. 
+Les résultats sont moins nets concernant la PL. Seules les multipares saines ainsi que les primipares ont montré un effet significatif. Concernant les multipares, quel que soit leur statut avant tarissement, le fait d'être exempt de toute mammite au cours de cette lactation semble montrer une augmentation de la production laitière de 1,3 unité par rapport aux primipares saines. Et concernant les primipares, le fait d'avoir une mammite semble tout de même entraîner une baisse de production, plus marqué lors de mammite environnementale.
 
 Pour les autres covariables, les OR sont visibles dans le @tbl-regression-lac et les prédictions réalisées à partir de ce modèle sont visibles sur les @fig-predict-lac-mam7, @fig-predict-lac-mam15, @fig-predict-lac-dim, @fig-predict-nai-parit, @fig-predict-nai-race et @fig-predict-nai-milk.
 
@@ -1191,7 +1188,7 @@ readRDS("generated_datasets/lac_race.RData")
 readRDS("generated_datasets/t_cox.RData")
 ```
 
-Les résultats sont assez peu significatifs, ils montrent que seules les catégories de multipares hautes en cellules avant tarissement, en mammite contagieuse à la lactation en cours, ainsi que la parité 4 et plus présentent une augmentation siginificative du risque de mort avec des valeurs de p-value < 0,001.
+Les résultats sont assez peu significatifs, ils montrent que seules les catégories de multipares hautes en cellules avant tarissement, en mammite contagieuse à la lactation en cours, ainsi que la parité 4 et plus présentent une augmentation siginificative du risque de mort avec des valeurs de p-value \< 0,001.
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-cox-mam
@@ -1213,9 +1210,7 @@ readRDS("generated_datasets/cox_parit.RData")
 readRDS("generated_datasets/t_scc_high.RData")
 ```
 
-Par rapport aux primipares saines prises comme référence, toutes les autres catégories ont une probabilité augmentée d'avoir un SCC supérieur à 200 000 cell/mL au dernier contrôle avant tarissement. Notamment les multipares qui avaient déjà un taux cellulaire élevé au dernier contrôle avant tarissement de la précédente lactation, car les animaux de cette catégorie ont environ 10,6 plus de chances d'avoir un contrôle élevé avant tarissement comparativement à la catégorie de référence. Les probabilités sont d'autant plus élevées que l'animal apartient à une catégorie dite de mammite contagieuse. 
-
-
+Par rapport aux primipares saines prises comme référence, toutes les autres catégories ont une probabilité augmentée d'avoir un SCC supérieur à 200 000 cell/mL au dernier contrôle avant tarissement. Notamment les multipares qui avaient déjà un taux cellulaire élevé au dernier contrôle avant tarissement de la précédente lactation, car les animaux de cette catégorie ont environ 10,6 plus de chances d'avoir un contrôle élevé avant tarissement comparativement à la catégorie de référence. Les probabilités sont d'autant plus élevées que l'animal apartient à une catégorie dite de mammite contagieuse.
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-scc-mam
@@ -1247,7 +1242,7 @@ readRDS("generated_datasets/scc_milk.RData")
 readRDS("generated_datasets/t_cure.RData")
 ```
 
-Le @tbl-regression-cure montre que concernant la probabilité de guérison au cours du tarissement, le fait d'avoir une mammite contagieuse réduit significativement la probabilité d'une guérison au tarissement. C'est également le cas pour les mammites environnementales mais de manière moins marquée. 
+Le @tbl-regression-cure montre que concernant la probabilité de guérison au cours du tarissement, le fait d'avoir une mammite contagieuse réduit significativement la probabilité d'une guérison au tarissement. C'est également le cas pour les mammites environnementales mais de manière moins marquée.
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-cure-mam
@@ -1279,7 +1274,7 @@ readRDS("generated_datasets/cure_milk.RData")
 readRDS("generated_datasets/t_ninf.RData")
 ```
 
-Selon le @tbl-regression-ninf, toute mammite quel soit environnementale ou contagieuse, chez une primipare ou une multipare augmente le risque de nouvelle infection acquise au cours du tarissement. Le risque est d'autant plus élevé que la mammite appartient à la catégorie contagieuse. 
+Selon le @tbl-regression-ninf, toute mammite quel soit environnementale ou contagieuse, chez une primipare ou une multipare augmente le risque de nouvelle infection acquise au cours du tarissement. Le risque est d'autant plus élevé que la mammite appartient à la catégorie contagieuse.
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-predict-ninf_mam
@@ -1305,135 +1300,155 @@ readRDS("generated_datasets/inf_race.RData")
 readRDS("generated_datasets/inf_milk.RData")
 ```
 
-#### Contrefactuels 
+#### Contrefactuels
 
-##### Scénario 1 
+##### Scénario 1
 
-Les résultats du scénario 1 montrent qu'il n'y a pas de différence statistiquement significative pour le taux moyen de nouvelles infections au tarissement (@tbl-comp-ninf) ni pour pour la PL moyenne a 15 jours en lait (@tbl-comp-pl). Cependant le taux moyen de guérison au tarissement est plus plus élevé (77% pour le contrefactuel contre 74% pour le factuel) et la différence est statistiquement significative (@tbl-comp-cure).  
+Les résultats du scénario 1 montrent qu'il n'y a pas de différence statistiquement significative pour le taux moyen de nouvelles infections au tarissement (@tbl-comp-ninf) ni pour pour la PL moyenne a 15 jours en lait (@tbl-comp-pl). Cependant le taux moyen de guérison au tarissement est plus plus élevé (77% pour le contrefactuel contre 74% pour le factuel) et la différence est statistiquement significative (@tbl-comp-cure).
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-ninf
 #| fig-cap: boxplot montrant la différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
 readRDS("generated_datasets/comp_ninf.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-ninf
 #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
 readRDS("generated_datasets/scenario1_ninf.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure
 #| fig-cap: boxplot montrant la différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
 readRDS("generated_datasets/comp_cure.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-cure
 #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
 readRDS("generated_datasets/scenario1_cure.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl
 #| fig-cap: boxplot montrant la différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 1. 
 readRDS("generated_datasets/comp_pl.RData")
+
 ```
+
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-pl
 #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 1. 
 readRDS("generated_datasets/scenario1_pl.RData")
+
 ```
 
-##### Scénario 2 
+##### Scénario 2
 
-Concernant le scénario 2, il n'y a pas de différence statistiquement significative pour le taux moyen de nouvelles infections au tarissement (@tbl-comp-ninf2) ni pour pour la PL moyenne a 15 jours en lait non plus (@tbl-comp-pl2). Cependant, là aussi, le taux moyen de guérison au tarissement est plus plus élevé (77% pour le contrefactuel contre 74% pour le factuel) et la différence est statistiquement significative (@tbl-comp-cure2).  
+Concernant le scénario 2, il n'y a pas de différence statistiquement significative pour le taux moyen de nouvelles infections au tarissement (@tbl-comp-ninf2) ni pour pour la PL moyenne a 15 jours en lait non plus (@tbl-comp-pl2). Cependant, là aussi, le taux moyen de guérison au tarissement est plus plus élevé (77% pour le contrefactuel contre 74% pour le factuel) et la différence est statistiquement significative (@tbl-comp-cure2).
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-ninf2
 #| fig-cap: boxplot montrant la différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
 readRDS("generated_datasets/comp_ninf2.RData")
+
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-ninf2
 #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
 readRDS("generated_datasets/scenario2_ninf.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure2
 #| fig-cap: boxplot montrant la différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
 readRDS("generated_datasets/comp_cure2.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-cure2
 #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
 readRDS("generated_datasets/scenario2_cure.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl2
 #| fig-cap: boxplot montrant la différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 2. 
 readRDS("generated_datasets/comp_pl2.RData")
+
 ```
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-pl2
 #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 2. 
 readRDS("generated_datasets/scenario2_pl.RData")
+
 ```
 
-##### Scénario 3 
+##### Scénario 3
 
 Pour ce dernier scénario, la même constatation est faite, il n'y pas de réelle différence significative entre le taux moyen de nouvelles infections au tarissement (@tbl-comp-ninf3), ainsi que pour la PL moyenne à 15 jours (@tbl-comp-pl3) entre le contrefactuel et le factuel mais il existe cependant toujours une différence entre le taux moyen de guérison au tarissement (77% contre 74% pour le factuel) (@tbl-comp-cure3)
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-ninf3
 #| fig-cap: boxplot montrant la différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
 readRDS("generated_datasets/comp_ninf3.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-ninf3
 #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
 readRDS("generated_datasets/scenario3_ninf.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure3
 #| fig-cap: boxplot montrant la différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
 readRDS("generated_datasets/comp_cure3.RData")
+
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-cure3
 #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
 readRDS("generated_datasets/scenario3_cure.RData")
+
 ```
 
-
-```{r, echo = FALSE, message = FALSE, warning = FALSE}}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl3
 #| fig-cap: boxplot montrant la différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 3. 
 readRDS("generated_datasets/comp_pl3.RData")
+
 ```
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: tbl-comp-pl3
 #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 3. 
 readRDS("generated_datasets/scenario3_pl.RData")
+
+
 ```
 
-Pour ces trois scénarios, on observe une grande dispersion des données contrefactuelles avec quelques valeurs extrêmes aberrantes. De plus il semble logique que le taux de guérison au tarissement soit plus élevé pour ces trois scénarios car toutes les vaches dites "incurables" ont été retirées des troupeaux. 
+Pour ces trois scénarios, on observe une grande dispersion des données contrefactuelles avec quelques valeurs extrêmes aberrantes. De plus il semble logique que le taux de guérison au tarissement soit plus élevé pour ces trois scénarios car toutes les vaches dites "incurables" ont été retirées des troupeaux.
 
 ## Discussion
 
-### Impact des mammites sur la reproduction. 
+### Interprétation des résultats 
 
-Pour la mise à la reproduction, il semblerait que les primipares, surtout si elles produisent plus de lait et qu'elles sont de race autre que PH semblent avoir une chance plus élevée de mise à la reproduction. Ce qui semble cohérent avec la réalité de l'élevage français car l’objectif pour les primipares élevées pour le renouvellement est de les amener à produire une seconde lactation surtout si ces dernières produisent plus ou que le lait est mieux valorisé comme c'est le cas pour certaines races (Montbéliardes par exemple). La parité 3 a été prise comme référence et il est observé que les parités supérieures ont moins de chance d'être mises à la reproduction et donc indirectement ont plus de risque d'être réformées. Cette observation est cohérente également et semble montrer qu'à partir du moment ou la vache à atteint le seuil de rentabilité, l'éleveur semble plus facilement s'en séparer. Cette observation est d'autant plus vrai que la comptage cellulaire à la fin de la précédente lactation était élevé. 
+### 
 
 ## Conclusion
 
