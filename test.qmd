@@ -1335,4 +1335,6 @@ Le but de ce scénario contrefactuelle était de se rapprocher un peu plus d'une
 
 Pour ces trois scénarios, le taux de guérison moyen au tarissement est meilleur pour les données contrefactuelles. Cela semble logique car on extrait les animaux dits "incurables". Cependant malgrés les attentes de départ, il n'y a pas eu de réelles évolutions en terme de taux moyen de nouvelles infections acquises durant le tarissement ni en terme de niveau de production laitière. Concernant le premier, cela est un peu décevant car il aurait été espéré une amélioration. Cependant cela ne semble pas non plus étonnant étant donné que les nouvelles infections ont été définies comme ayant un premier contrôle \> 200 000 cell/mL au début de la prochaine lactation. Or souvent ce premier contrôle dans nos données peut avoir lieu dans les premiers 15 jours de lactation. Période à laquelle il n'est pas rare d'avoir une augmentation des cellules à cause de l'inflammation causée par le vêlage ce qui est tout a fait normal @bradley2005. De plus comme le modèle se base sur les résultats d'un contrôle unique, il n'est pas possible de différencier le contagieux de l'environnemental.
 
+test sauvegarde. 
+
 # Annexes
