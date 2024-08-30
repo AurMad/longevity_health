@@ -59,8 +59,6 @@ Taux de renouvellement = rapport entre le nombre de génisses introduites dans l
 
 AIC = Akaike Information Criterion
 
-
-
 ## Réforme et longévité
 
 La réforme se définit comme le retrait d'un animal vivant de l'élevage pour l'envoi à l'abattoir, dans le but de produire de la viande et des sous-produits. Elle se distingue de la mortalité qui se définit comme la mort de l'animal au sein de l'élevage, que ce soit par l'euthanasie ou la mort naturelle. La mort intervient de manière involontaire, le plus souvent suite à une maladie ou une blessure, et réduit le plus souvent la longévité. Elle peut intervenir à tout moment dans la lactation et entraîne une forte perte économique pour l'éleveur. La réforme elle, peut être volontaire comme involontaire mais elle nécessite le plus souvent une période d'engraissement permettant la valorisation bouchère de l'animal. La réforme possède un impact direct sur la longévité car plus les éleveurs réforment des vaches plus ils diminuent la longévité globale de leur troupeau.
@@ -380,7 +378,6 @@ Les objectifs de l'étude sont :
 -   évaluer l'impact des mammites sur la longévité des vaches en élevage laitier, notamment en décrivant et en modélisant les dynamiques de réforme en fonction du statut vis-à-vis des mammites.
 -   évaluer l'impact des réformes de vaches sur la dynamique des infections intramammaires de début de lactation autour du tarissement.
 
-
 ## Matériels et méthodes
 
 ## Description des données
@@ -389,10 +386,7 @@ Les données fournies pour cette étude sont essentiellement des données de con
 
 L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L'étude prend en compte des données de contrôle laitier collectées entre janvier 1989 et mars 2024, pour un total de 3 818 887 enregistrements. Les différentes données fournies sont disponibles en annexe 1.
 
-Dans les données de contrôle laitier fournies, on a un total de 144 311 vaches en lactation et 10 066 dates de contrôles allant d'octobre 1989 à mars 2024.Grâce aux données complémentaires fournies il nous a été possible de rajouter le numéro de cheptel à chaque vache pour chaque date de contrôle. En filtrant pour n'obtenir que les animaux dont les dates de contrôles sont comprises entre la date d'entrée dans le cheptel et la date de sortie si elle est indiquée, on obtient un total de 143 311 animaux pour 4769 troupeaux. La sélection suivante a été ensuite réalisée : 
-- les dates de contrôles avec minimum 10 vaches étaient conservées. 
-- Il fallait un minimum de 11 contrôles et un maximum de 12 contrôles pour chaque combinaisons de troupeau/année, afin de s'assurer de la comparabilité des troupeaux et d'écarter les effectifs jugés insuffisants.
-Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parité 1 à la parité 14, et 6 202 dates de contrôle allant de janvier 2000 à décembre 2023.
+Dans les données de contrôle laitier fournies, on a un total de 144 311 vaches en lactation et 10 066 dates de contrôles allant d'octobre 1989 à mars 2024.Grâce aux données complémentaires fournies il nous a été possible de rajouter le numéro de cheptel à chaque vache pour chaque date de contrôle. En filtrant pour n'obtenir que les animaux dont les dates de contrôles sont comprises entre la date d'entrée dans le cheptel et la date de sortie si elle est indiquée, on obtient un total de 143 311 animaux pour 4769 troupeaux. La sélection suivante a été ensuite réalisée : - les dates de contrôles avec minimum 10 vaches étaient conservées. - Il fallait un minimum de 11 contrôles et un maximum de 12 contrôles pour chaque combinaisons de troupeau/année, afin de s'assurer de la comparabilité des troupeaux et d'écarter les effectifs jugés insuffisants. Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parité 1 à la parité 14, et 6 202 dates de contrôle allant de janvier 2000 à décembre 2023.
 
 Un nouveau data-frame a permis ensuite de combiner les données obtenues en les regroupant par lactation. Un premier tri retire tous les animaux dont les données de PL et de SCC ne sont pas assez exhaustives, cette première transformation donne un total de 217 577 lactations qui regroupe 83 991 animaux. Ensuite une dernière étape permet de ne sélectionner que les élevages avec une proportion suffisante de vêlages, c'est-à-dire au moins 70% de vêlages parmi les vaches inséminées dont au moins 15 à 50% de primipares. Il reste au total 127 541 lactations dont 58 579 animaux appartenant à 231 élevages.
 
@@ -641,7 +635,7 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-L'estimand peut être défini ici comme la recherche de l'effet causal des mammites sur le nombre de tentatives d'inséminations chez la vache laitière. Contrairement aux questions précédentes, nous avons ici une variable de comptage et non une variable binaire. Il n'est plus possible d'utiliser la loi binomiale. Le modèle de Poisson est plus adapté à une variable de comptage, il permet d'obtenir l'IRR. La fonction *gller* est encore une fois utilisée mais cette fois-ci il lui est précisé d'utiliser un modèle de Poisson. 
+L'estimand peut être défini ici comme la recherche de l'effet causal des mammites sur le nombre de tentatives d'inséminations chez la vache laitière. Contrairement aux questions précédentes, nous avons ici une variable de comptage et non une variable binaire. Il n'est plus possible d'utiliser la loi binomiale. Le modèle de Poisson est plus adapté à une variable de comptage, il permet d'obtenir l'IRR. La fonction *gller* est encore une fois utilisée mais cette fois-ci il lui est précisé d'utiliser un modèle de Poisson.
 
 -   **Revêlage**
 
@@ -732,7 +726,7 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-La première étape à été de se demander comment représenter la production laitière avec les données fournies. Pour chaque contrôle laitier, une production laitière sur 24h est mesurée. Il existe de nombreux modèles pour représenter une courbe de lactation.Une courbe de lactation qui suit un modle de Wilmink a été realisée et est présentée en annexe. 
+La première étape à été de se demander comment représenter la production laitière avec les données fournies. Pour chaque contrôle laitier, une production laitière sur 24h est mesurée. Il existe de nombreux modèles pour représenter une courbe de lactation.Une courbe de lactation qui suit un modle de Wilmink a été realisée et est présentée en annexe.
 
 On voit que le pic de lactation intervient généralement avant 40 jours de lactation et que la première phase de la courbe peut être assimilée à une droite passant par une ordonnée à l'origine.
 
@@ -783,8 +777,7 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-La régression de Cox réalisée avec la fonction *coxph* du package survival de R permet d'obtenir le HR qui traduit le risque de mort selon la variable dans le temps t.
-Un évènement de "mort" est crée, qui prend la valeur 1 une vache décède dans les 300 premiers jours de lactation. Les vaches qui survivent l'entièreté de la lactation ou les vaches qui décèdent après 300 jours de lactation prennent la valeur 0 ce qui implique qu'elles sont censurées. 
+La régression de Cox réalisée avec la fonction *coxph* du package survival de R permet d'obtenir le HR qui traduit le risque de mort selon la variable dans le temps t. Un évènement de "mort" est crée, qui prend la valeur 1 une vache décède dans les 300 premiers jours de lactation. Les vaches qui survivent l'entièreté de la lactation ou les vaches qui décèdent après 300 jours de lactation prennent la valeur 0 ce qui implique qu'elles sont censurées.
 
 ### Etude de la dynamique des infections intramammaires
 
@@ -1288,10 +1281,9 @@ Pour ces trois scénarios, on observe une grande dispersion des données contref
 
 ## Discussion
 
-### pertinence de la méthode 
+### pertinence de la méthode
 
-La manière d'aborder le problème en essayant de définir clairement chaque sous-question en utilisant l'inférence causale et chercher les estimands théoriques avant de s'attaquer à des modélisation statistique permet de clarifier le problème et de réellement visualiser la démarche de résolution. Le temps court consacré à poser le problème clairement et le gain en simplification justifient pleinement l'utilisation de cette démarche dans le cas de cette étude. Chaque modélisation statistique a été ensuite été choisit en fonction de chaque sous-question. 
-IL semble que poser le problème de cette façon permettra par la suite aux autres personnes voulant continuer ou améliorer l'étude de mieux intégrer et comprendre ce qui a déjà été réalisé. 
+La manière d'aborder le problème en essayant de définir clairement chaque sous-question en utilisant l'inférence causale et chercher les estimands théoriques avant de s'attaquer à des modélisation statistique permet de clarifier le problème et de réellement visualiser la démarche de résolution. Le temps court consacré à poser le problème clairement et le gain en simplification justifient pleinement l'utilisation de cette démarche dans le cas de cette étude. Chaque modélisation statistique a été ensuite été choisit en fonction de chaque sous-question. IL semble que poser le problème de cette façon permettra par la suite aux autres personnes voulant continuer ou améliorer l'étude de mieux intégrer et comprendre ce qui a déjà été réalisé.
 
 Les modèles peuvent surement être améliorés de manière à intégrer plus de données pertinentes mais chaque modèle a été réalisé au mieux avec pour chaque sous-partie plusieurs tentatives de modélisations qui permettaient de comparer plusieurs modèles et de sélectionner celui qui convergeait avec succès et qui avait les meilleures performances (plus petit AIC).
 
@@ -1341,14 +1333,6 @@ Ce scénario simplifie la situation en ne prenant pas en compte les vaches réfo
 
 Le but de ce scénario contrefactuelle était de se rapprocher un peu plus d'une situation réalisable. Toutes les vaches en mammite "contagieuses" étaient réformées mais les animaux déjà prévus à la réforme dans les données factuelles le restent également ici. C'est un scénario un peu plus compliqué à interpréter de par cette mixité mais il permet de nuancer un peu plus la situation. En intégrant des mesures curatives spécifiques à la réalité de la gestion habituelle du troupeau il permet un meilleur rapprochement avec le factuel tout en conservant une structure permettant des comparaisons analytiques.
 
-
-
-### Implication théorique et pratique
-
-### Limites de l'étude
-
-## Conclusion
-
-# Bibliographie
+Pour ces trois scénarios, le taux de guérison moyen au tarissement est meilleur pour les données contrefactuelles. Cela semble logique car on extrait les animaux dits "incurables". Cependant malgrés les attentes de départ, il n'y a pas eu de réelles évolutions en terme de taux moyen de nouvelles infections acquises durant le tarissement ni en terme de niveau de production laitière. Concernant le premier, cela est un peu décevant car il aurait été espéré une amélioration. Cependant cela ne semble pas non plus étonnant étant donné que les nouvelles infections ont été définies comme ayant un premier contrôle \> 200 000 cell/mL au début de la prochaine lactation. Or souvent ce premier contrôle dans nos données peut avoir lieu dans les premiers 15 jours de lactation. Période à laquelle il n'est pas rare d'avoir une augmentation des cellules à cause de l'inflammation causée par le vêlage ce qui est tout a fait normal @bradley2005. De plus comme le modèle se base sur les résultats d'un contrôle unique, il n'est pas possible de différencier le contagieux de l'environnemental.
 
 # Annexes
