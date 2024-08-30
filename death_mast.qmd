@@ -336,10 +336,14 @@ summary(cox_model_essai)
 
 start_values <- coef(cox_model_essai)
 ```
+
 ```{r}
 cox_model_essai1 <- coxph(Surv(time, death) ~ parKat + mast_cat1 , data = lac, subset = n_ctrl_early > 0 & dp_mis == 0)
 
 summary(cox_model_essai1)
+
+t_cox1 <- tbl_regression(cox_model_essai1, exponentiate = FALSE)
+print(t_cox1)
 
 ```
 
@@ -354,7 +358,6 @@ summary(cox_model_essai2)
 ```{r}
 saveRDS(cox_model_essai2, "generated_datasets/cox_model_essai2.RData")
 ```
-
 
 ```{r}
 table(lac$parKat)
@@ -399,6 +402,16 @@ cox_model_essai2 |>
 ```
 
 ```{r}
+t_cox <- tbl_regression(cox_model_essai1, exponentiate = FALSE)
+print(t_cox)
+```
+
+```{r}
+saveRDS(t_cox, "generated_datasets/t_cox.RData")
+```
+
+
+```{r}
 ## catégories de statuts mammites pour les primipares
 mast_lev_p1 <- lac |>
   filter(n_ctrl_early > 0 & dp_mis == 0 & parKat == 1) |>
@@ -416,8 +429,7 @@ mast_pred2 <- tibble(
   parKat = factor(c(rep(1, length(mast_lev_p1)),
                     rep(2, length(mast_lev_p2)))),
   mast_cat1 = factor(c(mast_lev_p1, mast_lev_p2)),
-  death = 0, 
-  time = 0
+  time = 300
 ) 
 
 level_order <- c("primi_healthy", "primi_env", "primi_cont",
@@ -429,12 +441,51 @@ level_order <- c("primi_healthy", "primi_env", "primi_cont",
 ```{r}
 prd <- predictions(model = cox_model_essai1, 
                    newdata = mast_pred2,
-                   re.form = NA, type = "risk")
+                   type = "risk")
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+
+
+cox_mam <- ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
   xlab("statut mammite") + 
   ylab( "score de risque de mort") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+cox_mam 
 ```
+```{r}
+saveRDS(cox_mam, "generated_datasets/cox_mam.RData")
+```
+
+```{r}
+parit_pred2 <- expand_grid(
+  parKat = factor(1:4),
+  time = 300,
+  death = 0) |> 
+  mutate( mast_cat1 = factor(ifelse(parKat == 1, "primi_healthy", "dpLow_healthy"))
+)
+
+```
+
+```{r}
+prd <- predictions(model = cox_model_essai1, 
+                   newdata = parit_pred2,
+                   type = "risk")
+
+
+
+cox_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+  geom_point() +
+  geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  ylim(c(0,2))+
+  xlab("parité") + 
+  ylab( "score de risque de mort") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+cox_parit 
+```
+```{r}
+saveRDS(cox_parit, "generated_datasets/cox_parit.RData")
+```
+

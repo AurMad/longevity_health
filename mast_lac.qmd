@@ -157,7 +157,6 @@ rec_lac <- left_join(lac |>
 diff <- anti_join(lac, rec_lac)
 ```
 
-
 le tableau lac ne prend que des données qui débutent à partir de 2009 donc on procède au même tri ici. On essaye de garder la première phase de la courbe afin de pouvoir l'apparenter à la phase linéaire de la courbe.
 
 ```{r}
@@ -196,15 +195,24 @@ summary(lac_start_model_full1)
 rec_lac <- rec_lac |> 
   mutate(race = relevel(as.factor(race), ref = "PH"))
 
-lac_start_model_full2 <- lmer(milk ~ dim + mast_cat1 + dim*mast_cat1 + parKat + race + (1|herd_id), data = rec_lac, subset = dp_mis == 0)
+lac_start_model_full2 <- lmerTest::lmer(milk ~ dim + mast_cat1 + dim*mast_cat1 + parKat + race + (1|herd_id), data = rec_lac, subset = dp_mis == 0)
 
 summary(lac_start_model_full2)
 ```
 
 ```{r}
-saveRDS(lac_start_model_full2, "generated_datasets/lac_start_model_full2")
+t_lac <- tbl_regression(lac_start_model_full2, exponentiate = FALSE) 
 ```
 
+```{r}
+
+print(t_lac)
+saveRDS(t_lac, "generated_datasets/t_lac.RData")
+```
+
+```{r}
+saveRDS(lac_start_model_full2, "generated_datasets/lac_start_model_full2")
+```
 
 # Prédictions
 
@@ -248,25 +256,38 @@ prd <- predictions(model = lac_start_model_full2,
                              newdata = lac_mast_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+lac_mam7 <- ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  ylim(c(15,35))+
   xlab("") + 
   ylab("production laitière") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+lac_mam7
 ```
+```{r}
+saveRDS(lac_mam7, "generated_datasets/lac_mam7.RData")
+```
+
 
 ```{r}
 prd <- predictions(model = lac_start_model_full2, 
                              newdata = lac_mast_pred2, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
+lac_mam15 <- ggplot(prd, aes(x = factor(mast_cat1, level = level_order), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = mast_cat1, y = conf.low, xend = mast_cat1, yend = conf.high)) +
+  ylim(c(15,40))+
   xlab("") + 
   ylab("production laitière") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+lac_mam15
+```
+```{r}
+saveRDS(lac_mam15, "generated_datasets/lac_mam15.RData")
 ```
 
 ```{r}
@@ -284,9 +305,16 @@ prd <- predictions(model = lac_start_model_full2,
                              newdata = lac_dim_pred, 
                            re.form = NA, type = "response")
 
-ggplot(prd, aes(x = dim, y = estimate, col = parKat)) +
+lac_dim <- ggplot(prd, aes(x = dim, y = estimate, col = parKat)) +
   geom_line() 
+
+lac_dim
 ```
+
+```{r}
+saveRDS(lac_dim, "generated_datasets/lac_dim.RData")
+```
+
 
 ```{r}
 lac_parit_pred <- expand_grid(
@@ -305,12 +333,19 @@ prd <- predictions(model = lac_start_model_full2,
                    newdata = lac_parit_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(parKat), y = estimate)) +
+lac_parit <- ggplot(prd, aes(x = factor(parKat), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = parKat, y = conf.low, xend = parKat, yend = conf.high)) +
+  ylim(c(15,40))+
   xlab("parité") + 
   ylab("Production laitière") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+lac_parit
+```
+
+```{r}
+saveRDS(lac_parit, "generated_datasets/lac_parit.RData")
 ```
 
 ```{r}
@@ -325,20 +360,25 @@ lac_race_pred <- expand_grid(
 str(lac_race_pred)
 ```
 
-
 ```{r}
 prd <- predictions(model = lac_start_model_full2, 
                    newdata = lac_race_pred, 
                    re.form = NA, type = "response")
 
-ggplot(prd, aes(x = factor(race), y = estimate)) +
+lac_race <- ggplot(prd, aes(x = factor(race), y = estimate)) +
   geom_point() +
   geom_segment(aes(x = race, y = conf.low, xend = race, yend = conf.high)) +
+  ylim(c(15,40))+
   xlab("race") + 
   ylab("Production laitière") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+lac_race
 ```
 
+```{r}
+saveRDS(lac_race, "generated_datasets/lac_race.RData")
+```
 # Enregistrements
 
 ```{r}

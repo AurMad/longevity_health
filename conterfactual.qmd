@@ -21,6 +21,7 @@ library(effects)
 library(ggpubr)
 library(RColorBrewer)
 library(kableExtra)
+library(flextable)
 ```
 
 ```{r seuil utilisés}
@@ -648,13 +649,14 @@ w_p_value_ninf <- test_final_ninf$p.value
 resultats_ninf <- data.frame(
   Test = c("Test de Student factual","Test de Student counterfactual", "Test de Wilcoxon"),
   Statistique = c(sprintf("%.3f", t_stat_ninf_fact), sprintf("%.3f", t_stat_ninf_ctr), sprintf("%.2f", w_statistic_ninf)),
-  Valeur_p = c(sprintf("%.3e", t_p_value_ninf_fact), sprintf("%.3e", t_p_value_ninf_ctr), sprintf("%.3f", w_p_value_ninf)),
+  Valeur_p = c(sprintf("%.2e", t_p_value_ninf_fact), sprintf("%.2e", t_p_value_ninf_ctr), sprintf("%.3f", w_p_value_ninf)),
   Moyennes = c(sprintf("%.2f", mean_fact), sprintf("%.2f", mean_ctr), NA)
 )
 
 # Affichage du tableau
-scenario1_ninf <- kable(resultats_ninf, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 1") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario1_ninf <- kable(resultats_ninf, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 1") 
+scenario1_ninf <- flextable(resultats_ninf)
+scenario1_ninf <- set_table_properties(scenario1_ninf, width = 1, layout = "autofit")
 
 scenario1_ninf
 
@@ -719,8 +721,9 @@ resultats_cure <- data.frame(
 )
 
 # Affichage du tableau
-scenario1_cure <- kable(resultats_cure, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 1") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario1_cure <- kable(resultats_cure, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 1")
+scenario1_cure <- flextable(resultats_cure)
+scenario1_cure <- set_table_properties(scenario1_cure, width = 1, layout = "autofit")
 
 scenario1_cure
 
@@ -889,8 +892,9 @@ resultats_pl <- data.frame(
 )
 
 # Affichage du tableau
-scenario1_pl <- kable(resultats_pl, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 1") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario1_pl <- kable(resultats_pl, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 1")
+scenario1_pl <- flextable(resultats_pl)
+scenario1_pl <- set_table_properties(scenario1_pl, width = 1, layout = "autofit")
 
 scenario1_pl
 
@@ -1281,8 +1285,9 @@ resultats_pl2 <- data.frame(
 )
 
 # Affichage du tableau
-scenario2_pl <- kable(resultats_pl2, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 2") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario2_pl <- kable(resultats_pl2, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 2")
+scenario2_pl <- flextable(resultats_pl2)
+scenario2_pl <- set_table_properties(scenario2_pl, width = 1, layout = "autofit")
 
 scenario2_pl
 
@@ -1353,8 +1358,9 @@ resultats_ninf2 <- data.frame(
 )
 
 # Affichage du tableau
-scenario2_ninf <- kable(resultats_ninf2, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 2") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario2_ninf <- kable(resultats_ninf2, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 2")
+scenario2_ninf <- flextable(resultats_ninf2)
+scenario2_ninf <- set_table_properties(scenario2_ninf, width = 1, layout = "autofit")
 
 scenario2_ninf
 
@@ -1417,8 +1423,9 @@ resultats_cure2 <- data.frame(
 )
 
 # Affichage du tableau
-scenario2_cure <- kable(resultats_cure2, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 2") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario2_cure <- kable(resultats_cure2, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 2") 
+scenario2_cure <- flextable(resultats_cure2)
+scenario2_cure <- set_table_properties(scenario2_cure, width = 1, layout = "autofit")
 
 scenario2_cure
 
@@ -1807,8 +1814,9 @@ resultats_pl3 <- data.frame(
 )
 
 # Affichage du tableau
-scenario3_pl <- kable(resultats_pl3, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 3") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario3_pl <- kable(resultats_pl3, caption = "Tableau des résultats des tests statistiques pour la comparaison de PL moyenne a J15 pour le scénario 3") 
+scenario3_pl <- flextable(resultats_pl3)
+scenario3_pl <- set_table_properties(scenario3_pl, width = 1, layout = "autofit")
 
 scenario3_pl
 
@@ -1883,8 +1891,9 @@ resultats_ninf3 <- data.frame(
 )
 
 # Affichage du tableau
-scenario3_ninf <- kable(resultats_ninf3, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 3") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario3_ninf <- kable(resultats_ninf3, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de nouvelles infections pour le scénario 3") 
+scenario3_ninf <- flextable(resultats_ninf3)
+scenario3_ninf <- set_table_properties(scenario3_ninf, width = 1, layout = "autofit")
 
 scenario3_ninf
 
@@ -1952,8 +1961,9 @@ resultats_cure3 <- data.frame(
 )
 
 # Affichage du tableau
-scenario3_cure <- kable(resultats_cure3, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 3") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+scenario3_cure <- kable(resultats_cure3, caption = "Tableau des résultats des tests statistiques pour la comparaison du taux de guérison pour le scénario 3")
+scenario3_cure <- flextable(resultats_cure3)
+scenario3_cure <- set_table_properties(scenario3_cure, width = 1, layout = "autofit")
 
 scenario3_cure
 
