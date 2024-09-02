@@ -93,7 +93,7 @@ Au canada, entre 2001 et 2010, une étude à montré un taux de réforme moyen d
 
 #### Longévité et impact économique
 
-L'élevage possède un fonctionnement cyclique, les vaches sont élevées pour produire puis remplacées dès que leur production est jugée insuffisante @stott1994 ou que pour une raison ou une autre il n'est plus intéressant pour l'éleveur de la garder au sein du troupeau en lactation. L'éleveur doit donc sans cesse évaluer les performances économiques de son troupeau. Pour évaluer l'impact économique de la longévité des vaches laitières il est essentiel de prendre en compte le coût de l'élevage des génisses. C'est une période considérée improductive donc ces animaux ne rapportent pour l'instant rien à l'éleveur, mais occasionnent des coûts d'élevage : nourriture, logement... Les éleveurs, dans le schéma classique, gardent la plupart du temps toutes les génisses nées sur l'exploitation pour le renouvellement, mais toutes ses génisses ne serviront pas au renouvellement. Aux Pays-bas, le coût total d'élevage d'une seule génisse (en prenant en compte le coût de la main d’œuvre) est d'environ 1567 € pour un âge au premier vêlage de 25 mois en moyenne @mohdnor2012. Ils ont également estimé que ce coût contribue à 13% du coût total de production du lait. Au Royaume-Uni, le coup d'élevage d'une génisse à été estimé à 1819 £ ce qui correspond à 2150 € environ @boulton2017. La nourriture ayant la plus grosse contribution à ce coût, suivi de la gestion de la litière et du fumier. Selon cette même étude, cela prendrait environ 1,5 lactation pour rembourser ce coût d'élevage avec un âge au premier vêlage compris entre 23 et 25 mois. Pour s'assurer un âge au premier vêlage le plus précoce possible il faut être certain que la génisse ait atteint un poids suffisant ainsi qu'une morphologie et une maturité sexuelle adéquates avant la mise à la reproduction. En France souvent l'âge au premier vêlage se rapproche plus des 28-30 mois.
+L'élevage possède un fonctionnement cyclique, les vaches sont élevées pour produire puis remplacées dès que leur production est jugée insuffisante @stott1994 ou que pour une raison ou une autre il n'est plus intéressant pour l'éleveur de la garder au sein du troupeau en lactation. L'éleveur doit donc sans cesse évaluer les performances économiques de son troupeau. Pour évaluer l'impact économique de la longévité des vaches laitières il est essentiel de prendre en compte le coût de l'élevage des génisses. C'est une période considérée improductive donc ces animaux ne rapportent pour l'instant rien à l'éleveur, mais occasionnent des coûts d'élevage : nourriture, logement... Les éleveurs, dans le schéma classique, gardent la plupart du temps toutes les génisses nées sur l'exploitation pour le renouvellement, mais toutes ses génisses ne serviront pas au renouvellement. Aux Pays-bas, le coût total d'élevage d'une seule génisse (en prenant en compte le coût de la main d'œuvre) est d'environ 1567 € pour un âge au premier vêlage de 25 mois en moyenne @mohdnor2012. Ils ont également estimé que ce coût contribue à 13% du coût total de production du lait. Au Royaume-Uni, le coup d'élevage d'une génisse à été estimé à 1819 £ ce qui correspond à 2150 € environ @boulton2017. La nourriture ayant la plus grosse contribution à ce coût, suivi de la gestion de la litière et du fumier. Selon cette même étude, cela prendrait environ 1,5 lactation pour rembourser ce coût d'élevage avec un âge au premier vêlage compris entre 23 et 25 mois. Pour s'assurer un âge au premier vêlage le plus précoce possible il faut être certain que la génisse ait atteint un poids suffisant ainsi qu'une morphologie et une maturité sexuelle adéquates avant la mise à la reproduction. En France souvent l'âge au premier vêlage se rapproche plus des 28-30 mois.
 
 Grâce aux technologies tels que l'IA ou la transplantation embryonnaire et aux avancées faîtes en reproduction ces dernières décennies, les génisses en attente pour entrer dans le troupeau des vaches en lactation, sont supposées être plus performantes génétiquement. Il serait donc aisé de penser que les performances économiques du troupeau seraient meilleures dès qu'une vache est remplacée par une nouvelle génisse. Mais les génisses produisent moins au cours de leurs premières lactations et ne commencent à exprimer leur véritable potentiel qu'à partir de la parité 3 voire 4. Une étude américaine à montré qu'une vache en lactation ne devait être remplacée que quand son revenu net marginal attendu devient inférieur à celui d'une vache de remplacement si et seulement si cette dernière est génétiquement plus performante. Cette décision se base sur la comparaison de revenus anticipés @vries2017. Cependant les études ont montré que l'amélioration génétique attendue chez les taureaux n'est pas suffisamment rapide pour justifier un taux de réforme élevé. Il est donc plus avantageux de maintenir les vaches dans le troupeau plus longtemps que de les remplacer de manière prématurée.
 
@@ -145,7 +145,7 @@ Les mammites semblent particulièrement préjudiciables autour de la période de
 
 ![(a) Diagramme d'un quartier illustrant le tissu glandulaire. (b) section d'une alvéole mammaire. D'après @nickerson2011](mammary_tissu.PNG)
 
-A l'échelle du tissu, c'est la réponse inflammatoire qui semble être délétère pour la PL. Le tissu infecté semble posséder une surface réduite en tissu alvéolaire et une quantité plus importante de stroma conjonctif. Il y aurait une différence entre le cas d'une inflammation aiguë qui se traduit par des petits et moyens canaux bouchés par de la fibrine, des leucocytes et des bactéries. Se produit également une vacuolisation des cellules épithéliales une lumière alvéolaire distendue par la stase lactée, puis réduite par l’œdème interstitiel. Cela entraîne une multiplication des bactéries, une involution puis une nécrose des tissus. Dans le cas de mammites chroniques l'infection se présente sous la forme de foyers dispersés et localisés grâce aux phagocytes. A terme une fibrose s'installe puis une involution se produit également.
+A l'échelle du tissu, c'est la réponse inflammatoire qui semble être délétère pour la PL. Le tissu infecté semble posséder une surface réduite en tissu alvéolaire et une quantité plus importante de stroma conjonctif. Il y aurait une différence entre le cas d'une inflammation aiguë qui se traduit par des petits et moyens canaux bouchés par de la fibrine, des leucocytes et des bactéries. Se produit également une vacuolisation des cellules épithéliales une lumière alvéolaire distendue par la stase lactée, puis réduite par l'œdème interstitiel. Cela entraîne une multiplication des bactéries, une involution puis une nécrose des tissus. Dans le cas de mammites chroniques l'infection se présente sous la forme de foyers dispersés et localisés grâce aux phagocytes. A terme une fibrose s'installe puis une involution se produit également.
 
 Au fur et à mesure que l'infection progresse, les lumières se remplissent de PN qui dégénèrent puis laissent place à davantage de macrophages et monocytes. Des lymphocytes apparaissent également et semblent responsables des dégâts cellulaires permettant la progression des PN. Il semblerait que ce soit cette réaction en chaîne qui soit responsable ou du moins qui ait contribué au détachement ou à la dégénérescence de la couche cellulaire sécrétoire.
 
@@ -193,7 +193,7 @@ L'effet négatif des mammites subcliniques à également été soulevé par cert
 
 #### Dans le cas de mammites subcliniques et cliniques
 
-De nombreuses études se sont intéressées à établir un lien entre le comptage des cellules somatiques d’un individu (SCC) et la survenue d’une infection provoquant des épisodes cliniques, le but étant de se servie du comptage cellulaire comme d’un outil diagnostic ou prédictif d’un épisode de mammite clinique. Un grand nombre de ces études a émis l’hypothèse d’une réponse différente selon le pathogène @dohoo1991, @coffey1986, @reneau1986, @bradley2005. Dans ces études, ils distinguent les pathogènes mineurs tels que *Corynbacterium bovis*, *Staphylocoques* à coagulase négative et microcoques, des pathogènes majeurs, tels que *Staphylococcus aureus*, *Streptococcus agalactiae*, *Streptococcus ubéris* et *Escherichia coli*. Ces derniers entraîneraient une réponse immunitaire plus importante et donc des hausses de SCC plus élevées. La sensibilité et la spécificité de l’utilisation du comptage cellulaire comme outil prédictif d’une mammite clinique seraient donc plus élevées dans le cas d’un pathogène majeur. Cela voudrait donc dire que dans le cas de pathogènes mineurs l’utilisation du comptage cellulaire entraînerait un nombre important de faux négatifs. Ce qui rend son utilisation peu intéressante dans le cas d’élevages avec un taux fort de pathogènes majeurs. Des études soulignent également l’importance des différentes causes de variations du SCC qui peuvent être indépendante de la présence ou non d’un germe ou du type de germe comme :
+De nombreuses études se sont intéressées à établir un lien entre le comptage des cellules somatiques d'un individu (SCC) et la survenue d'une infection provoquant des épisodes cliniques, le but étant de se servie du comptage cellulaire comme d'un outil diagnostic ou prédictif d'un épisode de mammite clinique. Un grand nombre de ces études a émis l'hypothèse d'une réponse différente selon le pathogène @dohoo1991, @coffey1986, @reneau1986, @bradley2005. Dans ces études, ils distinguent les pathogènes mineurs tels que *Corynbacterium bovis*, *Staphylocoques* à coagulase négative et microcoques, des pathogènes majeurs, tels que *Staphylococcus aureus*, *Streptococcus agalactiae*, *Streptococcus ubéris* et *Escherichia coli*. Ces derniers entraîneraient une réponse immunitaire plus importante et donc des hausses de SCC plus élevées. La sensibilité et la spécificité de l'utilisation du comptage cellulaire comme outil prédictif d'une mammite clinique seraient donc plus élevées dans le cas d'un pathogène majeur. Cela voudrait donc dire que dans le cas de pathogènes mineurs l'utilisation du comptage cellulaire entraînerait un nombre important de faux négatifs. Ce qui rend son utilisation peu intéressante dans le cas d'élevages avec un taux fort de pathogènes majeurs. Des études soulignent également l'importance des différentes causes de variations du SCC qui peuvent être indépendante de la présence ou non d'un germe ou du type de germe comme :
 
 -   La parité : une multipare aurait en général un SCC plus élevé qu'une primipare. Les vaches qui auraient déjà connue une infection tendent à avoir une réponse cellulaire plus élevée.
 -   Le stade de lactation : il y a souvent un pic de cellules qui survient juste après le vêlage et qui redescend dans les jours suivant en absence de toute autre cause d'inflammation.
@@ -201,7 +201,7 @@ De nombreuses études se sont intéressées à établir un lien entre le comptag
 -   Variation diurne : liée à la traite. Selon le moment de la journée, les cellules peuvent être augmentées, surtout dans les heures qui suivent la traite.
 -   Stress : il y aurait un effet du stress dans la variation du comptage cellulaire, notamment lors de stress thermique. Ces publications suggèrent également que le comptage cellulaire peut ne pas être très performant pour détecter les vaches avec de nouvelles infections, particulièrement dans les élevages avec beaucoup de cas subcliniques à pathogènes mineurs.
 
-Il est important de souligner que la sensibilité et la spécificité dépendent du seuil de cellules utilisé pour qualifier un animal comme sain ou infecté @reneau198. Le seuil utilisé pour détecter plus d’infections subcliniques à pathogènes majeurs devrait varier selon la race, la parité et la prévalence du troupeau. Selon @madouasse2010, le seuil de transition semble être plus bas pour les génisses que pour les multipares. Mais si on ne devait garder qu’un seuil unique, le seuil de 200 000 cellules/ml semblerait être le seuil qui fournirait le meilleur compromis de sensibilité. Selon @bradley2005, en utilisant un seuil de 200 000 cellules/ml on possède une sensibilité d’environ 70% et une spécificité d’environ 80%. Mais comme précédemment ils soulignent que la parité est un élément important à prendre en compte. Une primipare au-dessus d’un million de cellules sur plus de trois contrôles à plus de chance d’être réellement infectée qu’une vache en cinquième lactation qui possèdent deux contrôles légèrement au-dessus du seuil de 200 000 cellules/ml. On ajoute à cela également que parfois une simple variation, même en dessous du seuil peut être le signe de l’acquisition d’une infection. De plus, selon cette même étude, le comptage cellulaire serait un meilleur indicateur d’infection chronique que d’infection aiguë.
+Il est important de souligner que la sensibilité et la spécificité dépendent du seuil de cellules utilisé pour qualifier un animal comme sain ou infecté @reneau198. Le seuil utilisé pour détecter plus d'infections subcliniques à pathogènes majeurs devrait varier selon la race, la parité et la prévalence du troupeau. Selon @madouasse2010, le seuil de transition semble être plus bas pour les génisses que pour les multipares. Mais si on ne devait garder qu'un seuil unique, le seuil de 200 000 cellules/ml semblerait être le seuil qui fournirait le meilleur compromis de sensibilité. Selon @bradley2005, en utilisant un seuil de 200 000 cellules/ml on possède une sensibilité d'environ 70% et une spécificité d'environ 80%. Mais comme précédemment ils soulignent que la parité est un élément important à prendre en compte. Une primipare au-dessus d'un million de cellules sur plus de trois contrôles à plus de chance d'être réellement infectée qu'une vache en cinquième lactation qui possèdent deux contrôles légèrement au-dessus du seuil de 200 000 cellules/ml. On ajoute à cela également que parfois une simple variation, même en dessous du seuil peut être le signe de l'acquisition d'une infection. De plus, selon cette même étude, le comptage cellulaire serait un meilleur indicateur d'infection chronique que d'infection aiguë.
 
 ### Notions statistiques utilisées dans l'étude
 
@@ -323,11 +323,11 @@ Cette fonction permet de transformer cette probabilité $p$ en une variable pouv
 
 $$logit( p_i ) = \beta_0 + \beta_1 x_{i1} + \ldots + \beta_n x_{in}$$ où $\beta_0$ est l'intercept du modèle, $x_{i1}$ à $x_{in}$ sont les valeurs des covariables $1$ à $n$ pour la vache $i$ et $\beta_1$ à $\beta_n$ sont les coefficients associés. Ces coefficients $\beta_j$ sont estimés à partir des données et représentent l'effet des covariables sur le logit de la probabilité $p$.
 
-On peut montrer que pour une variable donnée, l'exponentielle du coefficient $\beta$ représente l'odds-ratio, c'est-à-dire le rapport des cotes (ou "odds") de l’évènement d'intérêt par rapport à l'absence de cet évènement, lorsque la covariable change d'une unité. Plus précisément, pour une covariable $A$ binaire (0 ou 1), par exemple la présence d'une mammite (où $A=1$ signifie que la vache a une mammite et $A=0$ qu'elle est saine), l'odds-ratio est donné par :
+On peut montrer que pour une variable donnée, l'exponentielle du coefficient $\beta$ représente l'odds-ratio, c'est-à-dire le rapport des cotes (ou "odds") de l'évènement d'intérêt par rapport à l'absence de cet évènement, lorsque la covariable change d'une unité. Plus précisément, pour une covariable $A$ binaire (0 ou 1), par exemple la présence d'une mammite (où $A=1$ signifie que la vache a une mammite et $A=0$ qu'elle est saine), l'odds-ratio est donné par :
 
 $$OR=\frac{P(Y=1|A=1)P(Y=0|A=1)}{P(Y=1|A=0)P(Y=0|A=0)} = e^{\beta_A}$$
 
-Ici, $\beta_A$ est le coefficient de la covariable $A$ dans le modèle. Si $OR>1$, cela indique que la probabilité de l’évènement (ici, la mise à la reproduction) est plus élevée lorsque $A=1$ (présence de mammite) que lorsque $A=0$. Si $OR<1$, l’évènement est moins probable avec $A=1$. @gelman2006.
+Ici, $\beta_A$ est le coefficient de la covariable $A$ dans le modèle. Si $OR>1$, cela indique que la probabilité de l'évènement (ici, la mise à la reproduction) est plus élevée lorsque $A=1$ (présence de mammite) que lorsque $A=0$. Si $OR<1$, l'évènement est moins probable avec $A=1$. @gelman2006.
 
 La régression logistique est largement utilisé dans les domaines de la médecine, l'épidémiologie et la sociologie car elle se prête particulièrement à la prédiction d'une donnée binaire (comme la survenue d'une maladie, la réussite à un test...). Pour évaluer la qualité du modèle, on utilise généralement des mesures comme le score de vraisemblance, l'**AIC** (Akaike Information Criterion), et des courbes **ROC** (Receiver Operating Characteristic) pour examiner la capacité du modèle à discriminer entre les deux classes.
 
@@ -343,7 +343,7 @@ $$ln(\lambda_i) = \alpha + \beta_1 x_1 + … + \beta_n x_n$$
 
 Avec $(X=x)$ les différentes variables explicatives utilisées dans le modèle et $\alpha$, $\beta_1$,...,$\beta_n$ les coefficients à estimer. L'équation montre que cette relation est log-linéaire.
 
-L'estimand peut donc être formulé comme le rapport des taux d'incidence $IRR$ qui mesure l'effet des variables explicatives sur le taux d’occurrence de l'évènement. $$IRR=\frac{\lambda_1}{\lambda_0}$$Où $\lambda_0$ et $\lambda_1$ sont les taux d'incidence pour deux niveaux de la variable explicative. Un $IRR$ supérieur à 1 indique une augmentation du taux d'évènement pour $\lambda_1$ @gelman2006.
+L'estimand peut donc être formulé comme le rapport des taux d'incidence $IRR$ qui mesure l'effet des variables explicatives sur le taux d'occurrence de l'évènement. $$IRR=\frac{\lambda_1}{\lambda_0}$$Où $\lambda_0$ et $\lambda_1$ sont les taux d'incidence pour deux niveaux de la variable explicative. Un $IRR$ supérieur à 1 indique une augmentation du taux d'évènement pour $\lambda_1$ @gelman2006.
 
 ### Régression de Cox
 
@@ -539,7 +539,7 @@ title_x <- 0.5  # Ajuster selon les besoins pour le placement horizontal
 
 La @fig-dag-mam-repro montre le DAG qui schématise cette décision et les variables qui interviennent potentiellement dans cette décision. La grande majorité des éleveurs laitiers aujourd'hui en France utilisent l'insémination artificielle (AI). Il est donc plus facile pour l'éleveur de gérer sa reproduction et de décider quelle vache inséminer pour l'amener à la prochaine lactation. Il doit donc prendre sa décision en fonction de plusieurs facteurs. Ce que cette étude cherche à démontrer c'est que la survenue d'une mammite en tout début de lactation va avoir un impact sur cette décision. Mais cette décision dépend également d'autres facteurs comme : la parité (**P**), la production laitière (**PL**), la race (**B** pour breed en Anglais), ainsi qu'un effet aléatoire de troupeau.
 
-L'estimand théorique ici est donc la recherche d'une différence de probabilité de survenue de l'évènement, ici la décision de mise à la reproduction, selon les catégories des différentes variables. Le modèle qui convient le mieux est un modèle de **régression logistique binomial** car la variable dépendante est de type binaire. L’estimant empirique qui convient le mieux est donc la recherche des OR pour chaque catégorie de variables afin d'estimer le poids de l'impact de chacune.
+L'estimand théorique ici est donc la recherche d'une différence de probabilité de survenue de l'évènement, ici la décision de mise à la reproduction, selon les catégories des différentes variables. Le modèle qui convient le mieux est un modèle de **régression logistique binomial** car la variable dépendante est de type binaire. L'estimant empirique qui convient le mieux est donc la recherche des OR pour chaque catégorie de variables afin d'estimer le poids de l'impact de chacune.
 
 la modélisation à été réalisée grâce à la fonction *glmer* du package lme4 de R. Pour cela une variable dépendante à été créée, elle prenait la valeur 1 si la vache a été inséminée au moins une fois au cours de la lactation et 0 sinon.
 
@@ -1150,12 +1150,13 @@ readRDS("generated_datasets/comp_ninf.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-ninf
-#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
-readRDS("generated_datasets/scenario1_ninf.RData")
 
-```
+<!-- ```{r probleme1, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+<!-- #| label: tbl-comp-ninf -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 1.  -->
+<!-- readRDS("generated_datasets/scenario1_ninf.RData") -->
+<!-- ``` -->
+
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure
@@ -1164,12 +1165,13 @@ readRDS("generated_datasets/comp_cure.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-cure
-#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 1. 
-readRDS("generated_datasets/scenario1_cure.RData")
+<!-- ```{r probleme2, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+<!-- #| label: tbl-comp-cure -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 1.  -->
+<!-- readRDS("generated_datasets/scenario1_cure.RData") -->
 
-```
+<!-- ``` -->
+
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl
@@ -1178,12 +1180,11 @@ readRDS("generated_datasets/comp_pl.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-pl
-#| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 1. 
-readRDS("generated_datasets/scenario1_pl.RData")
-
-```
+<!-- ```{r probleme3, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+<!-- #| label: tbl-comp-pl -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 1.  -->
+<!-- readRDS("generated_datasets/scenario1_pl.RData") -->
+<!-- ``` -->
 
 ##### Scénario 2
 
@@ -1197,12 +1198,14 @@ readRDS("generated_datasets/comp_ninf2.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-ninf2
-#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
-readRDS("generated_datasets/scenario2_ninf.RData")
 
-```
+<!-- ```{r probleme4, echo = FALSE, message = FALSE, warning = FALSE, eval = FALSE} -->
+<!-- #| label: tbl-comp-ninf2 -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 2.  -->
+<!-- readRDS("generated_datasets/scenario2_ninf.RData") -->
+
+<!-- ``` -->
+
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure2
@@ -1211,12 +1214,14 @@ readRDS("generated_datasets/comp_cure2.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-cure2
-#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 2. 
-readRDS("generated_datasets/scenario2_cure.RData")
 
-```
+<!-- ```{r probleme5, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+<!-- #| label: tbl-comp-cure2 -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 2.  -->
+<!-- readRDS("generated_datasets/scenario2_cure.RData") -->
+
+<!-- ``` -->
+
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl2
@@ -1225,12 +1230,13 @@ readRDS("generated_datasets/comp_pl2.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-pl2
-#| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 2. 
-readRDS("generated_datasets/scenario2_pl.RData")
 
-```
+<!-- ```{r probleme6, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+<!-- #| label: tbl-comp-pl2 -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 2.  -->
+<!-- readRDS("generated_datasets/scenario2_pl.RData") -->
+
+<!-- ``` -->
 
 ##### Scénario 3
 
@@ -1243,12 +1249,13 @@ readRDS("generated_datasets/comp_ninf3.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-ninf3
-#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
-readRDS("generated_datasets/scenario3_ninf.RData")
+<!-- ```{r probleme7, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+<!-- #| label: tbl-comp-ninf3 -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 3.  -->
+<!-- readRDS("generated_datasets/scenario3_ninf.RData") -->
 
-```
+<!-- ``` -->
+
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure3
@@ -1257,12 +1264,15 @@ readRDS("generated_datasets/comp_cure3.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-cure3
-#| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 3. 
-readRDS("generated_datasets/scenario3_cure.RData")
 
-```
+<!-- ```{r probleme8, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+<!-- #| label: tbl-comp-cure3 -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 3.  -->
+<!-- readRDS("generated_datasets/scenario3_cure.RData") -->
+
+<!-- ``` -->
+
+
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl3
@@ -1271,11 +1281,13 @@ readRDS("generated_datasets/comp_pl3.RData")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-#| label: tbl-comp-pl3
-#| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 3. 
-readRDS("generated_datasets/scenario3_pl.RData")
-```
+
+<!-- ```{r probleme9, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+<!-- #| label: tbl-comp-pl3 -->
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 3.  -->
+<!-- readRDS("generated_datasets/scenario3_pl.RData") -->
+<!-- ``` -->
+
 
 Pour ces trois scénarios, on observe une grande dispersion des données contrefactuelles avec quelques valeurs extrêmes aberrantes. De plus il semble logique que le taux de guérison au tarissement soit plus élevé pour ces trois scénarios car toutes les vaches dites "incurables" ont été retirées des troupeaux.
 
@@ -1335,6 +1347,6 @@ Le but de ce scénario contrefactuelle était de se rapprocher un peu plus d'une
 
 Pour ces trois scénarios, le taux de guérison moyen au tarissement est meilleur pour les données contrefactuelles. Cela semble logique car on extrait les animaux dits "incurables". Cependant malgrés les attentes de départ, il n'y a pas eu de réelles évolutions en terme de taux moyen de nouvelles infections acquises durant le tarissement ni en terme de niveau de production laitière. Concernant le premier, cela est un peu décevant car il aurait été espéré une amélioration. Cependant cela ne semble pas non plus étonnant étant donné que les nouvelles infections ont été définies comme ayant un premier contrôle \> 200 000 cell/mL au début de la prochaine lactation. Or souvent ce premier contrôle dans nos données peut avoir lieu dans les premiers 15 jours de lactation. Période à laquelle il n'est pas rare d'avoir une augmentation des cellules à cause de l'inflammation causée par le vêlage ce qui est tout a fait normal @bradley2005. De plus comme le modèle se base sur les résultats d'un contrôle unique, il n'est pas possible de différencier le contagieux de l'environnemental.
 
-test sauvegarde. 
+test sauvegarde.
 
 # Annexes
