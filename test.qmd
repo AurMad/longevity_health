@@ -1,4 +1,5 @@
 ---
+pti---
 title: "Impact des mammites sur la longévité des vaches laitières en France"
 author: "Joanna"
 format: 
@@ -382,11 +383,16 @@ Les objectifs de l'étude sont :
 
 ## Description des données
 
-Les données fournies pour cette étude sont essentiellement des données de contrôle laitier, récoltées directement par un prélèvements individuels dans les élevages. Les données de mammites enregistrées par les éleveurs étaient parfois également fournies mais étant considérées seules comme peu exhaustives. Il était également fourni, la généalogie de chaque vache ainsi que les mouvements effectués au cours de sa vie, et les données de reproduction pour chaque lactation.
+Les données fournies pour cette étude sont essentiellement des données de contrôle laitier, récoltées directement par un prélèvements individuels dans les élevages. Ces données comportaient essentiellement la date de contrôle, le stade de lactation le jour du contrôle, le comptage cellulaire, le taux protéique et le taux butyrique entres autres. Les données de mammites enregistrées par les éleveurs étaient également fournies mais étant considérées seules comme peu exhaustives, elles fournissaient cependant la date d'enregistrement de la mammite clinique par l'éleveur. Il était également fourni, la généalogie de chaque vache ainsi que les mouvements effectués au cours de sa vie, et les données de reproduction pour chaque lactation dans lesquelles étaient notées la date de chaque IA tentée.
 
 L'étude comporte un total de 308 élevages, pour un total de 252 977 animaux. L'étude prend en compte des données de contrôle laitier collectées entre janvier 1989 et mars 2024, pour un total de 3 818 887 enregistrements. Les différentes données fournies sont disponibles en annexe 1.
 
-Dans les données de contrôle laitier fournies, on a un total de 144 311 vaches en lactation et 10 066 dates de contrôles allant d'octobre 1989 à mars 2024.Grâce aux données complémentaires fournies il nous a été possible de rajouter le numéro de cheptel à chaque vache pour chaque date de contrôle. En filtrant pour n'obtenir que les animaux dont les dates de contrôles sont comprises entre la date d'entrée dans le cheptel et la date de sortie si elle est indiquée, on obtient un total de 143 311 animaux pour 4769 troupeaux. La sélection suivante a été ensuite réalisée : - les dates de contrôles avec minimum 10 vaches étaient conservées. - Il fallait un minimum de 11 contrôles et un maximum de 12 contrôles pour chaque combinaisons de troupeau/année, afin de s'assurer de la comparabilité des troupeaux et d'écarter les effectifs jugés insuffisants. Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parité 1 à la parité 14, et 6 202 dates de contrôle allant de janvier 2000 à décembre 2023.
+Le Principe de l'analyse était de démontrer l'impact de la survenue d'une infection intramammaire en début de lactation sur la suite de la lactation et de poser ces infections comme cause ou conséquence de réformes. la volonté de définir le statut de chaque vache durant les 90 premiers jours de lactation justifie la nécéssité de données le plus complètes possibles. Il a donc été nécéssaire de réaliser un tri afin d'écarter les animaux et les données incomplètes.
+
+Dans les données de contrôle laitier fournies, on a un total de 144 311 vaches en lactation et 10 066 dates de contrôles allant d'octobre 1989 à mars 2024.Grâce aux données complémentaires fournies il nous a été possible de rajouter le numéro de cheptel à chaque vache pour chaque date de contrôle. En filtrant pour n'obtenir que les animaux dont les dates de contrôles sont comprises entre la date d'entrée dans le cheptel et la date de sortie si elle est indiquée, on obtient un total de 143 311 animaux pour 4769 troupeaux. La sélection suivante a été ensuite réalisée :
+
+-   Il fallait s'assurer que tous les cheptels séléctionnés comportaient suffisamment de données. Les dates de contrôles avec minimum 10 vaches étaient conservées.
+-   Il fallait un minimum de 11 contrôles et un maximum de 12 contrôles pour chaque combinaisons de troupeau/année, afin de s'assurer de la comparabilité des troupeaux et d'écarter les effectifs jugés insuffisants. Il ne reste alors plus que 282 troupeaux, pour 84 006 vaches allant de la parité 1 à la parité 14, et 6 202 dates de contrôle allant de janvier 2000 à décembre 2023.
 
 Un nouveau data-frame a permis ensuite de combiner les données obtenues en les regroupant par lactation. Un premier tri retire tous les animaux dont les données de PL et de SCC ne sont pas assez exhaustives, cette première transformation donne un total de 217 577 lactations qui regroupe 83 991 animaux. Ensuite une dernière étape permet de ne sélectionner que les élevages avec une proportion suffisante de vêlages, c'est-à-dire au moins 70% de vêlages parmi les vaches inséminées dont au moins 15 à 50% de primipares. Il reste au total 127 541 lactations dont 58 579 animaux appartenant à 231 élevages.
 
@@ -438,7 +444,7 @@ A partir de ces données il a été possible de construire d'autres variables in
 
 ### Le statut mammite
 
-![Organigramme décisionnel pour l'affectation du statut mammite](organigramme.png)
+![Organigramme décisionnel pour l'affectation du statut mammite](organigramme.png) ou ![tableau descriptif des différentes catégories du statut mammite](tableau_mam.png)
 
 Il a été décidé de décomposer les mammites par modèle épidémiologique selon les contrôles effectués dans les 90 premiers jours de lactation. C'est-à-dire soit en mammite environnementale nommée *"env"*, caractérisée par un pic de cellules supérieur à 200 000 cell/mL isolé et/ou un épisode clinique. Soit en mammite contagieuse nommée *"cont"* caractérisée par une succession d'au moins deux contrôles supérieurs à 200 000 cell/mL. Celles qui restaient saines étaient nommées *"healthy"*. On prend également en compte le statut avant tarissement. Soit la vache est primipare est dans ce cas il est indiqué *"primi"*, soit la vache est multipare et il est indiqué le statut du dernier contrôle avant tarissement. Celui-ci peut-être soit élevé *"dp_high"* soit bas *"dp_low"*. Les animaux qui n'avaient pas au moins deux contrôles dans les 90 premiers jours de lactation ou qui n'étaient pas primipares mais dont on ne connaissait pas le statut avant tarissement, ont été retirés de l'étude.
 
@@ -455,6 +461,8 @@ L'étude comporte des vaches de nombreuses races dont des Prim'holsteins (PH) en
 La valeur du maximum de production enregistrée au cours d'un contrôle les 90 premiers jours de lactation a été prise pour chaque lactation. Cette valeur a ensuite été centrée puis réduite afin d'en faire une variable comparable pour chaque lactation.
 
 ### Construction des modèles statistiques
+
+![schéma général de l'organisation de l'étude](schéma_général.png)
 
 La première question qui se pose est par quels moyens la survenue d'une mammite peut entraîner la mise à la réforme précoce ? La schématisation de cela par le biais d'un DAG peut aider à y voir plus clair et comprendre ces différentes voies (@fig-dag-mammites). En effet, lors de la survenue d'une mammite (**M**), celle-ci peut entraîner un épisode clinique que l'organisme ne saura pas combattre et ainsi entraîner la mort (**D** pour death en anglais). Bien évidemment les cas de mammites cliniques entraînant des conséquences sur l'état général de l'animal sont rares mais il est important de les prendre en considération. Cette mammite peut également entraîner une baisse de production laitière (**PL**). Qu'elle soit définitive par la perte d'un ou plusieurs quartiers, ou temporaire à cause de la forte inflammation ou même indirecte lorsque l'éleveur écarte le lait du tank pour respecter les temps d'attente d'un éventuel traitement. Si cette baisse de production laitière entraîne un manque de rentabilité de la vache, l'éleveur peut estimer que le remplacement de cette vache est nécessaire. Finalement, cette mammite la persistance d'un taux de cellules élevé chez une vache peut entraîner la décision ou non de mise à la reproduction (**R**) par l'éleveur qui ne veut pas garder cet animal à cause des pénalités financières appliquées sur un lait de tank haut en cellules. S'il décide tout de même de mettre cette vache à la reproduction il va l'inséminer (**IA**) une ou plusieurs fois. Si la vache possède des troubles de fertilité (**F**) il peut également décider à ce moment de la réformer.
 
@@ -1150,13 +1158,15 @@ readRDS("generated_datasets/comp_ninf.RData")
 
 ```
 
-
 <!-- ```{r probleme1, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
-<!-- #| label: tbl-comp-ninf -->
-<!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 1.  -->
-<!-- readRDS("generated_datasets/scenario1_ninf.RData") -->
-<!-- ``` -->
 
+<!-- #| label: tbl-comp-ninf -->
+
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 1.  -->
+
+<!-- readRDS("generated_datasets/scenario1_ninf.RData") -->
+
+<!-- ``` -->
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure
@@ -1166,12 +1176,14 @@ readRDS("generated_datasets/comp_cure.RData")
 ```
 
 <!-- ```{r probleme2, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+
 <!-- #| label: tbl-comp-cure -->
+
 <!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 1.  -->
+
 <!-- readRDS("generated_datasets/scenario1_cure.RData") -->
 
 <!-- ``` -->
-
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl
@@ -1181,9 +1193,13 @@ readRDS("generated_datasets/comp_pl.RData")
 ```
 
 <!-- ```{r probleme3, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+
 <!-- #| label: tbl-comp-pl -->
+
 <!-- #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 1.  -->
+
 <!-- readRDS("generated_datasets/scenario1_pl.RData") -->
+
 <!-- ``` -->
 
 ##### Scénario 2
@@ -1198,14 +1214,15 @@ readRDS("generated_datasets/comp_ninf2.RData")
 
 ```
 
-
 <!-- ```{r probleme4, echo = FALSE, message = FALSE, warning = FALSE, eval = FALSE} -->
+
 <!-- #| label: tbl-comp-ninf2 -->
+
 <!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 2.  -->
+
 <!-- readRDS("generated_datasets/scenario2_ninf.RData") -->
 
 <!-- ``` -->
-
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure2
@@ -1214,14 +1231,15 @@ readRDS("generated_datasets/comp_cure2.RData")
 
 ```
 
-
 <!-- ```{r probleme5, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+
 <!-- #| label: tbl-comp-cure2 -->
+
 <!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 2.  -->
+
 <!-- readRDS("generated_datasets/scenario2_cure.RData") -->
 
 <!-- ``` -->
-
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl2
@@ -1230,10 +1248,12 @@ readRDS("generated_datasets/comp_pl2.RData")
 
 ```
 
-
 <!-- ```{r probleme6, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+
 <!-- #| label: tbl-comp-pl2 -->
+
 <!-- #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 2.  -->
+
 <!-- readRDS("generated_datasets/scenario2_pl.RData") -->
 
 <!-- ``` -->
@@ -1250,12 +1270,14 @@ readRDS("generated_datasets/comp_ninf3.RData")
 ```
 
 <!-- ```{r probleme7, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+
 <!-- #| label: tbl-comp-ninf3 -->
+
 <!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de nouvelles infections au tarissement entre le factuel et le contrefactuel au cours du scénario 3.  -->
+
 <!-- readRDS("generated_datasets/scenario3_ninf.RData") -->
 
 <!-- ``` -->
-
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-cure3
@@ -1264,15 +1286,15 @@ readRDS("generated_datasets/comp_cure3.RData")
 
 ```
 
-
 <!-- ```{r probleme8, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
+
 <!-- #| label: tbl-comp-cure3 -->
+
 <!-- #| tbl-cap: tests statistiques montrant la significativité de différence entre les probabilités moyennes de guérison au tarissement entre le factuel et le contrefactuel au cours du scénario 3.  -->
+
 <!-- readRDS("generated_datasets/scenario3_cure.RData") -->
 
 <!-- ``` -->
-
-
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-comp-pl3
@@ -1281,13 +1303,15 @@ readRDS("generated_datasets/comp_pl3.RData")
 
 ```
 
-
 <!-- ```{r probleme9, echo = FALSE, message = FALSE, warning = FALSE, eval=FALSE} -->
-<!-- #| label: tbl-comp-pl3 -->
-<!-- #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 3.  -->
-<!-- readRDS("generated_datasets/scenario3_pl.RData") -->
-<!-- ``` -->
 
+<!-- #| label: tbl-comp-pl3 -->
+
+<!-- #| tbl-cap: tests statistiques montrant la significativité de différence de PL moyenne à J15 entre le factuel et le contrefactuel au cours du scénario 3.  -->
+
+<!-- readRDS("generated_datasets/scenario3_pl.RData") -->
+
+<!-- ``` -->
 
 Pour ces trois scénarios, on observe une grande dispersion des données contrefactuelles avec quelques valeurs extrêmes aberrantes. De plus il semble logique que le taux de guérison au tarissement soit plus élevé pour ces trois scénarios car toutes les vaches dites "incurables" ont été retirées des troupeaux.
 
