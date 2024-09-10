@@ -396,6 +396,47 @@ Dans les données de contrôle laitier fournies, on a un total de 144 311 vaches
 
 Un nouveau data-frame a permis ensuite de combiner les données obtenues en les regroupant par lactation. Un premier tri retire tous les animaux dont les données de PL et de SCC ne sont pas assez exhaustives, cette première transformation donne un total de 217 577 lactations qui regroupe 83 991 animaux. Ensuite une dernière étape permet de ne sélectionner que les élevages avec une proportion suffisante de vêlages, c'est-à-dire au moins 70% de vêlages parmi les vaches inséminées dont au moins 15 à 50% de primipares. Il reste au total 127 541 lactations dont 58 579 animaux appartenant à 231 élevages.
 
+## Description de l'étude 
+
+![schéma général de l'organisation de l'étude](schéma_général.png)
+Grâce à ce schéma il est possible de visualiser la démarche choisit. On utilise essentiellement les données récoltées au cours des 90 premiers jours de lactation. Cela nous permet tout d'abord de modéliser l'impact des mammites du début de lactation sur la décision de mise à la reproduction, ainsi que sur la fertilité des animaux. On a ensuite modéliser la première phase de la production laitière jusqu'au pic de lactation ainsi que le risque de mort suite à la survenue d'une mammite. Grâce à ces données il a également été possible de modéliser les dynamiques de cellules au cours de la période de tarissement afin de voir si la survenue d'une mammite en début de lactation peut avoir un impact sur la lactation suivante. 
+Ces données nous ont ensuite permit de modéliser des données contrefactuelles en transformant une variable ou en transformant l'issue elle-même. 
+
+
+La première question qui se pose est combien de voies différentes peuvent être impactées par la survenue d'une mammite et entraîner la mise à la réforme précoce ? La schématisation de cela par le biais d'un DAG peut aider à y voir plus clair et comprendre ces différentes voies (@fig-dag-mammites). En effet, lors de la survenue d'une mammite, celle-ci peut entraîner un épisode clinique que l'organisme ne saura pas combattre et ainsi entraîner la mort. Bien évidemment les cas de mammites cliniques entraînant des conséquences sur l'état général de l'animal sont rares mais il est important de les prendre en considération. Cette mammite peut également entraîner une baisse de production laitière. Qu'elle soit définitive par la perte d'un ou plusieurs quartiers, ou temporaire à cause de la forte inflammation ou même indirecte lorsque l'éleveur écarte le lait du tank pour respecter les temps d'attente d'un éventuel traitement. Si cette baisse de production laitière entraîne un manque de rentabilité de la vache, l'éleveur peut estimer que le remplacement de cette vache est nécessaire. Finalement, cette mammite la persistance d'un taux de cellules élevé chez une vache peut entraîner la décision ou non de mise à la reproduction par l'éleveur qui ne veut pas garder cet animal à cause des pénalités financières appliquées sur un lait de tank haut en cellules. S'il décide tout de même de mettre cette vache à la reproduction il va l'inséminer une ou plusieurs fois. Si la vache possède des troubles de fertilité il peut également décider à ce moment de la réformer.
+
+```{r DAG mammites, message = FALSE, warning = FALSE}
+#| echo: false
+#| fig-width: 3
+#| fig-height: 3
+#| label: fig-dag-mammites
+#| fig-cap: Graphe orienté acyclique représentant les causes de réforme en lien avec les mammites. Les différents noeuds représentent les mammites (**M**), la PL (**PL**), la mort (**M**), la mise à la reproduction (**R**), la réussite à la première insémination (**AI**), la fertilité (**F**) et la réforme (**C**).  
+dag_mammites <- dagify(
+  PL ~ M,
+  D ~ M,
+  R ~ M,
+  AI ~ R,
+  F ~ AI,
+  C ~ F,
+  C ~ PL,
+  coords = list(
+    x = c(M = -1, R = 1, PL = 1, D = 1, AI = 3, F = 5, C = 6),
+    y = c(M = 1, R = 0, PL = 1, D = 2, AI = 0, F = 0, C = 1)
+  )
+)
+
+ggdag(dag_mammites) + theme_dag()
+```
+
+Ce DAG nous permet ainsi de différencier les différentes modélisations qu'il faut réaliser. il nous permet également de réaliser le choix des données pour y parvenir.
+Ce DAG n'est pas tout à fait complet, il ne prend pas en compte les autres facteurs, observables ou non, qui peuvent influencer ces relations. Or il est important de les mentionner et de les prendre en considération car ils peuvent influencer le résultat de l'étude.
+
+La démarche de cette première partie de l'étude a été de décomposer ce graphe par voies et d'identifier tous les facteurs pouvant intervenir dans la relation. Nous avons par la suite tenté de modéliser chacune de ces voies afin d'observer l'influence de ces facteurs sur la réforme des animaux.
+
+Pour pouvoir amener une vache à produire à nouveau du lait en quantité importante elle doit à nouveau vêler afin de permettre à nouveau la lactogenèse et la sécrétion lactée. Le système d'élevage laitier est donc basé en grande majorité sur la capacité d'une vache à révéler afin de produire une nouvelle vague de production lactée. Si pour une raison ou pour une autre cela n'est plus possible, la vache ne devient plus une valeur économique en termes de production de lait et le seul moyen de valoriser économiquement l'animal est de la réformer pour la production de viande.
+
+Toutes les modélisation ont été réalisée sur R version 4.3.0.
+
 ## Choix des données et création du tableau de données utilisé pour l'étude statistique
 
 Les données nous ont été fournies sous forme de plusieurs tableaux par l'IDELE. La première étape a donc été d'ordonner les données d'intérêt. Comme l'unité statistique de l'étude est la lactation un nouveau tableau a été créée pour l'étude. Ce tableau est créé à partir de données du contrôle laitier. Chaque lactation est traitée individuellement.
@@ -460,50 +501,18 @@ L'étude comporte des vaches de nombreuses races dont des Prim'holsteins (PH) en
 
 La valeur du maximum de production enregistrée au cours d'un contrôle les 90 premiers jours de lactation a été prise pour chaque lactation. Cette valeur a ensuite été centrée puis réduite afin d'en faire une variable comparable pour chaque lactation.
 
-### Construction des modèles statistiques
 
-![schéma général de l'organisation de l'étude](schéma_général.png)
+## Modélisations 
 
-La première question qui se pose est par quels moyens la survenue d'une mammite peut entraîner la mise à la réforme précoce ? La schématisation de cela par le biais d'un DAG peut aider à y voir plus clair et comprendre ces différentes voies (@fig-dag-mammites). En effet, lors de la survenue d'une mammite (**M**), celle-ci peut entraîner un épisode clinique que l'organisme ne saura pas combattre et ainsi entraîner la mort (**D** pour death en anglais). Bien évidemment les cas de mammites cliniques entraînant des conséquences sur l'état général de l'animal sont rares mais il est important de les prendre en considération. Cette mammite peut également entraîner une baisse de production laitière (**PL**). Qu'elle soit définitive par la perte d'un ou plusieurs quartiers, ou temporaire à cause de la forte inflammation ou même indirecte lorsque l'éleveur écarte le lait du tank pour respecter les temps d'attente d'un éventuel traitement. Si cette baisse de production laitière entraîne un manque de rentabilité de la vache, l'éleveur peut estimer que le remplacement de cette vache est nécessaire. Finalement, cette mammite la persistance d'un taux de cellules élevé chez une vache peut entraîner la décision ou non de mise à la reproduction (**R**) par l'éleveur qui ne veut pas garder cet animal à cause des pénalités financières appliquées sur un lait de tank haut en cellules. S'il décide tout de même de mettre cette vache à la reproduction il va l'inséminer (**IA**) une ou plusieurs fois. Si la vache possède des troubles de fertilité (**F**) il peut également décider à ce moment de la réformer.
+### Impact du statut mammite en début de lactation sur la décision de mise à la reproduction
 
-```{r DAG mammites, message = FALSE, warning = FALSE}
-#| echo: false
-#| fig-width: 3
-#| fig-height: 3
-#| label: fig-dag-mammites
-#| fig-cap: Graphe orienté acyclique représentant les causes de réforme en lien avec les mammites. 
-dag_mammites <- dagify(
-  PL ~ M,
-  D ~ M,
-  R ~ M,
-  AI ~ R,
-  F ~ AI,
-  C ~ F,
-  C ~ PL,
-  coords = list(
-    x = c(M = -1, R = 1, PL = 1, D = 1, AI = 3, F = 5, C = 6),
-    y = c(M = 1, R = 0, PL = 1, D = 2, AI = 0, F = 0, C = 1)
-  )
-)
-
-ggdag(dag_mammites) + theme_dag()
-```
-
-Ce DAG n'est pas tout à fait complet, il ne prend pas en compte les autres facteurs, observables ou non, qui peuvent influencer ces relations. Or il est important de les mentionner et de les prendre en considération car ils peuvent influencer le résultat de l'étude.
-
-La démarche de cette première partie de l'étude a été de décomposer ce graphe par voies et d'identifier tous les facteurs pouvant intervenir dans la relation. Nous avons par la suite tenté de modéliser chacune de ces voies afin d'observer l'influence de ces facteurs sur la réforme des animaux.
-
-Pour pouvoir amener une vache à produire à nouveau du lait en quantité importante elle doit à nouveau vêler afin de permettre à nouveau la lactogenèse et la sécrétion lactée. Le système d'élevage laitier est donc basé en grande majorité sur la capacité d'une vache à révéler afin de produire une nouvelle vague de production lactée. Si pour une raison ou pour une autre cela n'est plus possible, la vache ne devient plus une valeur économique en termes de production de lait et le seul moyen de valoriser économiquement l'animal est de la réformer pour la production de viande.
-
-Toutes les modélisation ont été réalisée sur R version 4.3.0.
-
-#### Décision de mise à la reproduction
+#### Impact sur la décision de l'éleveur 
 
 La démarche a été de partir du principe que la mise à la reproduction est une décision propre de l'éleveur. Il prend cette décision au cours de la lactation actuelle pour permettre à la lactation suivante d'exister. Il a donc fallut modéliser cette décision en fonction de la présence ou non d'une mammite. D'autres facteurs influencent cette décision.
 
 ```{r mammite - repro, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-repro
-#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur les perfomances de reproduction. 
+#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur les perfomances de reproduction. Les noeuds représentent les mammites (**M**), la mise à la reproduction (**R**), la PL (**PL**), la parité (**P**), la race (**B**), et l'effet aléatoire de troupeau (**T**).
 
 # Définir le graphe causal avec les variables latentes
 dag_mam_repro <- dagitty::dagitty('
@@ -512,6 +521,7 @@ dag_mam_repro <- dagitty::dagitty('
     R [outcome]
     T [latent]
     M -> PL
+    PL -> M
     M -> R
     PL -> R
     P -> R
@@ -545,19 +555,20 @@ title_x <- 0.5  # Ajuster selon les besoins pour le placement horizontal
 # title_y <- max(layout(graph)$y) + 0.2  # Ajuster pour l'espacement vertical
 ```
 
-La @fig-dag-mam-repro montre le DAG qui schématise cette décision et les variables qui interviennent potentiellement dans cette décision. La grande majorité des éleveurs laitiers aujourd'hui en France utilisent l'insémination artificielle (AI). Il est donc plus facile pour l'éleveur de gérer sa reproduction et de décider quelle vache inséminer pour l'amener à la prochaine lactation. Il doit donc prendre sa décision en fonction de plusieurs facteurs. Ce que cette étude cherche à démontrer c'est que la survenue d'une mammite en tout début de lactation va avoir un impact sur cette décision. Mais cette décision dépend également d'autres facteurs comme : la parité (**P**), la production laitière (**PL**), la race (**B** pour breed en Anglais), ainsi qu'un effet aléatoire de troupeau.
+La @fig-dag-mam-repro montre le DAG qui schématise cette décision et les variables qui interviennent potentiellement dans cette décision. La grande majorité des éleveurs laitiers aujourd'hui en France utilisent l'insémination artificielle (AI). Il est donc plus facile pour l'éleveur de gérer sa reproduction et de décider quelle vache inséminer pour l'amener à la prochaine lactation. Il doit donc prendre sa décision en fonction de plusieurs facteurs. Ce que cette étude cherche à démontrer c'est que la survenue d'une mammite en tout début de lactation va avoir un impact sur cette décision. Mais cette décision dépend également d'autres facteurs comme : la parité, la production laitière, la race, ainsi qu'un effet aléatoire de troupeau.
 
-L'estimand théorique ici est donc la recherche d'une différence de probabilité de survenue de l'évènement, ici la décision de mise à la reproduction, selon les catégories des différentes variables. Le modèle qui convient le mieux est un modèle de **régression logistique binomial** car la variable dépendante est de type binaire. L'estimant empirique qui convient le mieux est donc la recherche des OR pour chaque catégorie de variables afin d'estimer le poids de l'impact de chacune.
+Le modèle qui convient le mieux est un modèle de **régression logistique binomial** car la variable dépendante est de type binaire. L'estimant empirique qui convient le mieux est donc la recherche des OR pour chaque catégorie de variables afin d'estimer le poids de l'impact de chacune.
 
 la modélisation à été réalisée grâce à la fonction *glmer* du package lme4 de R. Pour cela une variable dépendante à été créée, elle prenait la valeur 1 si la vache a été inséminée au moins une fois au cours de la lactation et 0 sinon.
 
--   **Réussite à la première insémination**
 
-Une fois que l'éleveur a décidé de mettre son animal à la reproduction il l'insémine une première fois (**AI**). Ce qui est espéré habituellement en élevage laitier, c'est qu'il y ait fécondation dès la première insémination afin d'obtenir un intervalle vêlage-première insémination court et ainsi obtenir un intervalle vêlage-vêlage plus court également. De nombreux facteurs sont connus comme ayant un impact direct sur la fertilité d'une vache laitière, comme la parité (**P**), la race (**B**), le niveau production (**PL**) et un effet aléatoire de troupeau (**T**). A cela s'ajouter la variable statut mammite (**M**) qui est la principale variable à tester.
+### Impact du statut mammite en début de lactation sur la fertilité 
+
+Une fois que l'éleveur a décidé de mettre son animal à la reproduction il l'insémine une première fois. Ce qui est espéré habituellement en élevage laitier, c'est qu'il y ait fécondation dès la première insémination afin d'obtenir un intervalle vêlage-première insémination court et ainsi obtenir un intervalle vêlage-vêlage plus court également. De nombreux facteurs sont connus comme ayant un impact direct sur la fertilité d'une vache laitière, comme la parité, la race ou le niveau de production. 
 
 ```{r mammite - IA1, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-ai1
-#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur la réussite à la première IA. 
+#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur la réussite à la première IA. Les noeuds représentent les mammites (**M**), la première insémination (**IA**), la PL (**PL**), la parité (**P**), la race (**B**), et l'effet aléatoire de troupeau (**T**).
 
 
 # Définir le graphe causal avec les variables latentes
@@ -568,6 +579,7 @@ dag_mam_repro <- dagitty::dagitty('
     T [latent]
     G [latent]
     M -> PL
+    PL -> M
     M -> AI
     PL -> AI
     P -> AI
@@ -598,13 +610,17 @@ ggdag(tidy_dag) +
 
 Là encore l'estimand va être de trouver les OR grâce à une **régression logistique binomiale** réalisé avec une fonction *glmer*. Pour cela une nouvelle variable prenait la valeur 1 si la vache n'a été inséminée qu'une seule fois et qu'une date de vêlage suivante était donnée.
 
--   **fertilité**
+### Impact du statut mammite en début de lactation sur la résultante à la fois de la décision de l'éleveur et de la fertilité. 
 
-Pour modéliser la fertilité (**F**) il a été décidé de la représenter par le nombre d'IA avant fécondation ou non de la vache. Dans le cas où la $1^{ère}$ IA n'est pas un succès et que la vache revient en chaleur, l'éleveur peut décider de retenter l'insémination artificielle à chaque nouveau cycle. Cette voie, représentée par la @fig-dag-mam-nai, est complexe puisqu'elle met en évidence une décision prise par l'éleveur mais qui est largement influencée par des facteurs propres à la condition physiologique de l'animal entraînant une baisse de la fertilité (**F**), comme la parité (**P**), la race (**B**), le niveau de production (**PL**) ainsi qu'un effet aléatoire de troupeau (**T**). En effet cela peut être compliqué à modéliser car c'est l'éleveur qui décide combien d'inséminations il va tenter sur son animal, mais c'est la fertilité propre de l'animal qui entraîne la réussite ou l'échec de cette insémination. Donc c'est également cette fertilité qui indirectement influence la décision de l'éleveur et donc influence le nombre d'inséminations tentées.
+La reproduction représente parfois un mélange des deux. Par exemple, la vache peut être inséminée une première fois mais cela peut être un échec et nécessiter une autre insémination. Si la fécondation n'a pas lieu cela peut résulter d'un problème de fertilité, le problème est que pour modéliser la fertilité on utilise le nombre d'inséminations tentées ou le fait d'avoir un nouveau vêlage. Mais c'est également dépendant des décisions de l'éleveur car c'est au final lui qui décide quelle vache il insémine et combien d'inséminations il tente sur cette vache. Il faut donc considérer que ces effets sont mixtes et que la survenue d'une mammite peut à la fois avoir un impact sur la décision de l'éleveur et à la fois sur la fertilité mais il est difficile à séparer l'effet sur l'un par rapport à l'autre. 
+
+- **Nombre d'inséminations tentées**
+
+On a donc tout d'abords modéliser l'impact des mammites en début de lactation sur le nombre d"inséminations tentées. 
 
 ```{r mammite - nai, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-nai
-#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur le nombre d'inséminations tentées. 
+#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur le nombre d'inséminations tentées. Les noeuds représentent les mammites (**M**), le nombre d'IA (Nb) , la PL (**PL**), la parité (**P**), la race (**B**), et l'effet aléatoire de troupeau (**T**).
 
 
 # Définir le graphe causal avec les variables latentes
@@ -615,18 +631,19 @@ dag_mam_repro <- dagitty::dagitty('
     T [latent]
     G [latent]
     M -> PL
-    M -> F
-    PL -> F
-    P -> F
-    T -> F
-    B -> F
+    Pl -> M
+    M -> Nb
+    PL -> Nb
+    P -> Nb
+    T -> Nb
+    B -> Nb
   }
 ')
 
 # Définir les coordonnées pour le DAG
 coordinates(dag_mam_repro) <- list(
-  x = c(M = 0, F = 1, P = 1.5, T = 2, PL = 0.5, B = 1.5),
-  y = c(M = 2, F = 2, PL = 3, T = 1.5, P = 3, B = 0.5)
+  x = c(M = 0, Nb = 1, P = 1.5, T = 2, PL = 0.5, B = 1.5),
+  y = c(M = 2, Nb = 2, PL = 3, T = 1.5, P = 3, B = 0.5)
 )
 
 # Convertir en tidy_dagitty pour ggdag
@@ -643,15 +660,14 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-L'estimand peut être défini ici comme la recherche de l'effet causal des mammites sur le nombre de tentatives d'inséminations chez la vache laitière. Contrairement aux questions précédentes, nous avons ici une variable de comptage et non une variable binaire. Il n'est plus possible d'utiliser la loi binomiale. Le modèle de Poisson est plus adapté à une variable de comptage, il permet d'obtenir l'IRR. La fonction *gller* est encore une fois utilisée mais cette fois-ci il lui est précisé d'utiliser un modèle de Poisson.
+Contrairement aux questions précédentes, nous avons ici une variable de comptage et non une variable binaire. Il n'est plus possible d'utiliser la loi binomiale. Le modèle de Poisson est plus adapté à une variable de comptage, il permet d'obtenir l'IRR. La fonction *glmer* est encore une fois utilisée mais cette fois-ci il lui est précisé d'utiliser un modèle de Poisson.
 
 -   **Revêlage**
 
-Pour aller plus loin on pourrait se demander si une fois la vache inséminée elle s'assure une prochaine lactation et donc évite la réforme. Pour cela il faut qu'elle vêle (**V**) à nouveau et donc on va chercher à modéliser l'impact des mammites (**M**) sur la probabilité de révéler. De nombreux facteurs complexes interviennent tout au long de la gestation, comme la parité (**P**), la race (**B**), avec également une influence du troupeau (**T**). La @fig-dag-mam-revel schématise les variables qui peuvent être intégrées dans le modèle.
-
+Pour aller plus loin on pourrait se demander si une fois la vache inséminée elle s'assure une prochaine lactation et donc évite la réforme. Pour cela il faut qu'elle vêle à nouveau et donc on va chercher à modéliser l'impact des mammites sur la probabilité de révéler. 
 ```{r mammite - vêlage, echo = FALSE, message = FALSE, warning = FALSE}
 #| label: fig-dag-mam-revel
-#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur les chances de vêler à nouveau. 
+#| fig-cap: Graphe orienté acyclique représentant l'impact des mammites sur les chances de vêler à nouveau. Les noeuds représentent les mammites (**M**), le vêlage (**V**) , la PL (**PL**), la parité (**P**), la race (**B**), et l'effet aléatoire de troupeau (**T**).
 
 
 # Définir le graphe causal avec les variables latentes
@@ -687,7 +703,7 @@ ggdag(tidy_dag) +
   scale_color_manual(values = c("latent" = "red", "observed" = "blue"))
 ```
 
-L'estimand représente la recherche de l'effet causal des différentes catégories de mammites sur la probabilité de vêler à nouveau pour une vache laitière. Comme c'est également une régression logistique avec la fonction *glmer* qui est utilisée ici, c'est également la recherche des OR qui est intéressante.
+Comme c'est également une régression logistique avec la fonction *glmer* qui est utilisée ici, c'est également la recherche des OR qui est intéressante.
 
 #### Modélisation de l'impact des mammites sur le niveau de production laitière
 
